@@ -7,7 +7,6 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "stock_data")

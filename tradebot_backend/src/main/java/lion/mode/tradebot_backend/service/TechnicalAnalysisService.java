@@ -13,76 +13,66 @@ import org.ta4j.core.indicators.SMAIndicator;
 import org.ta4j.core.num.DecimalNum;
 import org.ta4j.core.num.Num;
 
+import lion.mode.tradebot_backend.model.StockData;
+import lion.mode.tradebot_backend.repository.StockDataRepository;
+import lombok.RequiredArgsConstructor;
+
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class TechnicalAnalysisService {
 
-    public double calculateRSI(List<Double> closePrices, int period) {
-        BarSeries series = buildSeries(closePrices);
-        ClosePriceIndicator close = new ClosePriceIndicator(series);
-        RSIIndicator rsi = new RSIIndicator(close, period);
-        return rsi.getValue(series.getEndIndex()).doubleValue();
-    }
+    private final StockDataRepository repository;
 
-    public double[] calculateMACD(List<Double> closePrices, int shortPeriod, int longPeriod, int signalPeriod) {
-        BarSeries series = buildSeries(closePrices);
-        ClosePriceIndicator close = new ClosePriceIndicator(series);
-        MACDIndicator macd = new MACDIndicator(close, shortPeriod, longPeriod);
-        EMAIndicator signalLine = new EMAIndicator(macd, signalPeriod);
-        return new double[]{
-            macd.getValue(series.getEndIndex()).doubleValue(),
-            signalLine.getValue(series.getEndIndex()).doubleValue()
-        };
-    }
+    private BarSeries loadSeries(String symbol) {
+        List<StockData> dataList = repository.findBySymbolOrderByTimestampAsc(symbol);
 
-    public double[] calculateBollingerBands(List<Double> closePrices, int period, double k) {
-        BarSeries series = buildSeries(closePrices);
-        ClosePriceIndicator close = new ClosePriceIndicator(series);
-        SMAIndicator sma = new SMAIndicator(close, period);
-        BollingerBandsMiddleIndicator middle = new BollingerBandsMiddleIndicator(sma);
-        BollingerBandsUpperIndicator upper = new BollingerBandsUpperIndicator(middle, (Indicator<Num>) close.numOf(k));
-        BollingerBandsLowerIndicator lower = new BollingerBandsLowerIndicator(middle, (Indicator<Num>) close.numOf(k));
-        return new double[]{
-            lower.getValue(series.getEndIndex()).doubleValue(),
-            middle.getValue(series.getEndIndex()).doubleValue(),
-            upper.getValue(series.getEndIndex()).doubleValue()
-        };
-    }
+    // create series with DecimalNum factory
+    BarSeries series = new BaseBarSeries(symbol, DecimalNum::valueOf);
 
-    public boolean calculateMACrossover(List<Double> closePrices, int shortPeriod, int longPeriod) {
-        BarSeries series = buildSeries(closePrices);
-        ClosePriceIndicator close = new ClosePriceIndicator(series);
-        SMAIndicator shortMA = new SMAIndicator(close, shortPeriod);
-        SMAIndicator longMA = new SMAIndicator(close, longPeriod);
+        for (StockData data : dataList) {
+            ZonedDateTime endTime = data.getTimestamp().atZone(ZoneId.systemDefault());
 
-        int lastIndex = series.getEndIndex();
-        return shortMA.getValue(lastIndex).isGreaterThan(longMA.getValue(lastIndex)) &&
-               shortMA.getValue(lastIndex - 1).isLessThan(longMA.getValue(lastIndex - 1));
-    }
+            // Skip bars that are not strictly after the last bar end time (TA4J requires strictly increasing end times)
+            if (series.getBarCount() > 0) {
+                ZonedDateTime lastEnd = series.getBar(series.getEndIndex()).getEndTime();
+                if (!endTime.isAfter(lastEnd)) {
+                    // skip duplicate or non-increasing timestamp
+                    continue;
+                }
+            }
 
-    public double calculateTrendlineSlope(List<Double> closePrices) {
-        int n = closePrices.size();
-        double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
-
-        for (int i = 0; i < n; i++) {
-            sumX += i;
-            sumY += closePrices.get(i);
-            sumXY += i * closePrices.get(i);
-            sumX2 += i * i;
+            Bar bar = BaseBar.builder()
+                    .timePeriod(java.time.Duration.ofMinutes(1))
+                    .endTime(endTime)
+                    .openPrice(DecimalNum.valueOf(data.getOpen()))
+                    .highPrice(DecimalNum.valueOf(data.getHigh()))
+                    .lowPrice(DecimalNum.valueOf(data.getLow()))
+                    .closePrice(DecimalNum.valueOf(data.getClose()))
+                    .volume(DecimalNum.valueOf(data.getVolume()))
+                    .build();
+            series.addBar(bar);
         }
+    return series;
+    }
+    
+    public double calculateRSI(String symbol) {
+        BarSeries series = loadSeries(symbol);
 
-        // y = ax + b -> slope (a) hesaplanıyor
-        return (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+        RSIIndicator rsi = new RSIIndicator(closePrice, 14); // 14 periyot RSI
+
+        double rsiValue = rsi.getValue(series.getEndIndex()).doubleValue();
+
+        if (rsiValue <= 30) return 1.0;   // buy signal
+        if (rsiValue >= 70) return -1.0;  // sell signal
+        if (rsiValue > 30 && rsiValue < 50) return (50 - rsiValue) / 20;
+        if (rsiValue > 50 && rsiValue < 70) return - (rsiValue - 50) / 20;
+
+        return rsiValue;
     }
 
-    private BarSeries buildSeries(List<Double> closePrices) {
-        BarSeries series = new BaseBarSeriesBuilder().withName("price_series").build();
-        for (Double price : closePrices) {
-            series.addBar(new BaseBar(java.time.Duration.ofDays(1), null, DecimalNum.valueOf(price),
-                    DecimalNum.valueOf(price), DecimalNum.valueOf(price), DecimalNum.valueOf(price),
-                    DecimalNum.valueOf(0), null));
-        }
-        return series;
-    }
 }

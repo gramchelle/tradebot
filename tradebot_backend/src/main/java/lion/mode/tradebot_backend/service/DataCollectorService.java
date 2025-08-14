@@ -1,10 +1,15 @@
 package lion.mode.tradebot_backend.service;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
+import lion.mode.tradebot_backend.config.HttpClientConfig;
 import lion.mode.tradebot_backend.model.StockData;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -26,47 +31,53 @@ public class DataCollectorService { // streaming data from alpha vantage
 
     private final StockDataRepository repository;
 
-    public List<StockData> fetchStockData() {
+    @Autowired
+    private HttpClient httpClient;
+
+    public boolean saveStockData(String symbol) {
         try {
-            String symbol = "AAPL";
-            String url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY" // Intraday can be changed
+            symbol = "AAPL"; // set AAPL stock symbol by default manually, TBD later
+            String url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY"
                     + "&symbol=" + symbol
                     + "&interval=1min&apikey=" + apiKey;
 
-            HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .GET()
                     .build();
 
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
-            JsonObject timeSeries = json.getAsJsonObject("Time Series (1min)");
+            JsonObject timeSeries = json.getAsJsonObject("Time Series (1min)"); // interval ile uyumlu
 
-            // İlk veri noktasını al
-            Map.Entry<String, com.google.gson.JsonElement> firstEntry =
-                    timeSeries.entrySet().iterator().next();
-
-            String timeStampStr = firstEntry.getKey();
-            JsonObject latestData = firstEntry.getValue().getAsJsonObject();
-
-            StockData data = new StockData();
-            data.setSymbol(symbol);
-            data.setOpen(latestData.get("1. open").getAsDouble());
-            data.setHigh(latestData.get("2. high").getAsDouble());
-            data.setLow(latestData.get("3. low").getAsDouble());
-            data.setClose(latestData.get("4. close").getAsDouble());
-            data.setVolume(latestData.get("5. volume").getAsLong());
-            data.setTimestamp(LocalDateTime.parse(timeStampStr.replace(" ", "T")));
-
-            repository.save(data);
-            return repository.findAll();
+            boolean savedAny = false;
+            for (Map.Entry<String, JsonElement> entry : timeSeries.entrySet()) {
+                LocalDateTime timestamp = LocalDateTime.parse(entry.getKey().replace(" ", "T"));
+                // Check if this timestamp already exists for this symbol
+                boolean exists = repository.existsBySymbolAndTimestamp(symbol, timestamp);
+                if (!exists) {
+                    StockData data = new StockData();
+                    data.setSymbol(symbol);
+                    data.setOpen(entry.getValue().getAsJsonObject().get("1. open").getAsDouble());
+                    data.setHigh(entry.getValue().getAsJsonObject().get("2. high").getAsDouble());
+                    data.setLow(entry.getValue().getAsJsonObject().get("3. low").getAsDouble());
+                    data.setClose(entry.getValue().getAsJsonObject().get("4. close").getAsDouble());
+                    data.setVolume(entry.getValue().getAsJsonObject().get("5. volume").getAsLong());
+                    data.setTimestamp(timestamp);
+                    repository.save(data);
+                    savedAny = true;
+                }
+            }
+            return savedAny;
 
         } catch (IOException | InterruptedException e) {
-            throw new RuntimeException("Alpha Vantage veri çekme hatası: " + e.getMessage());
+            throw new RuntimeException("[!] Alpha Vantage veri çekme hatası: " + e.getMessage());
         }
     }
 
+    public List<StockData> getAllStockData() {
+        return repository.findAll();
+    }
 
 }
