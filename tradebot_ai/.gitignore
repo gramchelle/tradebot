@@ -1,0 +1,5 @@
+.venv/
+.vscode/
+alpha_vantage_api_key.txt
+secrets/
+data/
