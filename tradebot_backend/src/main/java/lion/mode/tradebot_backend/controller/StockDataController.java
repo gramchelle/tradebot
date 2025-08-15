@@ -1,5 +1,9 @@
 package lion.mode.tradebot_backend.controller;
 
+import lion.mode.tradebot_backend.dto.indicators.BollingerResult;
+import lion.mode.tradebot_backend.dto.indicators.MACrossoverResult;
+import lion.mode.tradebot_backend.dto.indicators.MacdResult;
+import lion.mode.tradebot_backend.dto.indicators.TrendlineResult;
 import lion.mode.tradebot_backend.model.StockData;
 import lion.mode.tradebot_backend.service.DataCollectorService;
 import lion.mode.tradebot_backend.service.TechnicalAnalysisService;
@@ -19,7 +23,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/")
 @RequiredArgsConstructor
-public class StockDataController {
+public class StockDataController { //Technical Analysis Endpoints
 
     private final DataCollectorService dataCollectorService;
     private final TechnicalAnalysisService technicalAnalysisService;
@@ -40,5 +44,41 @@ public class StockDataController {
         ), HttpStatus.OK);
     }
 
-}
+    @GetMapping("/macd/{symbol}")
+    public ResponseEntity<MacdResult> getMACD(@PathVariable String symbol) {
+        return new ResponseEntity<>(technicalAnalysisService.calculateMACD(symbol), HttpStatus.OK);
+    }
 
+    @GetMapping("/ma-crossover/{symbol}")
+    public ResponseEntity<MACrossoverResult> getMACrossover(@PathVariable String symbol) {
+        return new ResponseEntity<>(technicalAnalysisService.calculateMACrossover(symbol), HttpStatus.OK);
+    }
+
+    @GetMapping("/bollinger/{symbol}")
+    public ResponseEntity<BollingerResult> getBollinger(@PathVariable String symbol) {
+        return new ResponseEntity<>(technicalAnalysisService.calculateBollinger(symbol), HttpStatus.OK);
+    }
+
+    @GetMapping("/trend/{symbol}")
+    public ResponseEntity<TrendlineResult> getTrend(@PathVariable String symbol) {
+        return new ResponseEntity<>(technicalAnalysisService.calculateTrend(symbol), HttpStatus.OK);
+    }
+
+    @GetMapping("/{symbol}")
+    public ResponseEntity<List<StockData>> getStockDataBySymbol(@PathVariable String symbol) {
+        return new ResponseEntity<List<StockData>>(dataCollectorService.getStockDataBySymbol(symbol), HttpStatus.OK);
+    }
+
+    @GetMapping("/tech-analysis/{symbol}")
+    public ResponseEntity<List> getTechnicalResultsBySymbol(@PathVariable String symbol) {
+    List technicalResults = List.of(
+            Map.of("rsi", technicalAnalysisService.calculateRSI(symbol)),
+            Map.of("macd", technicalAnalysisService.calculateMACD(symbol).getTradeSignal()),
+            Map.of("maCrossover", technicalAnalysisService.calculateMACrossover(symbol).getSignal()),
+            Map.of("bollinger", technicalAnalysisService.calculateBollinger(symbol).getSignal()),
+            Map.of("trend", technicalAnalysisService.calculateTrend(symbol).getTrend()) // TBD: getSlope yapılabilir
+    );
+
+        return new ResponseEntity<>(technicalResults, HttpStatus.OK);
+    }
+}

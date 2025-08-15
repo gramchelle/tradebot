@@ -3,13 +3,9 @@ package lion.mode.tradebot_backend.service;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
-import lion.mode.tradebot_backend.config.HttpClientConfig;
 import lion.mode.tradebot_backend.model.StockData;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +15,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -30,13 +29,13 @@ public class DataCollectorService { // streaming data from alpha vantage
     private String apiKey;
 
     private final StockDataRepository repository;
+    private final HttpClient httpClient;
 
-    @Autowired
-    private HttpClient httpClient;
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public boolean saveStockData(String symbol) {
+    // Function to fetch the data from Alpha Vantage and save it into the database through repository
         try {
-            symbol = "AAPL"; // set AAPL stock symbol by default manually, TBD later
             String url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY"
                     + "&symbol=" + symbol
                     + "&interval=1min&apikey=" + apiKey;
@@ -49,35 +48,53 @@ public class DataCollectorService { // streaming data from alpha vantage
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
-            JsonObject timeSeries = json.getAsJsonObject("Time Series (1min)"); // interval ile uyumlu
+            JsonObject timeSeries = json.getAsJsonObject("Time Series (1min)");
 
-            boolean savedAny = false;
+            if (timeSeries == null) {
+                System.err.println("[!] " + symbol + " için 'Time Series (1min)' verisi alınamadı. API Cevabı: " + response.body());
+                return false;
+            }
+
+            List<StockData> newStockDataList = new ArrayList<>();
+            LocalDateTime lastTimestampInDb = repository.findTopBySymbolOrderByTimestampDesc(symbol)
+                    .map(StockData::getTimestamp)
+                    .orElse(null);
+
             for (Map.Entry<String, JsonElement> entry : timeSeries.entrySet()) {
-                LocalDateTime timestamp = LocalDateTime.parse(entry.getKey().replace(" ", "T"));
-                // Check if this timestamp already exists for this symbol
-                boolean exists = repository.existsBySymbolAndTimestamp(symbol, timestamp);
-                if (!exists) {
+                LocalDateTime entryTimestamp = LocalDateTime.parse(entry.getKey(), FORMATTER);
+                if (lastTimestampInDb == null || entryTimestamp.isAfter(lastTimestampInDb)) {
+                    JsonObject values = entry.getValue().getAsJsonObject();
                     StockData data = new StockData();
                     data.setSymbol(symbol);
-                    data.setOpen(entry.getValue().getAsJsonObject().get("1. open").getAsDouble());
-                    data.setHigh(entry.getValue().getAsJsonObject().get("2. high").getAsDouble());
-                    data.setLow(entry.getValue().getAsJsonObject().get("3. low").getAsDouble());
-                    data.setClose(entry.getValue().getAsJsonObject().get("4. close").getAsDouble());
-                    data.setVolume(entry.getValue().getAsJsonObject().get("5. volume").getAsLong());
-                    data.setTimestamp(timestamp);
-                    repository.save(data);
-                    savedAny = true;
+                    data.setOpen(values.get("1. open").getAsDouble());
+                    data.setHigh(values.get("2. high").getAsDouble());
+                    data.setLow(values.get("3. low").getAsDouble());
+                    data.setClose(values.get("4. close").getAsDouble());
+                    data.setVolume(values.get("5. volume").getAsLong());
+                    data.setTimestamp(entryTimestamp);
+                    newStockDataList.add(data);
                 }
             }
-            return savedAny;
-
+            if (!newStockDataList.isEmpty()) {
+                // DÜZELTME: Listeyi veritabanına kaydetmeden önce tersine çeviriyoruz.
+                // Bu, verilerin eskiden yeniye (kronolojik) sırada kaydedilmesini sağlar.
+                Collections.reverse(newStockDataList);
+                repository.saveAll(newStockDataList);
+                return true;
+            }
+            return false;
         } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
             throw new RuntimeException("[!] Alpha Vantage veri çekme hatası: " + e.getMessage());
         }
     }
 
     public List<StockData> getAllStockData() {
         return repository.findAll();
+    }
+
+    public List<StockData> getStockDataBySymbol(String symbol) {
+        return repository.findBySymbol(symbol);
     }
 
 }
