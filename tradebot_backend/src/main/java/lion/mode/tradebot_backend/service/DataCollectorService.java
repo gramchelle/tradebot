@@ -97,4 +97,9 @@ public class DataCollectorService { // streaming data from alpha vantage
         return repository.findBySymbol(symbol);
     }
 
+    // TODO: Belirli bir hisse senedi ve tarih aralığı için OHLCV verisini veritabanından çeken bir service katmanı yazılmalıdır.
+    /*public List<StockData> getStockDataBySymbolAndDateRange(String symbol, LocalDateTime startDate, LocalDateTime endDate) {
+        return repository.findBySymbolAndTimestampBetween(symbol, startDate, endDate);
+    }*/
+
 }

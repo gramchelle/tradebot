@@ -14,10 +14,10 @@ import java.util.List;
 public class SchedulerConfig {
 
     private final DataCollectorService dataCollectorService;
-/*
-    @Value("${tradebot.tracked-symbols")
-    private List<String> symbols;
 
+    @Value("${tradebot.tracked-symbols}")
+    private List<String> symbols;
+/*
     @Scheduled(fixedRate = 300000) // this scheduler lets the statement get executed per 5 minute, which is safer for free API requests
     public void scheduleDataFetch() {
         System.out.println("[START] Scheduled data fetch starting at " + LocalDateTime.now());
@@ -36,5 +36,5 @@ public class SchedulerConfig {
 
         }
     }
-        */
+*/
 }

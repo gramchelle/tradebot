@@ -1,9 +1,6 @@
 package lion.mode.tradebot_backend.controller;
 
-import lion.mode.tradebot_backend.dto.indicators.BollingerResult;
-import lion.mode.tradebot_backend.dto.indicators.MACrossoverResult;
-import lion.mode.tradebot_backend.dto.indicators.MacdResult;
-import lion.mode.tradebot_backend.dto.indicators.TrendlineResult;
+import lion.mode.tradebot_backend.dto.indicators.*;
 import lion.mode.tradebot_backend.model.StockData;
 import lion.mode.tradebot_backend.service.DataCollectorService;
 import lion.mode.tradebot_backend.service.TechnicalAnalysisService;
@@ -34,14 +31,9 @@ public class StockDataController { //Technical Analysis Endpoints
     }
 
     @GetMapping("/rsi/{symbol}")
-    public ResponseEntity<Map<String, Object>> getRSIScore(@PathVariable String symbol) {
-        double rsi = technicalAnalysisService.calculateRSI(symbol);
-
-        return new ResponseEntity<>(Map.of(
-                "symbol", symbol,
-                "rsi", rsi,
-                "signal", rsi == 1.0 ? "buy" : rsi == -1.0 ? "sell" : "hold"
-        ), HttpStatus.OK);
+    public ResponseEntity<RSIResult> getRSIScore(@PathVariable String symbol) {
+        RSIResult rsiResult = technicalAnalysisService.calculateRSI(symbol);
+        return new ResponseEntity<>(rsiResult, HttpStatus.OK);
     }
 
     @GetMapping("/macd/{symbol}")

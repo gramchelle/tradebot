@@ -15,8 +15,14 @@ public interface StockDataRepository extends JpaRepository<StockData, Long> {
 
     @Query("SELECT sd FROM StockData sd WHERE sd.symbol = ?1 ORDER BY sd.timestamp ASC")
     List<StockData> findBySymbolOrderByTimestampAsc(String symbol);
+
     boolean existsBySymbolAndTimestamp(String symbol, LocalDateTime timestamp);
+
     List<StockData> findBySymbol(String symbol);
+
     Optional<StockData> findTopBySymbolOrderByTimestampDesc(String symbol);
+
+    @Query("SELECT s FROM StockData s WHERE s.symbol = ?1 ORDER BY s.timestamp DESC LIMIT ?2")
+    List<StockData> findTopNBySymbolOrderByTimestampDesc(String symbol, int n);
 
 }
