@@ -25,16 +25,16 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class DataCollectorService { // streaming data from alpha vantage
 
+    private final StockDataRepository repository;
+    private final StockDataProducer stockDataProducer;
+    private final HttpClient httpClient;
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
     @Value("${alpha.vantage.api.key}")
     private String apiKey;
 
-    private final StockDataRepository repository;
-    private final HttpClient httpClient;
-
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
+    // Function that fetches the data from Alpha Vantage and saves it into the database through repository
     public boolean saveStockData(String symbol) {
-    // Function to fetch the data from Alpha Vantage and save it into the database through repository
         try {
             String url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY"
                     + "&symbol=" + symbol
@@ -76,9 +76,7 @@ public class DataCollectorService { // streaming data from alpha vantage
                 }
             }
             if (!newStockDataList.isEmpty()) {
-                // DÜZELTME: Listeyi veritabanına kaydetmeden önce tersine çeviriyoruz.
-                // Bu, verilerin eskiden yeniye (kronolojik) sırada kaydedilmesini sağlar.
-                Collections.reverse(newStockDataList);
+                Collections.reverse(newStockDataList); // Listeyi veritabanına kaydetmeden önce tersine çevirmek, verilerin eskiden yeniye (kronolojik) sırada kaydedilmesini sağlar.
                 repository.saveAll(newStockDataList);
                 return true;
             }
@@ -95,6 +93,11 @@ public class DataCollectorService { // streaming data from alpha vantage
 
     public List<StockData> getStockDataBySymbol(String symbol) {
         return repository.findBySymbol(symbol);
+    }
+
+    public void publishStockData(StockData data) { // bu metot, hisse senedi verisini Kafka'ya gönderir
+        stockDataProducer.sendStockData(data);
+        System.out.println("[Kafka Producer] Gönderildi: " + data);
     }
 
     // TODO: Belirli bir hisse senedi ve tarih aralığı için OHLCV verisini veritabanından çeken bir service katmanı yazılmalıdır.

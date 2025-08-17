@@ -17,12 +17,13 @@ public class SchedulerConfig {
 
     @Value("${tradebot.tracked-symbols}")
     private List<String> symbols;
-/*
-    @Scheduled(fixedRate = 300000) // this scheduler lets the statement get executed per 5 minute, which is safer for free API requests
+
+    // this scheduler lets the statement get executed per 5 minute, which is safer for free API requests
+    @Scheduled(fixedRate = 300000)
     public void scheduleDataFetch() {
         System.out.println("[START] Scheduled data fetch starting at " + LocalDateTime.now());
 
-        // 2. Listede tanımlı her bir sembol için bir döngü başlatıyoruz.
+        // Listede tanımlı her bir sembol için bir döngü başlatır
         for (String symbol : symbols) {
             System.out.println("--> Fetching data for: " + symbol);
             dataCollectorService.saveStockData(symbol);
@@ -36,5 +37,5 @@ public class SchedulerConfig {
 
         }
     }
-*/
+
 }

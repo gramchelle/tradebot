@@ -22,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Map;
 import java.util.List;
 
 @Service
@@ -37,8 +36,8 @@ public class TechnicalAnalysisService {
         //fetches all stock data by symbol, OrderByTimestampAsc teknik analiz için şarttır, bu nedenle verileri sıralar
         List<StockData> dataList = repository.findBySymbolOrderByTimestampAsc(symbol);
 
-    // DecimalNum factory, finansal hesaplamalardaki küçük ondalık hatalarını önlemeye yarayan yüksek hassasiyetli bir sayı formatı kullanılmasını sağlar
-    BarSeries series = new BaseBarSeries(symbol, DecimalNum::valueOf);
+        // DecimalNum factory, finansal hesaplamalardaki küçük ondalık hatalarını önlemeye yarayan yüksek hassasiyetli bir sayı formatı kullanılmasını sağlar
+        BarSeries series = new BaseBarSeries(symbol, DecimalNum::valueOf);
 
         // this for loop takes OHLCV values from StockData entity, converts and assigns it into Bar object
         for (StockData data : dataList) {
@@ -78,8 +77,8 @@ public class TechnicalAnalysisService {
 
         double rsiValue = rsi.getValue(series.getEndIndex()).doubleValue();
 
-        if (rsiValue <= 30) rsi_result.setRsiValue(1.0); // buy signal
-        if (rsiValue >= 70) rsi_result.setRsiValue(-1.0);  // sell signal
+        if (rsiValue <= 30) rsi_result.setRsiValue(1.0);     // buy signal
+        if (rsiValue >= 70) rsi_result.setRsiValue(-1.0);             // sell signal
         if (rsiValue > 30 && rsiValue < 50) rsi_result.setRsiValue((50 - rsiValue) / 20); // 30 and 70 limits are selected by default, can be changed thoroughly
         if (rsiValue > 50 && rsiValue < 70) rsi_result.setRsiValue(- (rsiValue - 50) / 20);
 
@@ -92,8 +91,8 @@ public class TechnicalAnalysisService {
         return rsi_result;
     }
 
+    // MACD, bir hisse senedinin momentumunu ve trendinin yönünü ölçen popüler bir teknik analiz göstergesidir.
     public MacdResult calculateMACD(String symbol) {
-        // MACD, bir hisse senedinin momentumunu ve trendinin yönünü ölçen popüler bir teknik analiz göstergesidir.
         BarSeries series = loadSeries(symbol);
         if (series.getBarCount() == 0) return new MacdResult();
 
@@ -126,20 +125,20 @@ public class TechnicalAnalysisService {
         if (series.getBarCount() < 2) return new MACrossoverResult();
 
         ClosePriceIndicator close = new ClosePriceIndicator(series);
-        EMAIndicator shortEma = new EMAIndicator(close, 12); //kısa vadeli (hızlı) EMA'yı hesaplar
-        EMAIndicator longEma = new EMAIndicator(close, 26); // uzun vadeli (yavaş) EMA'yı hesaplar
+        EMAIndicator shortEma = new EMAIndicator(close, 12);    // kısa vadeli (hızlı) EMA'yı hesaplar
+        EMAIndicator longEma = new EMAIndicator(close, 26);     // uzun vadeli (yavaş) EMA'yı hesaplar
 
         int last = series.getEndIndex();
         int prev = Math.max(0, last - 1);
 
-        Num shortNow = shortEma.getValue(last); // şimdiki zamanın kısa vadeli ortalamalarının değerlerini al
-        Num longNow = longEma.getValue(last); // şimdiki zamanın uzun vadeli ortalamalarının değerlerini al
-        Num shortPrev = shortEma.getValue(prev); // bir önceki zamandaki kısa vadeli ortalamaların değerlerini al
-        Num longPrev = longEma.getValue(prev); // bir önceki zamandaki uzun vadeli ortalamaların değerlerini al
+        Num shortNow = shortEma.getValue(last);     // şimdiki zamanın kısa vadeli ortalamalarının değerleri
+        Num longNow = longEma.getValue(last);       // şimdiki zamanın uzun vadeli ortalamalarının değerleri
+        Num shortPrev = shortEma.getValue(prev);    // bir önceki zamandaki kısa vadeli ortalamaların değerleri
+        Num longPrev = longEma.getValue(prev);      // bir önceki zamandaki uzun vadeli ortalamaların değerleri
 
         String signal;
-        if (shortNow.isGreaterThan(longNow) && shortPrev.isLessThanOrEqual(longPrev)) signal = "buy"; // Golden Cross -> Eğer şimdi kısa ortalama, uzun ortalamanın üstündeyse ve bir önce kısa ortalama, uzun ortalamanın altında ya da eşit idiyse, bu, kısa ortalamanın uzun ortalamayı yukarı doğru kestiği anlamına gelir.
-        else if (shortNow.isLessThan(longNow) && shortPrev.isGreaterThanOrEqual(longPrev)) signal = "sell"; // Death Cross -> Eğer şimdi kısa ortalama, uzun ortalamanın altındaysa ve bir önce kısa ortalama, uzun ortalamanın üstünde ya da eşit idiyse, bu, kısa ortalamanın uzun ortalamayı aşağı doğru kestiği anlamına gelir.
+        if (shortNow.isGreaterThan(longNow) && shortPrev.isLessThanOrEqual(longPrev)) signal = "buy";       // Golden Cross -> Eğer şimdi kısa ortalama, uzun ortalamanın üstündeyse ve bir önce kısa ortalama, uzun ortalamanın altında ya da eşitse, bu, kısa ortalamanın uzun ortalamayı yukarı doğru kestiği anlamına gelir.
+        else if (shortNow.isLessThan(longNow) && shortPrev.isGreaterThanOrEqual(longPrev)) signal = "sell"; // Death Cross -> Eğer şimdi kısa ortalama, uzun ortalamanın altındaysa ve bir önce kısa ortalama, uzun ortalamanın üstünde ya da eşitse, bu, kısa ortalamanın uzun ortalamayı aşağı doğru kestiği anlamına gelir.
         else signal = "hold";
 
         MACrossoverResult result = new MACrossoverResult();
@@ -180,8 +179,8 @@ public class TechnicalAnalysisService {
         return result;
     }
 
+    // Trendline is calculated to see the relationship between last close and past close.
     public TrendlineResult calculateTrend(String symbol) {
-        // Trendline is calculated to see the relationship between last close and past close.
         BarSeries series = loadSeries(symbol);
         int period = 20;
         if (series.getBarCount() < period) return new TrendlineResult();

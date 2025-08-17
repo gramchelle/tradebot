@@ -1,5 +1,6 @@
 package lion.mode.tradebot_backend.service;
 
+import lion.mode.tradebot_backend.dto.statistical.PairsTrading;
 import org.springframework.stereotype.Service;
 
 import lion.mode.tradebot_backend.dto.statistical.CorrelationResult;
@@ -24,9 +25,9 @@ public class StatisticalAnalysisService {
 
     private final StockDataRepository stockDataRepository;
 
-    // FR-04: Implement Mean Reversion Function -1. priority
+    // FR-03: Implement Mean Reversion Function
     public MeanReversionResult calculateMeanReversionSignal(String symbol, int period) {
-        List<StockData> dataList = stockDataRepository.findBySymbolOrderByTimestampAsc(symbol); // Adım 3.1: Veritabanından verileri kronolojik sırada çek.
+        List<StockData> dataList = stockDataRepository.findBySymbolOrderByTimestampAsc(symbol); // Veritabanından verileri kronolojik sırada çek. -> TBD: Verileri kronolojik kaydet
         MeanReversionResult result = new MeanReversionResult();
 
         if (dataList.size() < period) {
@@ -72,21 +73,16 @@ public class StatisticalAnalysisService {
         return result;
     }
 
-// FR-04: Implement Z Score Deviation Function -2. ÖNCELİK
-
     public CorrelationResult calculateCorrelation(String symbolA, String symbolB, int period) {
-        // 1. Her iki hisse için de verileri veritabanından çek.
         List<StockData> dataA = stockDataRepository.findTopNBySymbolOrderByTimestampDesc(symbolA, period);
         List<StockData> dataB = stockDataRepository.findTopNBySymbolOrderByTimestampDesc(symbolB, period);
 
-        // Yeterli veri olup olmadığını kontrol et.
         if (dataA.size() < period || dataB.size() < period) {
             System.out.println("Insufficient data for one or both symbols.");
             return null;
         }
 
-        // 2. VERİLERİ HİZALA: Verileri zaman damgalarına göre bir Map'e koyarak
-        // eşleştirmeyi kolaylaştırıyoruz. Bu, en verimli yöntemlerden biridir.
+        // verileri hizala: verileri zaman damgalarına göre bir map'e koyarak eşleştirmeyi kolaylaştırıyoruz. best practicelerden biridir
         Map<LocalDateTime, Double> pricesAByTimestamp = dataA.stream()
                 .collect(Collectors.toMap(StockData::getTimestamp, StockData::getClose));
 
@@ -106,22 +102,22 @@ public class StatisticalAnalysisService {
             }
         });
 
-        // Korelasyon hesaplamak için en az 2 veri noktasına ihtiyaç var.
+        // korelasyon hesaplamak için en az 2 veri noktası olduğundan emin ol
         if (alignedPricesA.size() < 2) {
             System.out.println("Not enough common timestamps to calculate correlation.");
             return null;
         }
 
-        // 3. Listeleri, kütüphanenin istediği double[] formatına çevir.
+        // listeleri double türüne çevir
         double[] pricesArrayA = alignedPricesA.stream().mapToDouble(Double::doubleValue).toArray();
         double[] pricesArrayB = alignedPricesB.stream().mapToDouble(Double::doubleValue).toArray();
 
-        // 4. Pearson Korelasyonunu Hesapla.
+        // pearson korelasyon
         PearsonsCorrelation correlationCalculator = new PearsonsCorrelation();
         double correlation = correlationCalculator.correlation(pricesArrayA, pricesArrayB);
 
-        // Sonucu döndür.
         CorrelationResult result = new CorrelationResult();
+        result.setPair(symbolA+" "+symbolB);
         result.setSymbolA(symbolA);
         result.setSymbolB(symbolB);
         result.setPeriod(period);
@@ -130,19 +126,19 @@ public class StatisticalAnalysisService {
         return result;
     }
 
-    // Pairs trading mantığı:
+    // ?
+    public PairsTrading calculatePairsTradingSignal(String symbolA, String symbolB, int period) {
+        PairsTrading result = new PairsTrading();
 
-    public Map<String, Object> calculatePairsTradingSignal(String symbolA, String symbolB, int period) {
-        // 1. Her iki hisse için de verileri veritabanından çek.
         List<StockData> dataA = stockDataRepository.findTopNBySymbolOrderByTimestampDesc(symbolA, period);
         List<StockData> dataB = stockDataRepository.findTopNBySymbolOrderByTimestampDesc(symbolB, period);
 
         if (dataA.size() < period || dataB.size() < period) {
-            return Map.of("error", "Insufficient data for one or both symbols.");
+            System.out.println("Insufficient data for one or both symbols.");
+            return null;
         }
 
-        // 2. Verileri hizala ve aralarındaki oranı (spread) hesapla.
-        // TreeMap kullanarak zaman damgalarını doğal olarak sıralı tutuyoruz.
+        // Verileri hizala ve aralarındaki oranı (spread) hesapla. TreeMap kullanarak zaman damgalarını doğal olarak sıralı tutuyoruz.
         Map<LocalDateTime, Double> pricesAByTimestamp = new TreeMap<>(dataA.stream()
                 .collect(Collectors.toMap(StockData::getTimestamp, StockData::getClose)));
         Map<LocalDateTime, Double> pricesBByTimestamp = new TreeMap<>(dataB.stream()
@@ -160,34 +156,28 @@ public class StatisticalAnalysisService {
             return Map.of("error", "Not enough common data points to calculate spread Z-score.");
         }
 
-        // 3. Spread geçmişinin istatistiklerini hesapla.
+        // Spread geçmişinin istatistikleri
         DescriptiveStatistics stats = new DescriptiveStatistics();
         spreadHistory.forEach(stats::addValue);
         double meanSpread = stats.getMean();
         double stdDevSpread = stats.getStandardDeviation();
 
         if (stdDevSpread == 0) {
-            return Map.of("signal", "hold", "reason", "Spread is not volatile.");
+            return new PairsTrading();
         }
+        double currentSpread = spreadHistory.get(spreadHistory.size() - 1); // En son (şimdiki) spread değeri
+        double zScore = (currentSpread - meanSpread) / stdDevSpread; // Şimdiki spread'in Z-Skoru
 
-        // 4. En son (şimdiki) spread değerini al.
-        double currentSpread = spreadHistory.get(spreadHistory.size() - 1);
-
-        // 5. Şimdiki spread'in Z-Skorunu hesapla.
-        double zScore = (currentSpread - meanSpread) / stdDevSpread;
-
-        // 6. Z-Skoruna göre al/sat sinyali üret.
+        // Z-Skoruna göre al/sat sinyali üret
         String signal;
         String actionDetail = "";
         // Genellikle 1.5 veya 2.0 standart sapma eşik olarak kullanılır.
         if (zScore > 1.5) {
-            // Makas anormal derecede açılmış. Ortalamaya döneceğini varsayıyoruz.
-            // Yani, pay (A) düşecek, payda (B) artacak.
+            // Makas anormal derecede açılmış. Ortalamaya döneceğini varsayıyoruz. Yani, pay (A) düşecek, payda (B) artacak.
             signal = "SELL_PAIR";
             actionDetail = "Sell " + symbolA + ", Buy " + symbolB;
         } else if (zScore < -1.5) {
-            // Makas anormal derecede daralmış. Ortalamaya döneceğini varsayıyoruz.
-            // Yani, pay (A) artacak, payda (B) düşecek.
+            // Makas anormal derecede daralmış. Ortalamaya döneceğini varsayıyoruz. Yani, pay (A) artacak, payda (B) düşecek.
             signal = "BUY_PAIR";
             actionDetail = "Buy " + symbolA + ", Sell " + symbolB;
         } else {
@@ -195,22 +185,18 @@ public class StatisticalAnalysisService {
             actionDetail = "Spread is within normal range.";
         }
 
-        return Map.of(
-                "pair", symbolA + "-" + symbolB,
-                "meanSpread", meanSpread,
-                "stdDevSpread", stdDevSpread,
-                "currentSpread", currentSpread,
-                "zScore", zScore,
-                "signal", signal,
-                "action", actionDetail
-        );
+        result.setPair(symbolA + "-" + symbolB);
+        result.setMeanSpread(meanSpread);
+        result.setStdDevSpread(stdDevSpread);
+        result.setCurrentSpread(currentSpread);
+        result.setZScore(zScore);
+        result.setSignal(signal);
+        result.setAction(actionDetail);
+        return result;
     }
 
-// FR-05: İstatistiksel analiz sonuçlarına göre -1 ile +1 arasında bir "AL/SAT" sinyali üreten bir mantık geliştirilmelidir.
-
-// TODO: Implement Pairs Trading Function
-
-// TODO: Implement Correlation Function
-
+    // FR-04: Implement Z Score Deviation Function
+    // FR-05: Implement Pairs Trading Function
+    // FR-06: İstatistiksel analiz sonuçlarına göre -1 ile +1 arasında bir "AL/SAT" sinyali üreten bir mantık geliştirilmelidir.
 
 }

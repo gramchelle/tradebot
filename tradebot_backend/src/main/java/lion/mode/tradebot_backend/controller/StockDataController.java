@@ -61,16 +61,16 @@ public class StockDataController { //Technical Analysis Endpoints
         return new ResponseEntity<List<StockData>>(dataCollectorService.getStockDataBySymbol(symbol), HttpStatus.OK);
     }
 
-    @GetMapping("/tech-analysis/{symbol}")
-    public ResponseEntity<List> getTechnicalResultsBySymbol(@PathVariable String symbol) {
-    List technicalResults = List.of(
-            Map.of("rsi", technicalAnalysisService.calculateRSI(symbol)),
+    @GetMapping("/ta-results/{symbol}")
+    public ResponseEntity<List<Object>> getTechnicalResultsBySymbol(@PathVariable String symbol) {
+    List<Object> technicalResults = List.of(
+            Map.of("rsi", technicalAnalysisService.calculateRSI(symbol).getSignal()),
             Map.of("macd", technicalAnalysisService.calculateMACD(symbol).getTradeSignal()),
             Map.of("maCrossover", technicalAnalysisService.calculateMACrossover(symbol).getSignal()),
             Map.of("bollinger", technicalAnalysisService.calculateBollinger(symbol).getSignal()),
             Map.of("trend", technicalAnalysisService.calculateTrend(symbol).getTrend()) // TBD: getSlope yapılabilir
     );
 
-        return new ResponseEntity<>(technicalResults, HttpStatus.OK);
+        return new ResponseEntity<List<Object>>(technicalResults, HttpStatus.OK);
     }
 }
