@@ -26,14 +26,25 @@ import java.util.Map;
 public class DataCollectorService { // streaming data from alpha vantage
 
     private final StockDataRepository repository;
-    private final StockDataProducer stockDataProducer;
     private final HttpClient httpClient;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Value("${alpha.vantage.api.key}")
     private String apiKey;
 
-    // Function that fetches the data from Alpha Vantage and saves it into the database through repository
+    public List<StockData> getAllStockData() {
+        return repository.findAll();
+    }
+
+    public List<StockData> getStockDataBySymbol(String symbol) {
+        return repository.findBySymbol(symbol);
+    }
+
+    // TODO: Belirli bir hisse senedi ve tarih aralığı için OHLCV verisini veritabanından çeken bir service katmanı yazılmalıdır.
+    public List<StockData> getStockDataBySymbolAndDateRange(String symbol, LocalDateTime startDate, LocalDateTime endDate) {
+        return repository.findBySymbolAndTimestampBetween(symbol, startDate, endDate);
+    }
+
     public boolean saveStockData(String symbol) {
         try {
             String url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY"
@@ -76,7 +87,7 @@ public class DataCollectorService { // streaming data from alpha vantage
                 }
             }
             if (!newStockDataList.isEmpty()) {
-                Collections.reverse(newStockDataList); // Listeyi veritabanına kaydetmeden önce tersine çevirmek, verilerin eskiden yeniye (kronolojik) sırada kaydedilmesini sağlar.
+                Collections.reverse(newStockDataList);
                 repository.saveAll(newStockDataList);
                 return true;
             }
@@ -86,23 +97,5 @@ public class DataCollectorService { // streaming data from alpha vantage
             throw new RuntimeException("[!] Alpha Vantage veri çekme hatası: " + e.getMessage());
         }
     }
-
-    public List<StockData> getAllStockData() {
-        return repository.findAll();
-    }
-
-    public List<StockData> getStockDataBySymbol(String symbol) {
-        return repository.findBySymbol(symbol);
-    }
-
-    public void publishStockData(StockData data) { // bu metot, hisse senedi verisini Kafka'ya gönderir
-        stockDataProducer.sendStockData(data);
-        System.out.println("[Kafka Producer] Gönderildi: " + data);
-    }
-
-    // TODO: Belirli bir hisse senedi ve tarih aralığı için OHLCV verisini veritabanından çeken bir service katmanı yazılmalıdır.
-    /*public List<StockData> getStockDataBySymbolAndDateRange(String symbol, LocalDateTime startDate, LocalDateTime endDate) {
-        return repository.findBySymbolAndTimestampBetween(symbol, startDate, endDate);
-    }*/
 
 }

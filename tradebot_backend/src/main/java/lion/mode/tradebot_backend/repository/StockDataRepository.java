@@ -25,4 +25,7 @@ public interface StockDataRepository extends JpaRepository<StockData, Long> {
     @Query("SELECT s FROM StockData s WHERE s.symbol = ?1 ORDER BY s.timestamp DESC LIMIT ?2")
     List<StockData> findTopNBySymbolOrderByTimestampDesc(String symbol, int n);
 
+    @Query("SELECT s FROM StockData s WHERE s.symbol = ?1 AND s.timestamp BETWEEN ?2 AND ?3 ORDER BY s.timestamp ASC")
+    List<StockData> findBySymbolAndTimestampBetween(String symbol, LocalDateTime startDate, LocalDateTime endDate);
+
 }
