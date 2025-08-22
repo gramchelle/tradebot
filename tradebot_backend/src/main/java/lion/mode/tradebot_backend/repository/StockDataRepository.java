@@ -2,6 +2,7 @@ package lion.mode.tradebot_backend.repository;
 
 import lion.mode.tradebot_backend.model.StockData;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -28,4 +29,5 @@ public interface StockDataRepository extends JpaRepository<StockData, Long> {
     @Query("SELECT s FROM StockData s WHERE s.symbol = ?1 AND s.timestamp BETWEEN ?2 AND ?3 ORDER BY s.timestamp ASC")
     List<StockData> findBySymbolAndTimestampBetween(String symbol, LocalDateTime startDate, LocalDateTime endDate);
 
+    List<StockData> findBySymbolAndTimestampBetweenOrderByTimestampAsc(String symbol, LocalDateTime start, LocalDateTime end);
 }

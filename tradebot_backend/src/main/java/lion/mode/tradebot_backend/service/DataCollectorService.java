@@ -32,19 +32,6 @@ public class DataCollectorService { // streaming data from alpha vantage
     @Value("${alpha.vantage.api.key}")
     private String apiKey;
 
-    public List<StockData> getAllStockData() {
-        return repository.findAll();
-    }
-
-    public List<StockData> getStockDataBySymbol(String symbol) {
-        return repository.findBySymbol(symbol);
-    }
-
-    // TODO: Belirli bir hisse senedi ve tarih aralığı için OHLCV verisini veritabanından çeken bir service katmanı yazılmalıdır.
-    public List<StockData> getStockDataBySymbolAndDateRange(String symbol, LocalDateTime startDate, LocalDateTime endDate) {
-        return repository.findBySymbolAndTimestampBetween(symbol, startDate, endDate);
-    }
-
     public boolean saveStockData(String symbol) {
         try {
             String url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY"
