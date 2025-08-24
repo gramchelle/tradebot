@@ -36,7 +36,7 @@ public class DataCollectorService { // streaming data from alpha vantage
         try {
             String url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY"
                     + "&symbol=" + symbol
-                    + "&interval=1min&apikey=" + apiKey;
+                    + "&interval=60min&apikey=" + apiKey;
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))

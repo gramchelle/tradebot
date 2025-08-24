@@ -18,7 +18,7 @@ public class SchedulerConfig {
     @Value("${tradebot.tracked-symbols}")
     private List<String> symbols;
 
-/*
+
     // this scheduler lets the statement get executed per 5 minute, which is safer for free API requests
     @Scheduled(fixedRate = 300000)
     public void scheduleDataFetch() {
@@ -38,5 +38,5 @@ public class SchedulerConfig {
 
         }
     }
-*/
+
 }

@@ -11,5 +11,8 @@ public class RSIResult {
     private String signal;      // "buy", "sell", "hold"
     private int score;          // -1, 0, +1
     private double confidence = 1.0;  // default for 1.0 now
-    
+    private String divergence = "none";
+    // kaç tane alınmalı?
+    // private double amount = 0; // 0 by default
+
 }
