@@ -18,7 +18,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 @Service
-public class RsiService extends AbstractIndicatorService {
+public class RsiService extends IndicatorService {
 
     public RsiService(StockDataRepository repository) {
         super(repository);
@@ -40,7 +40,7 @@ public class RsiService extends AbstractIndicatorService {
         rsiResult.setPeriod(period);
         rsiResult.setRsiValue(lastRsi);
 
-        String divergence = detectRsiDivergence(series, period, symbol);
+        String divergence = detectDivergence(series, period, symbol);
         rsiResult.setDivergence(divergence);
 
         if (lastRsi > 70 && lastRsi < prevRsi) {
@@ -93,7 +93,7 @@ public class RsiService extends AbstractIndicatorService {
         double lastRsi = rsiIndicator.getValue(series.getEndIndex()).doubleValue();
         double prevRsi = rsiIndicator.getValue(series.getEndIndex() - 1).doubleValue();
 
-        String divergence = detectRsiDivergence(series, period, symbol);
+        String divergence = detectDivergence(series, 90, symbol);
         rsiResult.setDivergence(divergence);
 
         rsiResult.setRsiValue(lastRsi);
@@ -111,57 +111,4 @@ public class RsiService extends AbstractIndicatorService {
         return rsiResult;
     }
 
-    public String detectRsiDivergence(BarSeries series, int period, String symbol) {
-        if (series.getBarCount() < period + 2) {
-            throw new NotEnoughDataException("NOT ENOUGH DATA FOR " + symbol);
-        }
-
-        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
-        RSIIndicator rsi = new RSIIndicator(closePrice, period);
-
-        int endIndex = series.getEndIndex();
-        int lookback = Math.min(period, endIndex);
-
-        Double lastPriceLow = null, lastRsiLow = null;
-        Double lastPriceHigh = null, lastRsiHigh = null;
-
-        for (int i = endIndex - lookback; i < endIndex - 1; i++) {
-            if (i <= 0) continue;
-            if (i >= endIndex - 1) break;
-
-            double price = closePrice.getValue(i).doubleValue();
-            double prevPrice = closePrice.getValue(i - 1).doubleValue();
-            double nextPrice = closePrice.getValue(i + 1).doubleValue();
-
-            double rsiVal = rsi.getValue(i).doubleValue();
-            double prevRsi = rsi.getValue(i - 1).doubleValue();
-            double nextRsi = rsi.getValue(i + 1).doubleValue();
-
-            // local low
-            if (price < prevPrice && price < nextPrice) {
-                if (lastPriceLow != null && lastRsiLow != null) {
-                    if (price < lastPriceLow && rsiVal > lastRsiLow) {
-                        System.out.println("Bullish divergence detected at index " + i);
-                        return "bullish";
-                    }
-                }
-                lastPriceLow = price;
-                lastRsiLow = rsiVal;
-            }
-
-            // local high
-            if (price > prevPrice && price > nextPrice) {
-                if (lastPriceHigh != null && lastRsiHigh != null) {
-                    if (price > lastPriceHigh && rsiVal < lastRsiHigh) {
-                        System.out.println("Bearish divergence detected at index " + i);
-                        return "bearish";
-                    }
-                }
-                lastPriceHigh = price;
-                lastRsiHigh = rsiVal;
-            }
-        }
-
-        return "none";
-    }
 }

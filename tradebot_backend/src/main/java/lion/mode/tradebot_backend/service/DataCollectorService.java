@@ -46,10 +46,10 @@ public class DataCollectorService { // streaming data from alpha vantage
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
-            JsonObject timeSeries = json.getAsJsonObject("Time Series (1min)");
+            JsonObject timeSeries = json.getAsJsonObject("Time Series (60min)");
 
             if (timeSeries == null) {
-                System.err.println("[!] " + symbol + " için 'Time Series (1min)' verisi alınamadı. API Cevabı: " + response.body());
+                System.err.println("[!] Not able to fetch data for " + symbol + ". API Answer: " + response.body());
                 return false;
             }
 
@@ -81,7 +81,7 @@ public class DataCollectorService { // streaming data from alpha vantage
             return false;
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
-            throw new RuntimeException("[!] Alpha Vantage veri çekme hatası: " + e.getMessage());
+            throw new RuntimeException("[!] Alpha Vantage Error on Fetching Data: " + e.getMessage());
         }
     }
 
