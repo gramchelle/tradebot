@@ -86,7 +86,7 @@ public class BollingerBandService extends IndicatorService {
             double lower = lowerBand.getValue(i).doubleValue();
             double close = closePrice.getValue(i).doubleValue();
             
-            //TODO: Handle volatility
+            // TODO: handle volatility 
             
             result.setMiddleBand(middle);
             result.setUpperBand(upper);

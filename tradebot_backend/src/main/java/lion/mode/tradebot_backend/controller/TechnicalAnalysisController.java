@@ -124,11 +124,11 @@ public class TechnicalAnalysisController {
             @RequestParam String symbol) {
 
         Map<String, Object> results = new LinkedHashMap<>();
-        results.put("rsi", rsiService.calculateRSI(symbol, 14).getRsiValue());
-        results.put("macd", macdService.calculateMacd(symbol, 12, 26, 9).getMacdScore());
-        results.put("maCross", macrossService.calculateMACross(symbol, 9, 26).getCrossoverPoint());
-        results.put("bollingerMiddle", bollingerBandService.calculateBollingerBands(symbol, 20).getMiddleBand());
-        results.put("trendSlope", trendlineService.calculateTrendline(symbol, 14).getSlope());
+        results.put("rsi", rsiService.calculateRSI(symbol, 14).getSignal());
+        results.put("macd", macdService.calculateMacd(symbol, 12, 26, 9).getTradeSignal());
+        results.put("maCross", macrossService.calculateMACross(symbol, 9, 26).getSignal());
+        results.put("bollingerMiddle", bollingerBandService.calculateBollingerBands(symbol, 20).getSignal());
+        results.put("trendSlope", trendlineService.calculateTrendline(symbol, 14).getTrendType());
 
         return new ResponseEntity<>(results, HttpStatus.OK);
     }

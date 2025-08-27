@@ -70,7 +70,7 @@ public class RsiService extends IndicatorService {
         for (StockData data : dataList) {
             ZonedDateTime endTime = data.getTimestamp().atZone(ZoneId.systemDefault());
             Bar bar = BaseBar.builder()
-                    .timePeriod(java.time.Duration.ofMinutes(1))
+                    .timePeriod(java.time.Duration.ofHours(1))
                     .endTime(endTime)
                     .openPrice(DecimalNum.valueOf(data.getOpen()))
                     .highPrice(DecimalNum.valueOf(data.getHigh()))
@@ -86,6 +86,7 @@ public class RsiService extends IndicatorService {
         rsiResult.setPeriod(period);
 
         if (series.getBarCount() < period) {
+            System.out.println("Fetched rows: " + dataList.size());
             throw new NotEnoughDataException("Not enough data for RSI in this interval: " + symbol);
         }
 
