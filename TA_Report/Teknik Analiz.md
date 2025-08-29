@@ -497,9 +497,7 @@ Yani ADX trendin **gücünü**, +DI ve -DI trendin **yönünü** gösterir.
 
 ![GARAN 3 aylık ADX Index](adx_garanti.png)
 
----
-
-#### ADX Hesaplama Mantığı (Sözde Kod)
+#### ADX Hesaplama Mantığı
 
 ```pseudo
 Başla ADX Hesaplama
@@ -515,10 +513,6 @@ Girdi: FiyatlarListesi, Periyot
 
 Bitir
 ```
-
----
-
-#### Sözde Kodun Yorumu
 
 1. **Günlük Yüksek, Düşük ve Kapanış değerleri:** ADX, her günün fiyat hareketini inceleyerek başlar.  
 2. **+DI ve -DI:** Fiyatın yukarı mı yoksa aşağı mı hareket ettiğini gösteren iki çizgi oluşturulur.  
@@ -550,10 +544,6 @@ Bitir
 
 > Yani DMI, fiyatların hangi yönde daha güçlü hareket ettiğini gösterir ve yatırımcılara trendin yönü hakkında bilgi verir.
 
----
-
-#### DMI Hesaplama Mantığı (Sözde Kod)
-
 ```pseudo
 Başla DMI Hesaplama
 
@@ -569,10 +559,6 @@ Girdi: FiyatlarListesi, Periyot
 
 Bitir
 ```
-
----
-
-#### Sözde Kodun Yorumu
 
 1. **+DM ve -DM:** Günlük hareketin yukarı mı aşağı mı daha güçlü olduğunu gösterir.  
 2. **+DI ve -DI:** Bu hareketlerin normalize edilmiş yüzdeleri, trend yönünü belirler.  
@@ -594,7 +580,7 @@ Bitir
   - **80’in üzeri** → aşırı alım bölgesi (fiyatın yüksek ve hacimli bir şekilde yükseldiği, düzeltme gelebileceği düşünülür)  
   - **20’nin altı** → aşırı satım bölgesi (fiyatın düştüğü ve tepki yükselişi gelebileceği düşünülür)
 
-#### MFI Hesaplama Mantığı (Sözde Kod)
+#### MFI Hesaplama Mantığı
 
 ```pseudo
 Başla MFI Hesaplama
@@ -613,7 +599,7 @@ Girdi: FiyatlarListesi, HacimListesi, Periyot
 Bitir
 ```
 
-#### MFI Yorumu
+#### MFI Nasıl Yorumlanır?
 
 1. **Aşırı alım / aşırı satım:**  
    - MFI 80 üzerindeyse → potansiyel satış fırsatı  
