@@ -148,6 +148,10 @@ Bu veriler sayesinde yatırımcılar, piyasadaki *fırsatları* veya *riskleri* 
 
 > Kısacası: Temel analiz bir şirketin neden değerli olduğuna bakarken, teknik analiz bu değerin fiyat grafiğine nasıl yansıdığına odaklanır.
 
+### Teknik analiz çeşitleri
+
+![Technical Analysis Types](ta_types.png)
+
 ## İndikatörler
 
 İndikatörler, geçmiş fiyat ve işlem hacmi verilerini kullanarak piyasadaki trendleri, momentumları ve olası dönüş noktalarını göstermek için kullanılan araçlardır. Yatırımcılar, indikatörleri kullanarak **alım, satım veya bekleme kararları** verir. En yaygın indikatörler arasında Hareketli Ortalamalar, RSI, MACD ve Bollinger Bantları bulunur. Burada bilinmesi gereken en önemli unsur:
@@ -668,11 +672,15 @@ Bitir
 
 2. **Divergence (Uyumsuzluk):**  
    - Fiyat yeni zirve yaparken MFI düşüyorsa → yükseliş trendi zayıflıyor olabilir  
-   - Fiyat yeni dip yaparken MFI yükseliyorsa → düşüş trendi zayıflıyor olabilir  
+   - Fiyat yeni dip yaparken MFI yükseliyorsa → düşüş trendi zayıflıyor olabilir 
+
+> *"The most helpful MFI signals come from **divergence**—when price and money flow move in opposite directions, often foreshadowing reversals before most traders spot them. Suppose a stock is climbing to new highs while the MFI fails to match its previous peak. This divergence suggests that despite rising prices, buyer enthusiasm is waning—institutional investors might be quietly distributing shares while retail investors continue buying."* [8]
 
 Aşağıdaki görselde GARAN 1h/3M fiyat grafiğini MFI indikatörü ile inceleyebiliriz. 
 
 ![GARAN 3 aylık MFI](mfi_garanti.png)
+
+> *RSI, fiyat momentumu üzerine odaklanır ve fiyat hareketlerinin yönsel hızını ve büyüklüğünü hesaplarken MFI, hacmi ağırlıklandırma faktörü olarak entegre ederek fiyat değişimlerinin arkasındaki piyasa kuvvetini ölçer.* [8]
 
 > MFI, fiyat ve hacim birleşimi sayesinde RSI’ya göre daha güvenilir sinyaller sunabilir. Ancak tek başına kullanılmamalı, diğer indikatörlerle birlikte değerlendirilmelidir.
 
@@ -693,3 +701,5 @@ Aşağıdaki görselde GARAN 1h/3M fiyat grafiğini MFI indikatörü ile inceley
 [6] - [Changelly Cheat Sheet](https://changelly.com/blog/chart-patterns-cheat-sheet/)
 
 [7] - Technical Analysis for Dummies, 2004, Rockefeller B
+
+[8] - [Investopedia - MFI](https://www.investopedia.com/terms/m/mfi.asp)
