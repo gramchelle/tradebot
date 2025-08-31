@@ -132,6 +132,7 @@ Aslında bu, günlük hayatta da yaptığımız bir şeye benzer:
 Teknik analiz de benzer şekilde, “geçmişte fiyat böyle hareket etmişse, gelecekte de benzer şekilde hareket edebilir” varsayımına dayanır.
 
 ![Teknik Analiz Trend](teknik-analiz-trend.jpg)
+
 Bu görselde teknik analizin en basit yapı taşlarından birisi olan trend çizgileri ile oluşturulan 3 farklı trend çeşidini gözlemliyoruz. [5]
 
 ### Teknik analizde temel amaç nedir?
@@ -308,17 +309,17 @@ MA Cross'un ne olduğunu öğrenmeden önce, MA'in (Hareketli Ortalama) ne oldu�
 En yaygın kullanılan üç hareketli ortalama türü şunlardır:
 
 1. **Simple Moving Average (SMA):**  
-   Belirlenen süre içindeki fiyatların basit aritmetik ortalamasıdır. Örneğin, 10 günlük SMA, son 10 günün kapanış fiyatlarının toplamının 10’a bölünmesiyle elde edilir. 
+   Belirlenen süre içindeki fiyatların basit aritmetik ortalamasıdır. Örneğin, 10 günlük SMA, son 10 günün kapanış fiyatlarının toplamının 10’a bölünmesiyle elde edilir. Bu formül ile hesaplanır:
 
    ![SMA](sma.png)
 
 2. **Weighted Moving Average (WMA):**  
-   Daha yeni fiyatlara daha fazla ağırlık vererek ortalama alır. Böylece son dönem fiyat hareketleri SMA’ya göre daha hızlı yansıtılır.
+   Daha yeni fiyatlara daha fazla ağırlık vererek ortalama alır. Böylece son dönem fiyat hareketleri SMA’ya göre daha hızlı yansıtılır. Bu formül ile hesaplanır:
 
    ![WMA](wma.png)
 
 3. **Exponential Moving Average (EMA):**  
-   WMA’ya benzer şekilde yeni fiyatlara daha fazla önem verir, ancak ağırlıklandırmayı üstel (exponential) bir yöntemle yapar. Bu nedenle fiyat değişimlerine en hızlı tepki veren hareketli ortalama türüdür. Aynı şekilde borsada en yaygın kullanılan ve diğer indikatörlerde de yaygın olarak kullanılan bir MA türüdür.
+   WMA’ya benzer şekilde yeni fiyatlara daha fazla önem verir, ancak ağırlıklandırmayı üstel (exponential) bir yöntemle yapar. Bu nedenle fiyat değişimlerine en hızlı tepki veren hareketli ortalama türüdür. Aynı şekilde borsada en yaygın kullanılan ve diğer indikatörlerde de yaygın olarak kullanılan bir MA türüdür. Bu formül ile hesaplanır:
 
    ![EMA](ema.png)
 
@@ -390,9 +391,11 @@ RSI, fiyatların belirli bir periyottaki (genellikle 14 gün) **yükseliş ve d�
 
 ![GARAN 3 aylık RSI Index](rsi_garanti.png)
 
-#### RSI Hesaplama
+#### RSI Hesaplama 1. adım
 
 ![RSI Step One](rsi_step_one.png)
+
+#### RSI Hesaplama 2. adım
 
 ![RSI Step Two](rsi_step_two.png)
 
@@ -439,11 +442,9 @@ Bu sayede hem trendin yönünü hem de hızını yorumlamaya yardımcı olur.
 - **Sinyal Çizgisi (Signal Line):** MACD çizgisinin üstel ortalaması  
 - **Histogram:** MACD ile Sinyal çizgisi arasındaki fark (momentum gücünü gösterir)
 
+MACD ```12-period EMA - 26-period EMA``` ile hesaplanır. Periyotlar kişiden kişiye, kurumdan kuruma değişiklik gösterebilir. Aşağıdaki görselde GARAN 1h/3M fiyat grafiğinin altında varsayılan olarak kullanılan sırasıyla 12, 26, 9 değerlerinin short, long ve sinyal periyoduna verildiği MACD indikatör grafiğini inceleyebiliriz.  
+
 ![GARAN 3 aylık MACD](macd_garanti.png)
-
-#### MACD Hesaplama
-
-![MACD Formula](macd_formula.png)
 
 #### MACD Yorumlama
 
@@ -491,7 +492,7 @@ Bantların arasındaki mesafe, fiyatın oynaklığına göre genişler veya dara
 
 ![GARAN 3 aylık Bollinger Bands](bollinger_bands_garanti.png)
 
-#### Bollinger Bands Hesaplama Mantığı
+Bollinger Bands Hesaplama mantığını bir sözde kod algoritması ile oluşturarak daha detaylı inceleyebiliriz.
 
 ```pseudo
 Bollinger Bands Hesaplama
@@ -602,7 +603,9 @@ Girdi: FiyatlarListesi, Periyot
 4. +DI = (+DM’nin periyot ortalaması) / True Range * 100  
 5. -DI = (-DM’nin periyot ortalaması) / True Range * 100  
 6. +DI ve -DI’yi grafik üzerinde çiz  
-7. ADX ile birlikte trend gücünü yorumla  
+7. ADX ile birlikte trend gücünü yorumla
+
+Çıktı: AdxGüçYorumu
 
 Bitir
 ```
@@ -632,7 +635,11 @@ Bitir
 
 #### MFI Hesaplama
 
+Para Akış Endeksi hesaplanırken aşağıdaki formülden yararlanılır:
+
 ![MFI Hesaplama](mfi_hesaplama.png)
+
+MFI algoritmasını ise daha iyi anlayabilmek üzere sözde kod ile aşağıdaki gibi yazabiliriz:
 
 ```pseudo
 Başla MFI Hesaplama
@@ -646,7 +653,9 @@ Girdi: FiyatlarListesi, HacimListesi, Periyot
    - Bugünkü Tipik Fiyat < Önceki Gün Tipik Fiyat → Negatif  
 4. Para Akışı Oranı = Son 'Periyot' günün Pozitif / Negatif para akışları  
 5. MFI = 100 - (100 / (1 + Para Akışı Oranı))  
-6. Her gün için MFI değerini listele  
+6. Her gün için MFI değerini listele
+
+Çıktı: MfiDegerListesi
 
 Bitir
 ```
@@ -661,9 +670,11 @@ Bitir
    - Fiyat yeni zirve yaparken MFI düşüyorsa → yükseliş trendi zayıflıyor olabilir  
    - Fiyat yeni dip yaparken MFI yükseliyorsa → düşüş trendi zayıflıyor olabilir  
 
-> MFI, fiyat ve hacim birleşimi sayesinde RSI’ya göre daha güvenilir sinyaller sunabilir. Ancak tek başına kullanılmamalı, diğer indikatörlerle birlikte değerlendirilmelidir.
+Aşağıdaki görselde GARAN 1h/3M fiyat grafiğini MFI indikatörü ile inceleyebiliriz. 
 
 ![GARAN 3 aylık MFI](mfi_garanti.png)
+
+> MFI, fiyat ve hacim birleşimi sayesinde RSI’ya göre daha güvenilir sinyaller sunabilir. Ancak tek başına kullanılmamalı, diğer indikatörlerle birlikte değerlendirilmelidir.
 
 ---
 
