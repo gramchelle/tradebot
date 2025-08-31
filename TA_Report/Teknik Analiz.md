@@ -1,4 +1,6 @@
-# Finans Piyasasında Teknik Analiz
+# TradeBot - Teknik Analiz
+
+> Bu rapor, geliştirilmekte olan TradeBot projesinin teknik analiz katmanını özetleyen bir araştırma raporudur. Bu sadece bir araştırma raporu olduğundan ve raporda yazan hiçbir şey bir uzman tarafından yazılmamış olduğundan ötürü yatırım tavsiyesi niteliğinde değildir.
 
 Finans piyasasında şirketlerin hisselerinin (stock), fonların, dövizlerin ve benzeri diğer menkul kıymetlerin (security) satın alınıp satılmasına karar verebilmek üzere kullanılan birçok çeşit analiz yöntemleri bulunmaktadır. Bunlardan en yaygın bilinenleri
 
@@ -15,15 +17,15 @@ Bir şirketin gerçek değerini anlamak için finansal tablolar, endüstri anali
 ### Teknik Analiz
 Fiyat hareketlerini ve işlem hacimlerini inceleyerek gelecekteki piyasa trendlerini tahmin etmeye çalışır. Bu yaklaşım geçmiş piyasa verilerinin gelecekteki fiyat hareketlerini belirlemede yardımcı olabileceği varsayımına dayanır. Teknik analistler, grafikler ve çeşitli göstergeler kullanarak destek ve direnç seviyelerini, trend çizgilerini ve fiyat örüntülerini belirlerler. [1]
 
-Bu raporda bir fiyat grafiği nasıl okunur, nasıl yorumlanır, teknik analiz nedir, teknik analiz aşamasında kullanılan göstergeler (indicators) nelerdir gibi konulardan bahsediyor olacağız. Analiz aracı olarak TradingView.com platformu kullanılacaktır.
+Bu raporda bir fiyat grafiği nasıl okunur, nasıl yorumlanır, teknik analiz nedir, teknik analiz aşamasında kullanılan göstergeler (indicators) nelerdir gibi konulardan bahsediyor olacağız. Analiz aracı olarak TradingView.com platformunu kullanacağız.
 
 ### Temel Terminoloji
 
-* **Trade:** Finansal piyasalarsa alım-satım işlemleri yapma işleminin bütününe verilen isimdir.
+* **Trade:** Finansal piyasalarda alım-satım işlemleri yapma işleminin bütününe verilen isimdir.
 
-* **Trading:** Finansal piyasalarsa alım-satım işlemleri yapma işlemine verilen isimdir.
+* **Trading:** Finansal piyasalarda alım-satım işlemleri yapma işlemine verilen isimdir.
 
-* **Trader:** Finansal piyasalarsa alım-satım işlemleri yapma işlemini yapan kişiye verilen isimdir. Birkaç çeşidi bulunmaktadır: Intraday Trader, Day Trader, Swing Trader. Bu kişilerden rapor içerisinde "borsacı" olarak bahsedilecektir.
+* **Trader:** Finansal piyasalarda alım-satım işlemleri yapma işlemini yapan kişiye verilen isimdir. Birkaç çeşidi bulunmaktadır: Intraday Trader, Day Trader, Swing Trader. Bu kişilerden rapor içerisinde "borsacı" olarak bahsedilecektir.
 
     * Intraday Trader: Aynı gün içinde kısa vadeli işlemler yapar, günün sonunda tüm pozisyonlarını kapatır.
 
@@ -37,7 +39,7 @@ Bu raporda bir fiyat grafiği nasıl okunur, nasıl yorumlanır, teknik analiz n
 
 * **Indicator:** Geçmiş fiyat ve hacim verilerini kullanarak piyasanın yönü, momentumu veya gücü hakkında ipuçları veren teknik analiz araçlarıdır. Yatırımcılara alım, satım veya bekleme kararlarında yardımcı olur.
 
-* **Buy/Sell/Hold Signals:** Al/Sat/Tut sinyalleri
+* **Buy/Sell/Hold Signals:** Al/Sat/Tut sinyalleri, yapılan teknik analiz sonucunda bir hissenin alınıp alınmaması gerektiğine dair gönderilen sinyallere denir.
 
 * **Bullish:** Piyasanın veya bir varlığın fiyatının yükseleceği beklentisi. Yatırımcıların iyimser olduğu, alım baskısının yüksek olduğu dönemleri tanımlar. Türkçede genellikle “boğa piyasası” olarak geçer.
 
@@ -49,7 +51,7 @@ Bu kısımda fiyat grafiklerini okumayı, yorumlamayı ve mum grafiklerinin (can
 
 ![Garanti Bankası 1 Yıllık Günlük Bazda Fiyat Grafiği](price_chart.png)
 
-Yukarıdaki fiyat grafiğinde Garanti Bankası'nın (GARAN) günlük bazda 1 yıllık fiyat değişimi'ni gösteren TradingView görseli verilmiştir. [2] Ancak, bir hissenin fiyat grafiğini yorumlamadan önce OHLCV ve Symbol anahtar kelimeleri kesinlikle öğrenilmelidir.
+Yukarıdaki fiyat grafiğinde Garanti Bankası'nın (GARAN) günlük bazda 1 yıllık (1 Day/1 Year) fiyat değişimi'ni gösteren TradingView görseli verilmiştir. [2] Ancak, bir hissenin fiyat grafiğini yorumlamadan önce OHLCV ve Symbol anahtar kelimeleri kesinlikle öğrenilmelidir.
 
 ### OHLCV Nedir?
 
@@ -62,17 +64,17 @@ OHLCV, Open High Low Close Volume kelimelerinin kısaltımını temsil etmektedi
 * **V**olume: Fiyatın belirlenen zaman aralığındaki **hacmini** gösterir.
 * Symbol: Hissenin (veya menkul varlığın) sembolünü gösterir. (Örn. APPLE - AAPL)
 
-Bu kavramlar finans piyasasının bel kemiği görevini görürler ve bir finansal analist veya bir yatırımcı tüm süreçlerinde bu kavramları dahil edeceğinden dolayı bu kavramlara belirli bir seviyede hakim olmalıdır. Raporun ilerleyen kısımlarında bahsedeceğimiz teknik analiz indikatörlerinde bu değerleri sıklıkla kullanacağız. Peki biz bu değerleri nasıl okuruz? Öğrenme sürecimize bir mum grafik anatomisini inceleyerek başlayabiliriz.
+Bu kavramlar finans piyasasının bel kemiği görevini görürler ve bir finansal analist veya bir yatırımcı tüm süreçlerinde bu kavramları dahil edeceğinden dolayı bu kavramlara oldukça hakim olmalıdır. Raporun ilerleyen kısımlarında bahsedeceğimiz teknik analiz indikatörlerinde bu değerleri sıklıkla kullanacağız. Peki biz bu değerleri nasıl okur ve değerlendiririz? Öğrenme sürecimize bir mum grafik anatomisini inceleyerek başlayabiliriz.
 
 ## Mum Grafik Anatomisi
 
-Mum grafik, borsada (ingilizcesi ile candlestick olarak da bilinen) bir grafik türüdür. Menkul kıymetler üzerinde gerçekleşen fiyat değişimlerini temsilen kullanılır ve analistler tarafından incelenmek üzere kullanılır. Aslında kullanılan birkaç farklı grafik türünden sadece bir tanesidir, diğerlerine kıyasla daha yaygın kullanılır.
+Mum grafik, borsada (candlestick olarak da bilinen) bir grafik türüdür. Menkul kıymetler üzerinde gerçekleşen fiyat değişimlerini temsilen kullanılır ve analistler tarafından incelenmek üzere kullanılır. En yaygın kullanılan grafik türlerinden bir tanesidir.
 
 Peki, bir yatırımcı olarak biz mum grafikleri nasıl okuruz? İncelemek üzere aşağıda bir mum grafiğin anatomisi yer almaktadır. [3]
 
 ![Mum Grafiği Anatomisi](candlestick_chart.png)
 
-Mum grafikler çoğunlukla fiyat grafiklerinde yeşil ve kırmızı olarak yer alır. Yeşil grafikler bir artışı simgelerken, kırmızı grafikler fiyatta düşüşü simgeler. Bir mum grafiğinin;
+Mum grafikler çoğunlukla fiyat grafiklerinde yeşil ve kırmızı olarak yer alır. Yeşil grafikler bir artışı (bullish) simgelerken , kırmızı grafikler fiyatta düşüşü (bearish) simgeler. Bir mum grafiğinin;
 
 * **Open** değeri, **Close** değerinden düşük ise, yani fiyat kapanışa doğru artmışsa, bu bir artış (bullish) grafiğini temsil eder. Yani mum, yeşil renk alır.
 
@@ -80,9 +82,11 @@ Mum grafikler çoğunlukla fiyat grafiklerinde yeşil ve kırmızı olarak yer a
 
 Bir mumun açılış noktası, diğer mumun kapanış noktasıdır.
 
+İkinci en yaygın kullanılan grafik türü olan bar grafikleri inceleyelim.  
+
 ## Bar Grafikler
 
-Bar grafikler de fiyat değişimlerini temsil etmek için kullanılan en yaygın grafik türlerinden birisidir. Mantığı mum grafiklerden çok farklı olmamak üzere; en tepe nokta High, en düşük nokta Low değerlerini temsil eder. Barın türüne göre (yani boğa veya ayı grafiğini temsil etmesine göre), eğer yeşilse (veya artışı temsil ediyorsa) high değerinin altında kalan veya high değeriyle kesişen en üstteki değer kapanış değerini yani **Close**'u, alttaki çizgi ise hissenin o zaman aralığındaki açılış yani **Open** değerini temsil eder. Düşüş temsil eden ayı (bearish) grafiklerinde de tam tersi durum geçerlidir. Close ile Open yer değiştirir, yani menkul o zaman aralığı içerisinde değer kaybetmiştir ve kapanış değeri açılış değerinin altına düşmüştür. Aşağıda bir bar grafiğinin anatomisini inceleyebilirsiniz.
+Bar grafikler de fiyat değişimlerini temsil etmek için kullanılan en yaygın grafik türlerinden birisidir. Mantığı mum grafiklerden çok farklı olmamak üzere; en tepe nokta High, en düşük nokta Low değerlerini temsil eder. Barın türüne göre (yani boğa veya ayı grafiğini temsil etmesine göre), eğer yeşilse (artışı temsil ediyorsa) high değerinin altında kalan veya high değeriyle kesişen en üstteki değer kapanış değerini yani **Close**'u, alttaki çizgi ise hissenin o zaman aralığındaki açılış yani **Open** değerini temsil eder. Düşüş temsil eden ayı (bearish) grafiklerinde de tam tersi durum geçerlidir. Close ile Open yer değiştirir, yani menkul o zaman aralığı içerisinde değer kaybetmiştir ve kapanış değeri açılış değerinin altına düşmüştür. Aşağıda bir bar grafiğinin anatomisi yer almaktadır.
 
 ![Bar Chart](bar_chart.png)
 
@@ -103,17 +107,17 @@ Bu tablo, farklı türde yatırımcıların hangi zaman aralıklarını tercih e
 
 ### Zaman Aralıkları Nasıl Kullanılır?
 
-Araştırma aracımız olan TradingView platformunda yer alan zaman aralıkları 1 saniye ile 12 ay arasında değişmektedir. Biz de bu rapordaki araştırmamızda Alpha Vantage [4] üzerinden aldığımız ücretsiz API anahtarı ile, en yaygın kullanılan zaman aralıklarından biri olan *1 saatlik* veri ile işlem yapıyor olacağız.
+Araştırma aracımız olan TradingView platformunda yer alan zaman aralıkları 1 saniye ile 12 ay arasında değişmektedir. Biz de bu rapordaki araştırmamızda Alpha Vantage [4] üzerinden aldığımız API anahtarı ile zaman aralığı *1 saat* olan veri ile işlem yapıyor olacağız.
 
 ![Saatlik Veri](hourly_data.png)
 TradingView - GARAN 1 saat bazlı 1 yıllık fiyat değişimi [2]
 
 ![Günlük Veri](daily_data.png)
-TradingView - GARAN 1  gün bazlı 1 yıllık fiyat değişimi [2]
+TradingView - GARAN 1 gün bazlı 1 yıllık fiyat değişimi [2]
 
-Yukarıdaki grafiklerden de anlaşılabildiği üzere kullanılan zaman aralığı grafiğin granülerliğini de büyük ölçüde etkilemektedir. Kullanılan aralık küçüldükçe (örn. 1 gün -> 1 saat) granülerlik artar ve daha anlık veri akışı sağlanır. Intraday traderlar daha granüler bir fiyat grafiği kullanırlar.
+Yukarıdaki grafiklerden de anlaşılabildiği üzere kullanılan zaman aralığı grafiğin granülerliğini de büyük ölçüde etkilemektedir. Kullanılan aralık küçüldükçe (örn. 1 gün -> 1 saat) granülerlik artar ve daha anlık veri akışı sağlanır. Intraday traderlar daha granüler (zaman aralığı daha küçük) bir fiyat grafiği kullanırlar.
 
-Fiyat grafikleri okuma ve yorumlama yapılmadan bunların öğrenilmesi kritik önem taşımaktadır. Bir sonraki bölümde, öğrendiğimiz OHLCV verilerini kullanarak geleceğe yönelik tahmin yapmamızda yardımcı olacak olan teknik analiz aşamasına geçeceğiz.
+Fiyat grafikleri okuma ve yorumlama yapılmadan bunların öğrenilmesi kritik önem taşımaktadır. Bir sonraki bölümde, öğrendiğimiz OHLCV verilerini kullanarak geçmişe dayalı geleceğe yönelik tahmin yapmamızda yardımcı olacak olan teknik analiz aşamasına geçeceğiz.
 
 ## Teknik Analize Giriş
 
@@ -128,34 +132,33 @@ Aslında bu, günlük hayatta da yaptığımız bir şeye benzer:
 Teknik analiz de benzer şekilde, “geçmişte fiyat böyle hareket etmişse, gelecekte de benzer şekilde hareket edebilir” varsayımına dayanır.
 
 ![Teknik Analiz Trend](teknik-analiz-trend.jpg)
-Bu görselde teknik analizin en basit yapı taşlarından birisi olan trend çizgileri ile oluşturulan 3 farklı trend çeşidini görebiliyoruz. [5]
+Bu görselde teknik analizin en basit yapı taşlarından birisi olan trend çizgileri ile oluşturulan 3 farklı trend çeşidini gözlemliyoruz. [5]
 
 ### Teknik analizde temel amaç nedir?
 - Bir hissenin, dövizin veya herhangi bir yatırım aracının yükselme (bullish) ya da düşme (bearish) ihtimalini önceden tahmin edebilmek.  
 - Yatırımcıya **“ne zaman almalı, ne zaman satmalı, ne zaman beklemeli”** konusunda yol göstermek.  
 
 ### Teknik analiz neye odaklanır?
-- Fiyat grafikleri  
+- Fiyat grafikleri (OHLCV verileri)
 - İşlem hacimleri (bir üründen ne kadar alınıp satıldığı)  
 - Çeşitli göstergeler (indicators)
 
 Bu veriler sayesinde yatırımcılar, piyasadaki *fırsatları* veya *riskleri* daha kolay görmeye çalışır.  
 
-Kısacası: Temel analiz bir şirketin neden değerli olduğuna bakarken, teknik analiz bu değerin fiyat grafiğine nasıl yansıdığına odaklanır.
+> Kısacası: Temel analiz bir şirketin neden değerli olduğuna bakarken, teknik analiz bu değerin fiyat grafiğine nasıl yansıdığına odaklanır.
 
 ## İndikatörler
 
-İndikatörler, geçmiş fiyat ve işlem hacmi verilerini kullanarak piyasadaki trendleri, momentumları ve olası dönüş noktalarını göstermek için kullanılan araçlardır. Yatırımcılar, indikatörleri kullanarak **alım, satım veya bekleme kararları** verir. En yaygın indikatörler arasında Hareketli Ortalamalar, RSI, MACD ve Bollinger Bantları bulunur. Burada bilinmesi gereken en önemli unsurlardan iki tanesi:
+İndikatörler, geçmiş fiyat ve işlem hacmi verilerini kullanarak piyasadaki trendleri, momentumları ve olası dönüş noktalarını göstermek için kullanılan araçlardır. Yatırımcılar, indikatörleri kullanarak **alım, satım veya bekleme kararları** verir. En yaygın indikatörler arasında Hareketli Ortalamalar, RSI, MACD ve Bollinger Bantları bulunur. Burada bilinmesi gereken en önemli unsur:
 
-* Hiçbir indikatör tek başına güvenilerek kullanılmamalıdır, en az iki veya üç indikatör kombine halde kullanılarak daha sağlıklı tahminler yapılabilir.
-* Bu sadece bir araştırma raporudur. Bu raporda yazan hiçbir şey bir uzman tarafından yazılmamış olduğundan ötürü yatırım tavsiyesi niteliğinde değildir.
+> Hiçbir indikatör tek başına güvenilerek kullanılmamalıdır, en az iki indikatör ile kombine halde kullanılarak daha sağlıklı tahminler yapılabilir.
 
 ### 1. Trendlines
 Fiyat hareketlerindeki belirgin yükseliş ve düşüşleri göstermek için çizilen düz çizgilerdir. Trendlines, piyasadaki genel yönü (yükselen, düşen veya yatay) hızlıca anlamamızı sağlar. Trend çizgileri seçilen zaman aralığındaki fiyat değişim grafiğindeki mum grafiklerin açılış ve kapanış noktalarına göre çizilir. Aşağıdaki görselde Garanti Bankası'nın 1 saatlik bazda 3 aylık fiyat değişim grafiği yer almaktadır (1h-3M). Bazı örnek trend çizgileri çizilmiştir. 
 
 ![GARAN 3 aylık Trendlines](trendlines_garanti.png)
 
-Teknik analiz sürecinde hiçbir indikatör karar verme konusunda tek başına yeterli görülmemelidir. Trendler teknik analiz konusunda borsanın en önemli bileşenlerinden biridir. Trend çizgileri ise fiyatın gidişatı hakkında fikir sahibi olmamıza yarayacak olan çok önemli bir indikatör tipidir.
+Trendler teknik analiz konusunda borsanın en önemli bileşenlerinden biridir. Trend çizgileri ise fiyatın gidişatı hakkında fikir sahibi olmamıza yarayacak olan çok önemli bir indikatör tipidir.
 
 ### Trendlerin Temel Özellikleri
 
@@ -183,7 +186,7 @@ Trendleri anlamak için yalnızca çizgiler değil, yön, güç ve kırılma gib
    - Yatırımcıların çoğu mevcut trend yönünde işlem yapmayı tercih eder.
    - Trend yönünde yapılan işlemler genellikle daha güvenli kabul edilir.
 
-Trend çizgileri bazen tek başına çok bir anlam ifade etmese de, bazı grafik formasyonları (patternler), destek ve direnç çizgileri, diğer indikatörleri yorumlama gibi çeşitli konularda yardımcı olmaktadır. Trend çizgilerini yorumlamaya geçmeden önce basit bir trendline hesaplama algoritmasını inceleyelim.  
+Trend çizgileri çoğu zaman bazen tek başına çok güvenilir bir anlam ifade etmese de, bazı grafik formasyonları (patternler), destek ve direnç çizgileri, diğer indikatörleri yorumlama gibi çeşitli konularda yardımcı olmaktadır. Trend çizgilerini yorumlamaya geçmeden önce basit bir trendline hesaplama algoritmasını inceleyelim.  
 
 ```pseudo
 TrendlineHesaplama
@@ -203,13 +206,13 @@ Bitir
 
 Peki, yukarıda sözde kod ile yazdığımız TrendlineHesaplama algoritmasının ana çıktısı olan TrendYönleri'ni nasıl yorumlarız?
 
-Trend çizgilerimizi oluşturmak için kullandığımız teknikten ve kalıplar kadar, bunları nerede kullanacağımız ve hangi formasyonlar üzerinden yorumlama yapacağımız da önem taşımaktadır. Trend çizgileri envai çeşit alanda kullanılabilir ve çok farklı yorumlama teknikleri bulunabilir. En basit 3 trend yönü Artış, Azalış ve Sabit kalma trendleridir, ancak bunlarla yetinilmemelidir. Grafikler üzerinden trend kalıplarını yorumlamaya başlamak üzere bazı yaygın formasyonları inceleyelim. [6]
+Trend çizgilerimizi oluşturmak için kullandığımız teknik ve kalıplar kadar, bunları nerede kullanacağımız ve hangi formasyonlar üzerinden yorumlama yapacağımız da önem taşımaktadır. Trend çizgileri envai çeşit alanda kullanılabilir ve çok farklı yorumlama teknikleri bulunabilir. En basit 3 trend yönü Artış, Azalış ve Sabit kalma trendleridir, ancak bunlarla yetinilmemelidir. Grafikler üzerinden trend kalıplarını yorumlamaya başlamak üzere bazı yaygın formasyonları inceleyelim. [6]
 
 ![Chart Formations](chart_formations.png) 
 
 Yukarıdaki görselde de görüldüğü üzere piyasada bugüne dek gelen bazı kalıplaşmış trendler benzer sonuçlar vermektedir dolayısıyla bu trendler kalıplaştırılarak günümüzdeki yorumlama yöntemlerini de etkilemektedir. Trend kalıpları tek başına bir gösterge olarak kullanılmamalıdır ancak diğer güvenilir indikatör verileriyle desteklenmelidir.
 
-Ayrıca, grafik formasyonları ezberlenerek fiyat grafiklerinde aranmamalıdır. Borsada teknik analiz yaparak tahmin yapma konusunda gelişmek için bolca örnek yapılmalı ve fiyat grafiği takip araçları kullanılarak eller grafikler üzerinde çizimler yaparak, tahminde bulunarak kirletilmelidir.
+Ayrıca, grafik formasyonları ezberlenerek fiyat grafiklerinde aranmamalıdır. Borsada teknik analiz yaparak tahmin yapma konusunda gelişmek için bolca örnek yapılmalı ve fiyat grafiği takip araçları kullanılarak eller grafikler üzerinde çizimler yaparak, geçmişe dayalı tahminde bulunarak kirletilmelidir.
 
 ### Trend Kalıpları
 
@@ -247,13 +250,13 @@ Destek ve direnç seviyeleri, teknik analizin en temel yapı taşlarından birid
 
 Fiyatın aşağı yönlü hareketini durduran veya yavaşlatan seviyedir. Genellikle birden fazla kapanış değerinin kestiği kırılma noktalarını teğet geçen bir trend çizgisi ile sembolize edilir. Yatırımcılar bu seviyeyi “ucuz” olarak görüp alım yapmaya başlar. Dolayısıyla talep artar ve fiyatın daha fazla düşmesi engellenir.
 
-    * **Örneğin:** Bir hisse sürekli 100 TL’ye düştüğünde alıcı buluyorsa, 100 TL seviyesi destek kabul edilir.
+    Örneğin: Bir hisse sürekli 100 TL’ye düştüğünde alıcı buluyorsa, 100 TL seviyesi destek kabul edilir.
 
 2. **Direnç** Nedir? (Resistance)
 
 Fiyatın yukarı yönlü hareketini durduran veya yavaşlatan seviyedir. Birden fazla açılış değerinin kestiği kırılma noktalarını teğet geçen bir trend çizgisi ile sembolize edilir. Yatırımcılar bu seviyeyi “pahalı” olarak görüp satış yapmaya başlar. Arz arttığı için fiyatın daha fazla yükselmesi zorlaşır, bu nedenle direnç olarak bilinir.
 
-3. Destek ve Direnç Nasıl Belirlenir?
+3. **Destek ve Direnç** Nasıl Belirlenir?
 
     * Geçmişte fiyatın sık sık dönüş yaptığı noktalar incelenir.
 
@@ -264,13 +267,17 @@ Fiyatın yukarı yönlü hareketini durduran veya yavaşlatan seviyedir. Birden 
 Destek ve direnç seviyelerinin önemi, bu seviyelerin kırılması (breakout) yeni trendlerin başlangıcı olabileceğinden dolayı kritiktir. **Alım** kararları genellikle destek bölgelerinde, **Satım** kararları ise direnç bölgelerinde yapılır. Destek ve direnç seviyelerini hesaplayabilmek için örnek bir algoritma şu şekildedir:
 
 ```pseudo
-Input: fiyat_verileri
+Destek Direnç Hesaplama
+
+Başla
+
+Girdi: FiyatlarListesi
 
 For her fiyat noktasında:
-    Eğer fiyat daha önce birçok kez aynı seviyeden yukarı dönmüşse:
+    Eğer fiyat daha önce birden çok kez aynı seviyeden yukarı dönmüşse:
         O seviye = DESTEK
     
-    Eğer fiyat daha önce birçok kez aynı seviyeden aşağı dönmüşse:
+    Eğer fiyat daha önce birden çok kez aynı seviyeden aşağı dönmüşse:
         O seviye = DİRENÇ
 
 Eğer fiyat DESTEK seviyesini aşağı kırarsa:
@@ -278,13 +285,21 @@ Eğer fiyat DESTEK seviyesini aşağı kırarsa:
 
 Eğer fiyat DİRENÇ seviyesini yukarı kırarsa:
     Yeni direnç seviyesi daha yukarıda aranır
+
+Çıktı: DestekDirençAralıkları
+
+Bitir
 ```
 
-En basit haliyle trend çizgileri bu amaçlarla kullanılmakta ve bu şekilde hesaplanarak yorumlanmaktadır.
+Bu algoritmanın verdiği çıktı, diğer indikatör çıktılarının sonuçlarını desteklemek amaçlı kullanılarak daha güvenli bir al/sat/tut sinyali gönderen bir sistem geliştirilebilir.
+
+En basit haliyle trend çizgileri bu amaçlarla kullanılmakta ve bu şekilde hesaplanarak yorumlanmaktadır. 
 
 ---
 
 ### 2. Hareketli Ortalamalar Kesişimi / MA Crossover
+
+**MA Crossover (Hareketli Ortalama Kesişimi)** ise, kısa vadeli ve uzun vadeli hareketli ortalamaların birbirini kesmesiyle oluşur. MA Cross olarak da bilinir.
 
 MA Cross'un ne olduğunu öğrenmeden önce, MA'in (Hareketli Ortalama) ne olduğunu öğrenmek öğrenme vizyonumuzu değiştirecek ve motivasyonumuzu da etkileyecektir. Bu nedenle ilk olarak basitçe tanımlardan başlayabiliriz.
 
@@ -295,15 +310,31 @@ En yaygın kullanılan üç hareketli ortalama türü şunlardır:
 1. **Simple Moving Average (SMA):**  
    Belirlenen süre içindeki fiyatların basit aritmetik ortalamasıdır. Örneğin, 10 günlük SMA, son 10 günün kapanış fiyatlarının toplamının 10’a bölünmesiyle elde edilir. 
 
+   ![SMA](sma.png)
+
 2. **Weighted Moving Average (WMA):**  
-   Daha yeni fiyatlara daha fazla ağırlık vererek ortalama alır. Böylece son dönem fiyat hareketleri SMA’ya göre daha hızlı yansıtılır.  
+   Daha yeni fiyatlara daha fazla ağırlık vererek ortalama alır. Böylece son dönem fiyat hareketleri SMA’ya göre daha hızlı yansıtılır.
+
+   ![WMA](wma.png)
 
 3. **Exponential Moving Average (EMA):**  
    WMA’ya benzer şekilde yeni fiyatlara daha fazla önem verir, ancak ağırlıklandırmayı üstel (exponential) bir yöntemle yapar. Bu nedenle fiyat değişimlerine en hızlı tepki veren hareketli ortalama türüdür. Aynı şekilde borsada en yaygın kullanılan ve diğer indikatörlerde de yaygın olarak kullanılan bir MA türüdür.
 
-**MA Crossover (Hareketli Ortalama Kesişimi)** ise, kısa vadeli ve uzun vadeli hareketli ortalamaların birbirini kesmesiyle oluşur. İki oluşum gerçekleşebilir: Golden ve Death Cross.
+   ![EMA](ema.png)
+
+> İki oluşum gerçekleşebilir: Golden ve Death Cross.
 - **Golden Cross:** Kısa vadeli MA (ör. 50 günlük) uzun vadeli MA’nın (ör. 200 günlük) üzerine çıktığında görülür, genellikle yükseliş sinyali olarak yorumlanır.  
 - **Death Cross:** Kısa vadeli MA uzun vadeli MA’nın altına düştüğünde oluşur, genellikle düşüş sinyali olarak değerlendirilir.
+
+Golden Cross'u bir grafik üzerinde daha yakından inceleyelim:
+
+![Golden Cross](golden_cross.png)
+
+Death Cross'u bir S&P 500 (SPX) grafiği üzerinde daha yakından inceleyelim:
+
+![Death Cross](death_cross.png)
+
+GARAN sembolü üzerinden inceleyelim:
 
 ![MA Cross](ma_crossover.png)
 
@@ -315,10 +346,10 @@ Kısa vadeli MA’nın uzun vadeli MA’yı yukarı yönlü kestiği nokta sarı
 
 Görüldüğü üzere, yukarı yönlü kesim (Golden Cross) gerçekleştiğinde fiyatlarda artış gözlenmiş; aşağı yönlü kesimde (Death Cross) ise düşüş yaşanmıştır.  
 
-> Bu örnekler yalnızca bariz durumları göstermektedir.  
+> **Önemli Not:** Bu örnekler yalnızca bariz durumları göstermektedir.  
 Periyotları değiştirmek (örneğin 9-21 yerine 50-200 kullanmak) veya zaman aralığını değiştirmek (1 günlük yerine 1 haftalık) MA Crossover sonuçlarını önemli ölçüde etkiler. Ancak unutulmamalıdır ki **her yukarı yönlü kesişim Golden Cross değildir**, aynı şekilde **her aşağı yönlü kesişim de Death Cross değildir**.  
 
-> **Bu tür kesişimlerin güvenilirliğini artırmak için farklı indikatörler, trend analizleri ve piyasa koşulları birlikte değerlendirilmelidir.**
+> **❗Bu tür kesişimlerin güvenilirliğini artırmak için farklı indikatörler, trend analizleri ve piyasa koşulları birlikte değerlendirilmelidir.**
 
 Aslında buradaki ana mantık, kısa dönemli ortalamanın uzun dönemli ortalamayı ne kadar hızlı kesip trendin nasıl etkileneceğini tahmin etmek üzerine kuruludur. Periyotlar varsayılan olarak kısa 9, uzun 21 olacak şekilde ayarlanır ancak bu süreler genellikle yatırımcının risk yönetimine göre ayarlanır. Peki, nasıl hesaplarız?
 
@@ -336,9 +367,13 @@ Girdi: FiyatlarListesi, KısaMA_Periyot, UzunMA_Periyot
 5. Sinyalleri listele ve gün gün takip et
 
 Çıktı: Al, Sat, Tut sinyal listesi
+
+Bitir
 ```
 
 MA Crossover algoritmasının girdileri fiyatlar listesi ile kısa ve uzun vadeli hareketli ortalama periyotlarıdır. Her gün bu iki ortalama hesaplanır. Eğer kısa vadeli ortalama uzun vadeli ortalamayı yukarı keserse “Al”, aşağı keserse “Sat” sinyali üretilir. Kesişim yoksa “Tut” sinyali verilir. Çıktı ise gün gün üretilen bu sinyallerin listesidir ve bu liste tahminlerde yardımcı indikatör olarak kullanılır.
+
+> Örneğin: Eğer **Golden Cross** tespit edilmişse, yapılan teknik analiz aşamasında yukarı yönlü bir artış olduğunu gösteren bir sinyal (buy) gönderilebilir. 
 
 ---
 
@@ -355,7 +390,11 @@ RSI, fiyatların belirli bir periyottaki (genellikle 14 gün) **yükseliş ve d�
 
 ![GARAN 3 aylık RSI Index](rsi_garanti.png)
 
-#### RSI Hesaplama Mantığı
+#### RSI Hesaplama
+
+![RSI Step One](rsi_step_one.png)
+
+![RSI Step Two](rsi_step_two.png)
 
 ```pseudo
 RSI Hesaplama
@@ -383,6 +422,8 @@ RSI yalnızca seviyelerle değil, fiyat hareketi ile indikatör arasındaki uyum
 * **Negatif Divergence**    
     Fiyat yükselirken RSI düşer. Bu durumda yükseliş gücünü kaybediyor olabilir, aşağı yönlü bir dönüş gelebilir.
 
+![RSI Divergence](rsi_divergence.png)
+
 > RSI tek başına kullanılmamalıdır; tıpkı diğer yöntemler gibi, trendler ve diğer indikatörlerle birlikte değerlendirildiğinde daha güvenilir sonuç verir.  
 
 ---
@@ -400,7 +441,11 @@ Bu sayede hem trendin yönünü hem de hızını yorumlamaya yardımcı olur.
 
 ![GARAN 3 aylık MACD](macd_garanti.png)
 
-#### Yorumlama
+#### MACD Hesaplama
+
+![MACD Formula](macd_formula.png)
+
+#### MACD Yorumlama
 
 - MACD çizgisi, Sinyal çizgisini **yukarı keserse** → Genellikle **al sinyali** olarak yorumlanır.  
 - MACD çizgisi, Sinyal çizgisini **aşağı keserse** → Genellikle **sat sinyali** olarak yorumlanır.  
@@ -484,7 +529,7 @@ Bollinger Bantları da fiyat hareketiyle birlikte analiz edildiğinde uyumsuzluk
 - **Önemli:** ADX trendin **yönünü göstermez**, sadece trendin **gücünü** ölçer.  
 - Bu nedenle bir fiyatın yükseliyor mu yoksa düşüyor mu olduğuna bakmaksızın, ADX yüksekse trend güçlü, düşükse trend zayıftır.  
 
-#### ADX’in mantığını anlamak için basit bir örnek:
+> Örneğin:
 - Bir hisse fiyatı sürekli yukarı çıkıyorsa ve ADX yüksekse → bu **güçlü bir yükseliş trendi**dir.  
 - Bir hisse fiyatı yükseliyor ama ADX düşükse → bu yükseliş **güçsüz**dür ve aniden tersine dönebilir.  
 - Fiyat yatay gidiyorsa → ADX genellikle düşüktür, trend yoktur.  
@@ -493,7 +538,7 @@ ADX, +DI ve -DI denilen iki yön göstergesiyle birlikte kullanılır:
 - +DI > -DI → trend yukarı yönlü  
 - -DI > +DI → trend aşağı yönlü  
 
-Yani ADX trendin **gücünü**, +DI ve -DI trendin **yönünü** gösterir.
+Yani ADX trendin **gücünü**, +DI ve -DI trendin **yönünü** gösterir. GARAN 1h/3M ADX tablosunun ADX sinyallerini inceleyelim.
 
 ![GARAN 3 aylık ADX Index](adx_garanti.png)
 
@@ -537,12 +582,14 @@ Bitir
   2. **-DI (Negative Directional Indicator)** → Aşağı yönlü hareketin gücünü gösterir.  
   3. **ADX** → Trendin gücünü ölçer (yukarıdaki ADX bölümünde detaylı anlatıldı).
 
-#### DMI Mantığı
+#### DMI Mantığı ve Hesaplama
 - +DI > -DI → trend yukarı yönlüdür.  
 - -DI > +DI → trend aşağı yönlüdür.  
-- +DI ve -DI birbirine çok yakınsa → trend zayıf veya yataydır.  
+- +DI ve -DI birbirine çok yakınsa → trend zayıf veya yataydır.
 
 > Yani DMI, fiyatların hangi yönde daha güçlü hareket ettiğini gösterir ve yatırımcılara trendin yönü hakkında bilgi verir.
+
+![DMI Hesaplama](dmi_hesaplama.png)
 
 ```pseudo
 Başla DMI Hesaplama
@@ -561,11 +608,14 @@ Bitir
 ```
 
 1. **+DM ve -DM:** Günlük hareketin yukarı mı aşağı mı daha güçlü olduğunu gösterir.  
+
 2. **+DI ve -DI:** Bu hareketlerin normalize edilmiş yüzdeleri, trend yönünü belirler.  
+
 3. **DMI yorumu:**  
    - +DI > -DI → alım baskısı daha güçlü, trend yukarı yönlü  
    - -DI > +DI → satış baskısı daha güçlü, trend aşağı yönlü  
    - +DI ve -DI birbirine yakın → piyasa kararsız veya trend zayıf  
+
 4. **ADX ile kombinasyon:** DMI trendin yönünü, ADX trendin gücünü gösterir; birlikte kullanıldığında yatırımcıya güçlü ve güvenilir sinyaller sağlar.  
 
 > DMI ve ADX’i tek başına kullanmak risklidir; diğer indikatörlerle desteklenerek analiz yapmak en güvenli yöntemdir.
@@ -580,7 +630,9 @@ Bitir
   - **80’in üzeri** → aşırı alım bölgesi (fiyatın yüksek ve hacimli bir şekilde yükseldiği, düzeltme gelebileceği düşünülür)  
   - **20’nin altı** → aşırı satım bölgesi (fiyatın düştüğü ve tepki yükselişi gelebileceği düşünülür)
 
-#### MFI Hesaplama Mantığı
+#### MFI Hesaplama
+
+![MFI Hesaplama](mfi_hesaplama.png)
 
 ```pseudo
 Başla MFI Hesaplama
