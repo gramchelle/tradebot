@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.service;
+package lion.mode.tradebot_backend.service.fetch_data_api;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -14,7 +14,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,7 +23,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class DataCollectorService { // streaming data from alpha vantage
+public class AlphaVantageDataCollectorService {
 
     private final StockDataRepository repository;
     private final HttpClient httpClient;
@@ -36,7 +36,7 @@ public class DataCollectorService { // streaming data from alpha vantage
         try {
             String url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY"
                     + "&symbol=" + symbol
-                    + "&interval=60min&apikey=" + apiKey;
+                    + "&interval=30min&apikey=" + apiKey;
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -44,9 +44,8 @@ public class DataCollectorService { // streaming data from alpha vantage
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
             JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
-            JsonObject timeSeries = json.getAsJsonObject("Time Series (60min)");
+            JsonObject timeSeries = json.getAsJsonObject("Time Series (30min)");
 
             if (timeSeries == null) {
                 System.err.println("[!] Not able to fetch data for " + symbol + ". API Answer: " + response.body());
@@ -59,8 +58,12 @@ public class DataCollectorService { // streaming data from alpha vantage
                     .orElse(null);
 
             for (Map.Entry<String, JsonElement> entry : timeSeries.entrySet()) {
-                LocalDateTime entryTimestamp = LocalDateTime.parse(entry.getKey(), FORMATTER);
-                if (lastTimestampInDb == null || entryTimestamp.isAfter(lastTimestampInDb)) {
+                ZonedDateTime etTime = LocalDateTime.parse(entry.getKey(), FORMATTER)
+                        .atZone(ZoneId.of("America/New_York"));
+
+                LocalDateTime localTime = etTime.withZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime();
+
+                if (lastTimestampInDb == null || localTime.isAfter(lastTimestampInDb)) {
                     JsonObject values = entry.getValue().getAsJsonObject();
                     StockData data = new StockData();
                     data.setSymbol(symbol);
@@ -69,13 +72,15 @@ public class DataCollectorService { // streaming data from alpha vantage
                     data.setLow(values.get("3. low").getAsDouble());
                     data.setClose(values.get("4. close").getAsDouble());
                     data.setVolume(values.get("5. volume").getAsLong());
-                    data.setTimestamp(entryTimestamp);
+                    data.setTimestamp(localTime);
                     newStockDataList.add(data);
                 }
             }
+
             if (!newStockDataList.isEmpty()) {
                 Collections.reverse(newStockDataList);
                 repository.saveAll(newStockDataList);
+                System.out.println("[i] Saved " + newStockDataList.size() + " new bars for " + symbol);
                 return true;
             }
             return false;
@@ -84,5 +89,4 @@ public class DataCollectorService { // streaming data from alpha vantage
             throw new RuntimeException("[!] Alpha Vantage Error on Fetching Data: " + e.getMessage());
         }
     }
-
 }

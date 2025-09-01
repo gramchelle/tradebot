@@ -3,7 +3,7 @@ package lion.mode.tradebot_backend.service.technicalanalysis;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
 
-import lion.mode.tradebot_backend.dto.indicators.MACrossResult;
+import lion.mode.tradebot_backend.dto.indicators.macd.MACrossResult;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.indicators.EMAIndicator;

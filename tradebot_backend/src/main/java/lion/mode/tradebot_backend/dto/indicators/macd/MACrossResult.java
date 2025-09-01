@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.dto.indicators;
+package lion.mode.tradebot_backend.dto.indicators.macd;
 
 import lombok.Data;
 

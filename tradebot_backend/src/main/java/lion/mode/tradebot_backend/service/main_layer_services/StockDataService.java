@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.service;
+package lion.mode.tradebot_backend.service.main_layer_services;
 
 import lion.mode.tradebot_backend.model.StockData;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
@@ -22,7 +22,6 @@ public class StockDataService {
         return repository.findBySymbol(symbol);
     }
 
-    // TODO: Belirli bir hisse senedi ve tarih aralığı için OHLCV verisini veritabanından çeken bir service katmanı yazılmalıdır.
     public List<StockData> getStockDataBySymbolAndDateRange(String symbol, LocalDateTime startDate, LocalDateTime endDate) {
         return repository.findBySymbolAndTimestampBetween(symbol, startDate, endDate);
     }

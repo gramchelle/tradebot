@@ -13,7 +13,7 @@ import org.ta4j.core.indicators.bollinger.BollingerBandsMiddleIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsUpperIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsLowerIndicator;
 
-import lion.mode.tradebot_backend.dto.indicators.BollingerResult;
+import lion.mode.tradebot_backend.dto.indicators.bollinger_bands.BollingerResult;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 
 @Service
@@ -23,6 +23,7 @@ public class BollingerBandService extends IndicatorService {
         super(repository);
     }
 
+/*
     public BollingerResult calculateBollingerBands(String symbol, int period) {
         BarSeries series = loadSeries(symbol);
         int lastIndex = series.getEndIndex();
@@ -109,4 +110,5 @@ public class BollingerBandService extends IndicatorService {
 
         return results;
     }
+        */
 }

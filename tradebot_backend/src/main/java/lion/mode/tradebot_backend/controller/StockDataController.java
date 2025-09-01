@@ -1,7 +1,7 @@
 package lion.mode.tradebot_backend.controller;
 
 import lion.mode.tradebot_backend.model.StockData;
-import lion.mode.tradebot_backend.service.StockDataService;
+import lion.mode.tradebot_backend.service.main_layer_services.StockDataService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,4 +25,5 @@ public class StockDataController {
     public ResponseEntity<List<StockData>> getStockDataBySymbol(@RequestParam String symbol) {
         return new ResponseEntity<List<StockData>>(stockDataService.getStockDataBySymbol(symbol), HttpStatus.OK);
     }
+
 }

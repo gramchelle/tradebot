@@ -13,8 +13,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface StockDataRepository extends JpaRepository<StockData, Long> {
-
-    @Query("SELECT sd FROM StockData sd WHERE sd.symbol = ?1 ORDER BY sd.timestamp ASC")
     List<StockData> findBySymbolOrderByTimestampAsc(String symbol);
 
     boolean existsBySymbolAndTimestamp(String symbol, LocalDateTime timestamp);
@@ -30,4 +28,7 @@ public interface StockDataRepository extends JpaRepository<StockData, Long> {
     List<StockData> findBySymbolAndTimestampBetween(String symbol, LocalDateTime startDate, LocalDateTime endDate);
 
     List<StockData> findBySymbolAndTimestampBetweenOrderByTimestampAsc(String symbol, LocalDateTime start, LocalDateTime end);
+
+    @Query("SELECT s FROM StockData s WHERE s.symbol = ?1 AND s.timestamp <= ?2 ORDER BY s.timestamp DESC LIMIT 1")
+    List<StockData> findBySymbolAndTimestampLessThanEqualOrderByTimestampAsc(String symbol, LocalDateTime targetDate);
 }

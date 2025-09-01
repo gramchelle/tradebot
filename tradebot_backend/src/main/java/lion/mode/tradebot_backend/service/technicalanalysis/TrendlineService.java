@@ -1,6 +1,6 @@
 package lion.mode.tradebot_backend.service.technicalanalysis;
 
-import lion.mode.tradebot_backend.dto.indicators.TrendlineResult;
+import lion.mode.tradebot_backend.dto.indicators.trendline.TrendlineResult;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
