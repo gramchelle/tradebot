@@ -8,7 +8,6 @@ import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.num.DecimalNum;
 
 import lion.mode.tradebot_backend.dto.indicators.rsi.RSIResult;
-import lion.mode.tradebot_backend.dto.indicators.rsi.RsiSeriesEntry;
 import lion.mode.tradebot_backend.model.StockData;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 
@@ -29,9 +28,6 @@ public class RsiService extends IndicatorService {
         super(repository);
     }
 
-    /**
-     * 1. Şu anki RSI (default now).
-     */
     public RSIResult calculateRSI(String symbol, int period) {
         BarSeries series = loadSeries(symbol);
 
@@ -56,9 +52,6 @@ public class RsiService extends IndicatorService {
         return result;
     }
 
-    /**
-     * 2. Belirli tarihte RSI hesapla.
-     */
     public RSIResult calculateRSI(String symbol, int period, LocalDateTime targetDate) {
         List<StockData> dataList = repository
                 .findBySymbolAndTimestampLessThanEqualOrderByTimestampAsc(symbol, targetDate);
@@ -110,9 +103,6 @@ public class RsiService extends IndicatorService {
         return result;
     }
 
-    /**
-     * 3. Şimdiki RSI + Divergence.
-     */
     public RSIResult calculateRSIWithDivergence(String symbol, int period) {
         BarSeries series = loadSeries(symbol);
 
@@ -128,9 +118,6 @@ public class RsiService extends IndicatorService {
         return rsiResult;
     }
 
-    /**
-     * 4. Belirli tarihte RSI + Divergence.
-     */
     public RSIResult calculateRSIWithDivergence(String symbol, int period, LocalDateTime targetDate) {
         List<StockData> dataList = repository
                 .findBySymbolAndTimestampLessThanEqualOrderByTimestampAsc(symbol, targetDate);
@@ -156,7 +143,6 @@ public class RsiService extends IndicatorService {
             series.addBar(bar);
         }
 
-        // targetIndex bul
         int targetIndex = -1;
         for (int i = 0; i < series.getBarCount(); i++) {
             if (series.getBar(i).getEndTime().toLocalDateTime().equals(targetDate)) {
@@ -168,7 +154,6 @@ public class RsiService extends IndicatorService {
             throw new NotEnoughDataException("No bar found at " + targetDate + " for " + symbol);
         }
 
-        // RSI hesapla
         ClosePriceIndicator close = new ClosePriceIndicator(series);
         RSIIndicator rsi = new RSIIndicator(close, period);
         double rsiValue = rsi.getValue(targetIndex).doubleValue();
@@ -181,29 +166,26 @@ public class RsiService extends IndicatorService {
         result.setSignal(generateSignal(rsiValue));
         result.setTrendComment("RSI with divergence at " + targetDate + " is " + rsiValue);
 
-        // divergence hesapla
         String divergence = detectDivergence(series, period, symbol);
         result.setDivergence(divergence);
 
         return result;
     }
 
-    // helpers
     private Duration detectBarDuration(List<StockData> dataList) {
-        if (dataList.size() < 2) return Duration.ofMinutes(30);
+        if (dataList.size() < 2) return Duration.ofHours(1);
         LocalDateTime t0 = dataList.get(0).getTimestamp();
         LocalDateTime t1 = dataList.get(1).getTimestamp();
         return Duration.between(t0, t1);
     }
 
     private String generateSignal(double rsiValue) {
-        if (rsiValue > 70) return "Sell";
-        if (rsiValue < 30) return "Buy";
+        if (rsiValue > 68) return "Sell";
+        if (rsiValue < 32) return "Buy";
         return "Hold";
     }
 
     public String detectDivergence(BarSeries series, int period, String symbol) {    
-        // require a bit more history to find local extrema
         if (series.getBarCount() < period + 3) {
             throw new NotEnoughDataException("NOT ENOUGH DATA FOR " + symbol);
         }
@@ -212,14 +194,12 @@ public class RsiService extends IndicatorService {
         RSIIndicator rsi = new RSIIndicator(closePrice, period);
 
         int endIndex = series.getEndIndex();
-        // lookback window: a few periods to find meaningful local highs/lows
         int lookback = Math.min(period * 3, endIndex);
-        int startIndex = Math.max(1, endIndex - lookback); // ensure i-1 exists
+        int startIndex = Math.max(1, endIndex - lookback);
 
         List<Integer> lowIndices = new ArrayList<>();
         List<Integer> highIndices = new ArrayList<>();
 
-        // collect local lows/highs within the lookback window
         for (int i = startIndex; i <= endIndex - 1; i++) {
             double price = closePrice.getValue(i).doubleValue();
             double prevPrice = closePrice.getValue(i - 1).doubleValue();
@@ -233,8 +213,7 @@ public class RsiService extends IndicatorService {
             }
         }
 
-        // Regular bullish divergence:
-        // price makes lower low but RSI makes higher low (last two lows)
+        // Regular bullish divergence
         if (lowIndices.size() >= 2) {
             int i1 = lowIndices.get(lowIndices.size() - 2);
             int i2 = lowIndices.get(lowIndices.size() - 1);
@@ -248,8 +227,7 @@ public class RsiService extends IndicatorService {
             }
         }
 
-        // Regular bearish divergence:
-        // price makes higher high but RSI makes lower high (last two highs)
+        // Regular bearish divergence
         if (highIndices.size() >= 2) {
             int i1 = highIndices.get(highIndices.size() - 2);
             int i2 = highIndices.get(highIndices.size() - 1);
@@ -263,7 +241,6 @@ public class RsiService extends IndicatorService {
             }
         }
 
-        // no regular divergence found
         return "none";
     }
 

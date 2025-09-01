@@ -22,10 +22,6 @@ public class RsiController {
 
     private final RsiService rsiService;
 
-    /**
-     * 1. Şu anki RSI
-     * /ta/rsi/now?symbol=HEPS&period=14
-     */
     @GetMapping("/{symbol}")
     public ResponseEntity<RSIResult> getRsiNow(
             @PathVariable String symbol,
@@ -35,10 +31,6 @@ public class RsiController {
         return ResponseEntity.ok(result);
     }
 
-    /**
-     * 2. Belirli tarihte RSI
-     * /ta/rsi/at?symbol=HEPS&period=14&date=2025-08-20T12:00:00
-     */
     @GetMapping("/{symbol}/at")
     public ResponseEntity<RSIResult> getRsiAt(
             @PathVariable String symbol,
@@ -53,10 +45,6 @@ public class RsiController {
         return ResponseEntity.ok(result);
     }
 
-    /**
-     * 3. Şu anki RSI + Divergence
-     * /ta/rsi/now/divergence?symbol=HEPS&period=14
-     */
     @GetMapping("/{symbol}/divergence")
     public ResponseEntity<RSIResult> getRsiNowWithDivergence(
             @PathVariable String symbol,
@@ -66,10 +54,6 @@ public class RsiController {
         return ResponseEntity.ok(result);
     }
 
-    /**
-     * 4. Belirli tarihte RSI + Divergence
-     * /ta/rsi/at/divergence?symbol=HEPS&period=14&date=2025-08-20T12:00:00
-     */
     @GetMapping("/{symbol}/at/divergence")
     public ResponseEntity<RSIResult> getRsiAtWithDivergence(
             @PathVariable String symbol,
