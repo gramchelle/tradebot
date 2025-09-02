@@ -33,7 +33,7 @@ abstract class IndicatorService{
         BarSeries series = new BaseBarSeries(symbol, DecimalNum::valueOf);
 
         for (StockData data : dataList) {
-            ZonedDateTime endTime = data.getTimestamp().atZone(ZoneId.systemDefault());
+            ZonedDateTime endTime = data.getTimestamp().atZone(ZoneId.of("America/New_York"));
 
             if (series.getBarCount() > 0) {
                 ZonedDateTime lastEnd = series.getBar(series.getEndIndex()).getEndTime();
@@ -55,6 +55,8 @@ abstract class IndicatorService{
         }
         return series;
     }
+
+    // TODO: divergence engine
 
 }
 

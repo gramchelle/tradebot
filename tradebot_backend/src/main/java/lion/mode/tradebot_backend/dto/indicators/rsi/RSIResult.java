@@ -13,7 +13,7 @@ public class RSIResult {
     private double rsiValue;
     private String signal;       // Buy, Sell, Hold
     private int score;
-    private String divergence;   // bullish, bearish, none
+    private String divergence = "none detected yet";
     private String trendComment;
 
 }

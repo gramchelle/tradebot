@@ -1,25 +1,21 @@
 package lion.mode.tradebot_backend.service.technicalanalysis;
 
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
-import org.springframework.stereotype.Service;
-import org.ta4j.core.*;
-import org.ta4j.core.indicators.*;
-import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
-import org.ta4j.core.num.DecimalNum;
-
 import lion.mode.tradebot_backend.dto.indicators.rsi.RSIResult;
 import lion.mode.tradebot_backend.model.StockData;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
+import org.springframework.stereotype.Service;
+import org.ta4j.core.Bar;
+import org.ta4j.core.BarSeries;
+import org.ta4j.core.BaseBar;
+import org.ta4j.core.BaseBarSeries;
+import org.ta4j.core.indicators.RSIIndicator;
+import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
+import org.ta4j.core.num.DecimalNum;
 
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class RsiService extends IndicatorService {
@@ -30,9 +26,8 @@ public class RsiService extends IndicatorService {
 
     public RSIResult calculateRSI(String symbol, int period) {
         BarSeries series = loadSeries(symbol);
-
         if (series.getBarCount() < period) {
-            throw new NotEnoughDataException("Not enough data to calculate RSI for " + symbol);
+            throw new NotEnoughDataException("Not enough data for RSI calculation for " + symbol);
         }
 
         ClosePriceIndicator close = new ClosePriceIndicator(series);
@@ -40,97 +35,99 @@ public class RsiService extends IndicatorService {
 
         int lastIndex = series.getEndIndex();
         double lastRsi = rsi.getValue(lastIndex).doubleValue();
+        double prevRsi = rsi.getValue(lastIndex - 1).doubleValue();
 
         RSIResult result = new RSIResult();
         result.setSymbol(symbol);
         result.setPeriod(period);
         result.setRsiValue(lastRsi);
         result.setDate(series.getLastBar().getEndTime().toLocalDateTime());
-        result.setSignal(generateSignal(lastRsi));
-        result.setTrendComment("Latest RSI is " + lastRsi);
+        generateSignalAndScoreResult(result, lastRsi);
+        if (lastRsi > prevRsi) {
+            result.setTrendComment("RSI Trend is increasing by " + (lastRsi - prevRsi));
+        } else {
+            result.setTrendComment("RSI Trend is decreasing by " + (prevRsi - lastRsi));
+        }
+        result.setDivergence("none");
 
         return result;
     }
 
-    public RSIResult calculateRSI(String symbol, int period, LocalDateTime targetDate) {
-        List<StockData> dataList = repository
-                .findBySymbolAndTimestampLessThanEqualOrderByTimestampAsc(symbol, targetDate);
+    private void generateSignalAndScoreResult(RSIResult result, double rsiValue){
+        if (rsiValue > 68) {
+            result.setSignal("Sell");
+            result.setScore(-1);
+        } else if (rsiValue < 32) {
+            result.setSignal("Buy");
+            result.setScore(1);
+        } else {
+            result.setSignal("Hold");
+            result.setScore(0);
+        }
+    }
 
-        if (dataList.size() < period + 1) {
+    public RSIResult calculateRSI(String symbol, int period, LocalDateTime targetDate) {
+        BarSeries series = loadSeries(symbol);
+
+        if (series.getBarCount() < period + 1) {
             throw new NotEnoughDataException("Not enough data for RSI at " + targetDate + " for " + symbol);
         }
 
-        Duration barDuration = detectBarDuration(dataList);
-
-        BarSeries series = new BaseBarSeries(symbol, DecimalNum::valueOf);
-        for (StockData data : dataList) {
-            ZonedDateTime endTime = data.getTimestamp().atZone(ZoneId.systemDefault());
-            Bar bar = BaseBar.builder()
-                    .timePeriod(barDuration)
-                    .endTime(endTime)
-                    .openPrice(DecimalNum.valueOf(data.getOpen()))
-                    .highPrice(DecimalNum.valueOf(data.getHigh()))
-                    .lowPrice(DecimalNum.valueOf(data.getLow()))
-                    .closePrice(DecimalNum.valueOf(data.getClose()))
-                    .volume(DecimalNum.valueOf(data.getVolume()))
-                    .build();
-            series.addBar(bar);
-        }
-
+        // Target index bulma (MACD'deki gibi)
         int targetIndex = -1;
         for (int i = 0; i < series.getBarCount(); i++) {
-            if (series.getBar(i).getEndTime().toLocalDateTime().equals(targetDate)) {
+            LocalDateTime barTime = series.getBar(i).getEndTime().toLocalDateTime();
+            if (!barTime.isAfter(targetDate)) {
                 targetIndex = i;
-                break;
-            }
+            } else break;
         }
+
         if (targetIndex == -1) {
-            throw new NotEnoughDataException("No bar found at " + targetDate + " for " + symbol);
+            throw new NotEnoughDataException("No bar found before or at " + targetDate + " for " + symbol);
         }
 
         ClosePriceIndicator close = new ClosePriceIndicator(series);
         RSIIndicator rsi = new RSIIndicator(close, period);
+
         double rsiValue = rsi.getValue(targetIndex).doubleValue();
+        double prevRsi = rsi.getValue(targetIndex - 1).doubleValue();
 
         RSIResult result = new RSIResult();
         result.setSymbol(symbol);
         result.setPeriod(period);
         result.setRsiValue(rsiValue);
-        result.setDate(targetDate);
-        result.setSignal(generateSignal(rsiValue));
-        result.setTrendComment("RSI at " + targetDate + " is " + rsiValue);
+        result.setDate(series.getBar(targetIndex).getEndTime().toLocalDateTime());
+        generateSignalAndScoreResult(result, rsiValue);
+
+        if (rsiValue > prevRsi) {
+            result.setTrendComment("RSI Trend is increasing by " + (rsiValue - prevRsi));
+        } else if (rsiValue < prevRsi) {
+            result.setTrendComment("RSI Trend is decreasing by " + (prevRsi - rsiValue));
+        } else {
+            result.setTrendComment("RSI Trend is stable");
+        }
+
+        result.setDivergence("none"); // ileride divergence detection eklersin
 
         return result;
     }
 
     public RSIResult calculateRSIWithDivergence(String symbol, int period) {
-        BarSeries series = loadSeries(symbol);
-
-        if (series.getBarCount() < period + 3) {
-            throw new NotEnoughDataException("Not enough data to calculate RSI + divergence for " + symbol);
-        }
-
         RSIResult rsiResult = calculateRSI(symbol, period);
-
-        String divergence = detectDivergence(series, period, symbol);
-        rsiResult.setDivergence(divergence);
-
+        BarSeries series = loadSeries(symbol);
+        rsiResult.setDivergence(detectDivergence(series, period));
         return rsiResult;
     }
 
     public RSIResult calculateRSIWithDivergence(String symbol, int period, LocalDateTime targetDate) {
-        List<StockData> dataList = repository
-                .findBySymbolAndTimestampLessThanEqualOrderByTimestampAsc(symbol, targetDate);
+        RSIResult rsiResult = calculateRSI(symbol, period, targetDate);
 
-        if (dataList.size() < period + 3) {
-            throw new NotEnoughDataException("Not enough data for RSI divergence at " + targetDate + " for " + symbol);
-        }
-
+        List<StockData> dataList = repository.findBySymbolAndTimestampLessThanEqualOrderByTimestampAsc(symbol, targetDate);
         Duration barDuration = detectBarDuration(dataList);
 
         BarSeries series = new BaseBarSeries(symbol, DecimalNum::valueOf);
         for (StockData data : dataList) {
-            ZonedDateTime endTime = data.getTimestamp().atZone(ZoneId.systemDefault());
+            ZonedDateTime endTime = data.getTimestamp().atZone(ZoneId.of("America/New_York"));
             Bar bar = BaseBar.builder()
                     .timePeriod(barDuration)
                     .endTime(endTime)
@@ -143,33 +140,8 @@ public class RsiService extends IndicatorService {
             series.addBar(bar);
         }
 
-        int targetIndex = -1;
-        for (int i = 0; i < series.getBarCount(); i++) {
-            if (series.getBar(i).getEndTime().toLocalDateTime().equals(targetDate)) {
-                targetIndex = i;
-                break;
-            }
-        }
-        if (targetIndex == -1) {
-            throw new NotEnoughDataException("No bar found at " + targetDate + " for " + symbol);
-        }
-
-        ClosePriceIndicator close = new ClosePriceIndicator(series);
-        RSIIndicator rsi = new RSIIndicator(close, period);
-        double rsiValue = rsi.getValue(targetIndex).doubleValue();
-
-        RSIResult result = new RSIResult();
-        result.setSymbol(symbol);
-        result.setPeriod(period);
-        result.setRsiValue(rsiValue);
-        result.setDate(targetDate);
-        result.setSignal(generateSignal(rsiValue));
-        result.setTrendComment("RSI with divergence at " + targetDate + " is " + rsiValue);
-
-        String divergence = detectDivergence(series, period, symbol);
-        result.setDivergence(divergence);
-
-        return result;
+        rsiResult.setDivergence(detectDivergence(series, period));
+        return rsiResult;
     }
 
     private Duration detectBarDuration(List<StockData> dataList) {
@@ -179,17 +151,7 @@ public class RsiService extends IndicatorService {
         return Duration.between(t0, t1);
     }
 
-    private String generateSignal(double rsiValue) {
-        if (rsiValue > 68) return "Sell";
-        if (rsiValue < 32) return "Buy";
-        return "Hold";
-    }
-
-    public String detectDivergence(BarSeries series, int period, String symbol) {    
-        if (series.getBarCount() < period + 3) {
-            throw new NotEnoughDataException("NOT ENOUGH DATA FOR " + symbol);
-        }
-
+    private String detectDivergence(BarSeries series, int period) {
         ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
         RSIIndicator rsi = new RSIIndicator(closePrice, period);
 
@@ -205,43 +167,30 @@ public class RsiService extends IndicatorService {
             double prevPrice = closePrice.getValue(i - 1).doubleValue();
             double nextPrice = closePrice.getValue(i + 1).doubleValue();
 
-            if (price < prevPrice && price < nextPrice) {
-                lowIndices.add(i);
-            }
-            if (price > prevPrice && price > nextPrice) {
-                highIndices.add(i);
-            }
+            if (price < prevPrice && price < nextPrice) lowIndices.add(i);
+            if (price > prevPrice && price > nextPrice) highIndices.add(i);
         }
 
-        // Regular bullish divergence
+        // Bullish divergence
         if (lowIndices.size() >= 2) {
             int i1 = lowIndices.get(lowIndices.size() - 2);
             int i2 = lowIndices.get(lowIndices.size() - 1);
-            double p1 = closePrice.getValue(i1).doubleValue();
-            double p2 = closePrice.getValue(i2).doubleValue();
-            double r1 = rsi.getValue(i1).doubleValue();
-            double r2 = rsi.getValue(i2).doubleValue();
-
-            if (p2 < p1 && r2 > r1) {
+            if (closePrice.getValue(i2).doubleValue() < closePrice.getValue(i1).doubleValue() &&
+                rsi.getValue(i2).doubleValue() > rsi.getValue(i1).doubleValue()) {
                 return "bullish";
             }
         }
 
-        // Regular bearish divergence
+        // Bearish divergence
         if (highIndices.size() >= 2) {
             int i1 = highIndices.get(highIndices.size() - 2);
             int i2 = highIndices.get(highIndices.size() - 1);
-            double p1 = closePrice.getValue(i1).doubleValue();
-            double p2 = closePrice.getValue(i2).doubleValue();
-            double r1 = rsi.getValue(i1).doubleValue();
-            double r2 = rsi.getValue(i2).doubleValue();
-
-            if (p2 > p1 && r2 < r1) {
+            if (closePrice.getValue(i2).doubleValue() > closePrice.getValue(i1).doubleValue() &&
+                rsi.getValue(i2).doubleValue() < rsi.getValue(i1).doubleValue()) {
                 return "bearish";
             }
         }
 
         return "none";
     }
-
 }

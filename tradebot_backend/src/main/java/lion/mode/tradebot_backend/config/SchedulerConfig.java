@@ -15,8 +15,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SchedulerConfig {
 
-    private final FinnhubDataCollectorService finnhubDataCollectorService;
-    private final AlphaVantageDataCollectorService alphaVantageDataCollectorService;
+    //private final FinnhubDataCollectorService dataCollectorService;
+    private final AlphaVantageDataCollectorService dataCollectorService;
 
     @Value("${tradebot.tracked-symbols-nasdaq}")
     private List<String> symbols;
@@ -25,13 +25,11 @@ public class SchedulerConfig {
     public void scheduleDataFetch() {
         System.out.println("[START] Scheduled data fetch starting at " + LocalDateTime.now());
 
-        finnhubDataCollectorService.fetchAndSaveAll(symbols);
+        //dataCollectorService.fetchAndSaveAll(symbols);
 
-        /*
         for (String symbol : symbols) {
-            alphaVantageDataCollectorService.saveStockData(symbol);
+            dataCollectorService.saveStockData(symbol);
         }
-        */
 
         System.out.println("[DONE] Scheduled data fetch finished at " + LocalDateTime.now());
     }

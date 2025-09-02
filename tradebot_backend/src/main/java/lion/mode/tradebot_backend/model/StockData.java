@@ -10,6 +10,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "stock_data")
+//@Table(name = "nasdaq_stock_data")
 @Data
 public class StockData { // db entity which saves ohlcv data
 
