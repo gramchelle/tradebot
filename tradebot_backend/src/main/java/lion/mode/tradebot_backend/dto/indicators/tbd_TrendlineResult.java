@@ -1,10 +1,10 @@
-package lion.mode.tradebot_backend.dto.indicators.trendline;
+package lion.mode.tradebot_backend.dto.indicators;
 
 import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class TrendlineResult {
+public class tbd_TrendlineResult {
     
     private String symbol;
     private String timeframe; // e.g. 1d 1h

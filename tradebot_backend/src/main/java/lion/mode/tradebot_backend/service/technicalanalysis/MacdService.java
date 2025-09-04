@@ -1,7 +1,6 @@
 package lion.mode.tradebot_backend.service.technicalanalysis;
 
-import lion.mode.tradebot_backend.dto.indicators.macd.MacdResult;
-import lion.mode.tradebot_backend.dto.indicators.macd.MacdResultDivergence;
+import lion.mode.tradebot_backend.dto.indicators.MacdResult;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.Bar;
@@ -10,7 +9,7 @@ import org.ta4j.core.indicators.EMAIndicator;
 import org.ta4j.core.indicators.MACDIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 
-import java.time.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,9 +20,9 @@ public class MacdService extends IndicatorService {
         super(repository);
     }
 
-    public MacdResult calculateMacd(String symbol, int shortPeriod, int longPeriod, int signalPeriod) {
+    public MacdResult calculateMacd(String symbol, int shortPeriod, int longPeriod, int signalPeriod, int histogramTrendPeriod, double histogramConfidence) {
         BarSeries series = loadSeries(symbol);
-        
+
         if (series == null || series.isEmpty()) {
             throw new IllegalArgumentException("No data available for symbol: " + symbol);
         }
@@ -43,18 +42,35 @@ public class MacdService extends IndicatorService {
         result.setSignalScore(signal.getValue(lastIndex).doubleValue());
         result.setHistogramValue(result.getMacdScore() - result.getSignalScore());
 
-        if (result.getHistogramValue() > 0) {
-            result.setSignalText("Bullish");
+        if (result.getHistogramValue() > 0) result.setMaCross("Bullish-Increase");
+        else result.setMaCross("Bearish-Decrease");
+
+        result.setHistogramTrendPeriod(histogramTrendPeriod);
+        result.setHistogramTrend(detectHistogramTrend(series, macd, signal, histogramTrendPeriod, histogramConfidence));
+
+        result.setDivergence(detectDivergence(series, macd, longPeriod));
+
+        if (result.getMaCross().equals("Bullish-Increase") && result.getHistogramTrend().equals("Increasing")) {
+            result.setSignal("Hold");
+            result.setScore(0);
+        } else if (result.getMaCross().equals("Bullish-Increase") && result.getHistogramTrend().equals("Decreasing")) {
+            result.setSignal("Sell");
+            result.setScore(-1);
+        } else if (result.getMaCross().equals("Bearish-Decrease") && result.getHistogramTrend().equals("Decreasing")) {
+            result.setSignal("Hold");
+            result.setScore(-1);
+        } else if (result.getMaCross().equals("Bearish-Decrease") && result.getHistogramTrend().equals("Increasing")) {
+            result.setSignal("Buy");
             result.setScore(1);
         } else {
-            result.setSignalText("Bearish");
-            result.setScore(-1);
+            result.setSignal("Hold - Market Indecisive");
+            result.setScore(0);
         }
 
         return result;
     }
 
-    public MacdResult calculateMacdAt(String symbol, int shortPeriod, int longPeriod, int signalPeriod, LocalDateTime targetDateTime){
+    public MacdResult calculateMacdAt(String symbol, int shortPeriod, int longPeriod, int signalPeriod, LocalDateTime targetDateTime, int histogramTrendPeriod, double histogramConfidence) {
         BarSeries series = loadSeries(symbol);
 
         if (series == null || series.isEmpty()) {
@@ -91,83 +107,61 @@ public class MacdService extends IndicatorService {
         result.setSignalScore(signal.getValue(targetIndex).doubleValue());
         result.setHistogramValue(result.getMacdScore() - result.getSignalScore());
 
-        if (result.getHistogramValue() > 0) {
-            result.setSignalText("Bullish");
+        if (result.getHistogramValue() > 0) result.setMaCross("Bullish-Increase");
+        else result.setMaCross("Bearish-Decrease");
+
+        result.setHistogramTrendPeriod(histogramTrendPeriod);
+        result.setHistogramTrend(detectHistogramTrend(series, macd, signal, histogramTrendPeriod, histogramConfidence));
+        result.setDivergence(detectDivergence(series, macd, longPeriod));
+
+        if (result.getMaCross().equals("Bullish-Increase") && result.getHistogramTrend().equals("Increasing")) {
+            result.setSignal("Hold");
+            result.setScore(0);
+        } else if (result.getMaCross().equals("Bullish-Increase") && result.getHistogramTrend().equals("Decreasing")) {
+            result.setSignal("Sell");
+            result.setScore(-1);
+        } else if (result.getMaCross().equals("Bearish-Decrease") && result.getHistogramTrend().equals("Decreasing")) {
+            result.setSignal("Hold");
+            result.setScore(-1);
+        } else if (result.getMaCross().equals("Bearish-Decrease") && result.getHistogramTrend().equals("Increasing")) {
+            result.setSignal("Buy");
+            result.setScore(1);
+        } else if (result.getMaCross().equals("Bearish-Decrease") && result.getHistogramTrend().equals("Sideways")) {
+            result.setSignal("Buy");
             result.setScore(1);
         } else {
-            result.setSignalText("Bearish");
+            result.setSignal("Sell");
             result.setScore(-1);
         }
 
         return result;
     }
 
-    public MacdResultDivergence calculateMacdAtWithDivergence(
-            String symbol,
-            int shortPeriod,
-            int longPeriod,
-            int signalPeriod,
-            LocalDateTime targetDateTime,
-            int lookback_param
-    ) {
-        BarSeries series = loadSeries(symbol);
-
-        if (series == null || series.isEmpty()) {
-            throw new IllegalArgumentException("No data available for symbol: " + symbol);
+    private String detectHistogramTrend(BarSeries series, MACDIndicator macd, EMAIndicator signal, int trendPeriod, double histogramConfidence) {
+        int endIndex = series.getEndIndex();
+        if (endIndex < trendPeriod) {
+            return "Not enough data";
         }
 
-        int targetIndex = -1;
-        for (int i = 0; i < series.getBarCount(); i++) {
-            LocalDateTime barTime = series.getBar(i).getEndTime().toLocalDateTime();
-            if (!barTime.isAfter(targetDateTime)) {
-                targetIndex = i;
-            } else break;
-        }
-        if (targetIndex == -1) {
-            throw new IllegalArgumentException("No bar found before or at " + targetDateTime);
+        List<Double> histValues = new ArrayList<>();
+        for (int i = endIndex - trendPeriod + 1; i <= endIndex; i++) {
+            double macdValue = macd.getValue(i).doubleValue();
+            double signalValue = signal.getValue(i).doubleValue();
+            histValues.add(macdValue - signalValue);
         }
 
-        ClosePriceIndicator close = new ClosePriceIndicator(series);
-        MACDIndicator macd = new MACDIndicator(close, shortPeriod, longPeriod);
-        EMAIndicator signal = new EMAIndicator(macd, signalPeriod);
+        double first = histValues.get(0);
+        double last = histValues.get(histValues.size() - 1);
 
-        MacdResultDivergence result = new MacdResultDivergence();
-        result.setSymbol(symbol);
-        result.setShortPeriod(shortPeriod);
-        result.setLongPeriod(longPeriod);
-        result.setSignalPeriod(signalPeriod);
+        first += histogramConfidence;
 
-        double macdValue = macd.getValue(targetIndex).doubleValue();
-        double signalValue = signal.getValue(targetIndex).doubleValue();
-        double histogram = macdValue - signalValue;
-
-        result.setMacdScore(macdValue);
-        result.setSignalScore(signalValue);
-        result.setHistogramValue(histogram);
-
-        if (histogram > 0) {
-            result.setSignalText("Bullish");
-            result.setScore(1);
+        if (last > first) {
+            return "Increasing";
+        } else if (last < first) {
+            return "Decreasing";
         } else {
-            result.setSignalText("Bearish");
-            result.setScore(-1);
+            return "Sideways";
         }
-
-        int lookback = Math.min(lookback_param, targetIndex);
-        double lastPrice = close.getValue(targetIndex).doubleValue();
-        double prevPrice = close.getValue(targetIndex - lookback).doubleValue();
-        double lastMacd = macd.getValue(targetIndex).doubleValue();
-        double prevMacd = macd.getValue(targetIndex - lookback).doubleValue();
-        
-        if (lastPrice < prevPrice && lastMacd > prevMacd) {
-            result.setDivergence("Bullish Divergence");
-        } else if (lastPrice > prevPrice && lastMacd < prevMacd) {
-            result.setDivergence("Bearish Divergence");
-        } else {
-            result.setDivergence("None");
-        }
-
-        return result;
     }
 
     private String detectDivergence(BarSeries series, MACDIndicator macd, int lookback) {

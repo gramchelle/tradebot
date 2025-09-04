@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.service.main_layer_services;
+package lion.mode.tradebot_backend.service.data;
 
 import lion.mode.tradebot_backend.model.StockData;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
@@ -25,4 +25,9 @@ public class StockDataService {
     public List<StockData> getStockDataBySymbolAndDateRange(String symbol, LocalDateTime startDate, LocalDateTime endDate) {
         return repository.findBySymbolAndTimestampBetween(symbol, startDate, endDate);
     }
+
+    public List<String> getSymbols(){
+        return repository.findSymbols();
+    }
+
 }

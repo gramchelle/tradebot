@@ -1,17 +1,13 @@
 package lion.mode.tradebot_backend.service.technicalanalysis;
 
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
-import lion.mode.tradebot_backend.dto.indicators.rsi.RSIResult;
+import lion.mode.tradebot_backend.dto.indicators.RSIResult;
 import lion.mode.tradebot_backend.model.StockData;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 import org.springframework.stereotype.Service;
-import org.ta4j.core.Bar;
 import org.ta4j.core.BarSeries;
-import org.ta4j.core.BaseBar;
-import org.ta4j.core.BaseBarSeries;
 import org.ta4j.core.indicators.RSIIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
-import org.ta4j.core.num.DecimalNum;
 
 import java.time.*;
 import java.util.ArrayList;
@@ -24,7 +20,7 @@ public class RsiService extends IndicatorService {
         super(repository);
     }
 
-    public RSIResult calculateRSI(String symbol, int period) {
+    public RSIResult calculateRSI(String symbol, int period, int trendPeriod) {
         BarSeries series = loadSeries(symbol);
         if (series.getBarCount() < period) {
             throw new NotEnoughDataException("Not enough data for RSI calculation for " + symbol);
@@ -35,18 +31,20 @@ public class RsiService extends IndicatorService {
 
         int lastIndex = series.getEndIndex();
         double lastRsi = rsi.getValue(lastIndex).doubleValue();
-        double prevRsi = rsi.getValue(lastIndex - 1).doubleValue();
+        double prevRsi = rsi.getValue(lastIndex - trendPeriod).doubleValue();
 
         RSIResult result = new RSIResult();
         result.setSymbol(symbol);
         result.setPeriod(period);
         result.setRsiValue(lastRsi);
         result.setDate(series.getLastBar().getEndTime().toLocalDateTime());
+        result.setTrendPeriod(trendPeriod);
+
         generateSignalAndScoreResult(result, lastRsi);
         if (lastRsi > prevRsi) {
-            result.setTrendComment("RSI Trend is increasing by " + (lastRsi - prevRsi));
+            result.setTrendComment("RSI Trend is increasing by " + (lastRsi - prevRsi) + " since " + trendPeriod + " period");
         } else {
-            result.setTrendComment("RSI Trend is decreasing by " + (prevRsi - lastRsi));
+            result.setTrendComment("RSI Trend is decreasing by " + (prevRsi - lastRsi) +  " since " + trendPeriod + " period");
         }
         result.setDivergence("none");
 
@@ -66,14 +64,13 @@ public class RsiService extends IndicatorService {
         }
     }
 
-    public RSIResult calculateRSI(String symbol, int period, LocalDateTime targetDate) {
+    public RSIResult calculateRSI(String symbol, int period, LocalDateTime targetDate, int trendPeriod) {
         BarSeries series = loadSeries(symbol);
 
         if (series.getBarCount() < period + 1) {
             throw new NotEnoughDataException("Not enough data for RSI at " + targetDate + " for " + symbol);
         }
 
-        // Target index bulma (MACD'deki gibi)
         int targetIndex = -1;
         for (int i = 0; i < series.getBarCount(); i++) {
             LocalDateTime barTime = series.getBar(i).getEndTime().toLocalDateTime();
@@ -90,13 +87,14 @@ public class RsiService extends IndicatorService {
         RSIIndicator rsi = new RSIIndicator(close, period);
 
         double rsiValue = rsi.getValue(targetIndex).doubleValue();
-        double prevRsi = rsi.getValue(targetIndex - 1).doubleValue();
+        double prevRsi = rsi.getValue(targetIndex - trendPeriod).doubleValue();
 
         RSIResult result = new RSIResult();
         result.setSymbol(symbol);
         result.setPeriod(period);
         result.setRsiValue(rsiValue);
         result.setDate(series.getBar(targetIndex).getEndTime().toLocalDateTime());
+
         generateSignalAndScoreResult(result, rsiValue);
 
         if (rsiValue > prevRsi) {
@@ -104,44 +102,12 @@ public class RsiService extends IndicatorService {
         } else if (rsiValue < prevRsi) {
             result.setTrendComment("RSI Trend is decreasing by " + (prevRsi - rsiValue));
         } else {
-            result.setTrendComment("RSI Trend is stable");
+            result.setTrendComment("RSI Trend is going sideways.");
         }
 
-        result.setDivergence("none"); // ileride divergence detection eklersin
+        result.setDivergence("none"); //TODO: Add divergence detection
 
         return result;
-    }
-
-    public RSIResult calculateRSIWithDivergence(String symbol, int period) {
-        RSIResult rsiResult = calculateRSI(symbol, period);
-        BarSeries series = loadSeries(symbol);
-        rsiResult.setDivergence(detectDivergence(series, period));
-        return rsiResult;
-    }
-
-    public RSIResult calculateRSIWithDivergence(String symbol, int period, LocalDateTime targetDate) {
-        RSIResult rsiResult = calculateRSI(symbol, period, targetDate);
-
-        List<StockData> dataList = repository.findBySymbolAndTimestampLessThanEqualOrderByTimestampAsc(symbol, targetDate);
-        Duration barDuration = detectBarDuration(dataList);
-
-        BarSeries series = new BaseBarSeries(symbol, DecimalNum::valueOf);
-        for (StockData data : dataList) {
-            ZonedDateTime endTime = data.getTimestamp().atZone(ZoneId.of("America/New_York"));
-            Bar bar = BaseBar.builder()
-                    .timePeriod(barDuration)
-                    .endTime(endTime)
-                    .openPrice(DecimalNum.valueOf(data.getOpen()))
-                    .highPrice(DecimalNum.valueOf(data.getHigh()))
-                    .lowPrice(DecimalNum.valueOf(data.getLow()))
-                    .closePrice(DecimalNum.valueOf(data.getClose()))
-                    .volume(DecimalNum.valueOf(data.getVolume()))
-                    .build();
-            series.addBar(bar);
-        }
-
-        rsiResult.setDivergence(detectDivergence(series, period));
-        return rsiResult;
     }
 
     private Duration detectBarDuration(List<StockData> dataList) {
@@ -151,6 +117,7 @@ public class RsiService extends IndicatorService {
         return Duration.between(t0, t1);
     }
 
+    //TODO: Enhance this method
     private String detectDivergence(BarSeries series, int period) {
         ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
         RSIIndicator rsi = new RSIIndicator(closePrice, period);

@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.service.fetch_data_api;
+package lion.mode.tradebot_backend.service.data;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -36,7 +36,7 @@ public class AlphaVantageDataCollectorService {
         try {
             String url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY"
                     + "&symbol=" + symbol
-                    + "&interval=30min&apikey=" + apiKey;
+                    + "&interval=60min&apikey=" + apiKey;
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -45,7 +45,7 @@ public class AlphaVantageDataCollectorService {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
-            JsonObject timeSeries = json.getAsJsonObject("Time Series (30min)");
+            JsonObject timeSeries = json.getAsJsonObject("Time Series (60min)");
 
             if (timeSeries == null) {
                 System.err.println("[!] Not able to fetch data for " + symbol + ". API Answer: " + response.body());
@@ -58,12 +58,14 @@ public class AlphaVantageDataCollectorService {
                     .orElse(null);
 
             for (Map.Entry<String, JsonElement> entry : timeSeries.entrySet()) {
-                ZonedDateTime etTime = LocalDateTime.parse(entry.getKey(), FORMATTER)
+                // Alpha Vantage timestamp is in New York time
+                ZonedDateTime nyTime = LocalDateTime.parse(entry.getKey(), FORMATTER)
                         .atZone(ZoneId.of("America/New_York"));
 
-                LocalDateTime localTime = etTime.withZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime();
+                // Convert to UTC
+                LocalDateTime utcTime = nyTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
 
-                if (lastTimestampInDb == null || localTime.isAfter(lastTimestampInDb)) {
+                if (lastTimestampInDb == null || utcTime.isAfter(lastTimestampInDb)) {
                     JsonObject values = entry.getValue().getAsJsonObject();
                     StockData data = new StockData();
                     data.setSymbol(symbol);
@@ -72,7 +74,7 @@ public class AlphaVantageDataCollectorService {
                     data.setLow(values.get("3. low").getAsDouble());
                     data.setClose(values.get("4. close").getAsDouble());
                     data.setVolume(values.get("5. volume").getAsLong());
-                    data.setTimestamp(localTime);
+                    data.setTimestamp(utcTime); // ✅ Always UTC
                     newStockDataList.add(data);
                 }
             }

@@ -9,10 +9,9 @@ import java.time.LocalDateTime;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "stock_data")
-//@Table(name = "nasdaq_stock_data")
+@Table(name = "stock_data_historical")
 @Data
-public class StockData { // db entity which saves ohlcv data
+public class StockData {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.controller.statistical_analysis_controllers;
+package lion.mode.tradebot_backend.controller.statistical_analysis;
 
 public class StatisticalAnalysisController {
 
