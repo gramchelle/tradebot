@@ -1,8 +1,9 @@
-package lion.mode.tradebot_backend.service.technicalanalysis;
+package lion.mode.tradebot_backend.service.technicalanalysis.indicators;
 
 import lion.mode.tradebot_backend.dto.indicators.BollingerResult;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
+import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.*;
 import org.ta4j.core.indicators.SMAIndicator;
@@ -16,44 +17,33 @@ import org.ta4j.core.num.DecimalNum;
 import java.time.*;
 
 @Service
-public class BollingerService extends IndicatorService {
+public class BollingerBandsService extends IndicatorService {
 
-    public BollingerService(StockDataRepository repository) {
+    public BollingerBandsService(StockDataRepository repository) {
         super(repository);
     }
 
-    public BollingerResult calculateLatest(String symbol, int period, double nbDev) {
+    public BollingerResult calculateAtDate(String symbol, int period, double nbDev, LocalDateTime date, double squeezeConfidence) {
         BarSeries series = loadSeries(symbol);
-        if (series.getBarCount() < period) {
-            throw new NotEnoughDataException("Not enough data for Bollinger Bands: " + symbol);
-        }
-        int lastIndex = series.getEndIndex();
-        return calculateAtIndex(symbol, series, period, nbDev, lastIndex);
-    }
 
-    public BollingerResult calculateAtDate(String symbol, int period, double nbDev, LocalDateTime targetDate) {
-        BarSeries series = loadSeries(symbol);
         if (series.getBarCount() < period) {
-            throw new NotEnoughDataException("Not enough data for Bollinger Bands: " + symbol);
+            throw new NotEnoughDataException("Not enough data for Bollinger Bands for symbol: " + symbol);
         }
 
-        // targetDate -> hangi bara denk geliyor bul
-        ZonedDateTime target = targetDate.atZone(ZoneId.of("America/New_York")); // EST kullanıyoruz
         int targetIndex = -1;
         for (int i = 0; i < series.getBarCount(); i++) {
-            if (!series.getBar(i).getEndTime().isAfter(target)) {
+            LocalDateTime barTime = series.getBar(i).getEndTime().toLocalDateTime();
+            if (!barTime.isAfter(date)) {
                 targetIndex = i;
-            } else {
-                break;
-            }
+            } else break;
         }
-        if (targetIndex < period) {
-            throw new NotEnoughDataException("Not enough data before target date: " + targetDate);
+        if (targetIndex == -1) {
+            throw new NotEnoughDataException("Not enough data before target date: " + date);
         }
-        return calculateAtIndex(symbol, series, period, nbDev, targetIndex);
+        return calculateAtIndex(symbol, series, period, nbDev, targetIndex, squeezeConfidence);
     }
 
-    private BollingerResult calculateAtIndex(String symbol, BarSeries series, int period, double nbDev, int index) {
+    private BollingerResult calculateAtIndex(String symbol, BarSeries series, int period, double nbDev, int index, double squeezeConfidence) {
         ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
         SMAIndicator sma = new SMAIndicator(closePrice, period);
         StandardDeviationIndicator sd = new StandardDeviationIndicator(closePrice, period);
@@ -72,17 +62,16 @@ public class BollingerService extends IndicatorService {
         BollingerResult result = new BollingerResult();
         result.setSymbol(symbol);
         result.setPeriod(period);
-        result.setNbDev(nbDev);
+        result.setNumberOfDeviations(nbDev);
         result.setMiddle(middle);
         result.setUpper(upper);
         result.setLower(lower);
         result.setBandwidth(bandwidth);
 
-        // --- Squeeze detection ---
-        boolean squeeze = bandwidth < 0.05; // çok dar (sen parametre yapabilirsin)
+        // Squeeze detection
+        boolean squeeze = bandwidth < squeezeConfidence;
         result.setSqueeze(squeeze ? "squeeze detected" : "squeeze not detected");
 
-        // --- Signal ---
         if (close >= upper) {
             result.setSignal("sell");
             result.setScore(-1);

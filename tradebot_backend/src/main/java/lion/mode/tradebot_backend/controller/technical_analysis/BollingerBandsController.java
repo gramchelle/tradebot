@@ -1,7 +1,7 @@
 package lion.mode.tradebot_backend.controller.technical_analysis;
 
 import lion.mode.tradebot_backend.dto.indicators.BollingerResult;
-import lion.mode.tradebot_backend.service.technicalanalysis.BollingerService;
+import lion.mode.tradebot_backend.service.technicalanalysis.indicators.BollingerBandsService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.format.annotation.DateTimeFormat;
@@ -20,31 +20,17 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class BollingerBandsController {
 
-    private final BollingerService bollingerService;
+    private final BollingerBandsService bollingerService;
 
     @GetMapping("/{symbol}")
-    public ResponseEntity<BollingerResult> getLatestBollinger(
-            @PathVariable String symbol,
-            @RequestParam(defaultValue = "20") int period,
-            @RequestParam(defaultValue = "2.0") double nbDev,
-            @RequestParam(defaultValue = "1h") String interval) {
-
-        BollingerResult result = bollingerService.calculateLatest(symbol, period, nbDev);
-        return new ResponseEntity<>(result, HttpStatus.OK);
-    }
-
-    /**
-     * Belirli bir tarihteki Bollinger Bands sonucu
-     */
-    @GetMapping("/{symbol}/at")
     public ResponseEntity<BollingerResult> getBollingerAtDate(
             @PathVariable String symbol,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime targetDate,
             @RequestParam(defaultValue = "20") int period,
-            @RequestParam(defaultValue = "2.0") double nbDev,
-            @RequestParam(defaultValue = "1d") String interval) {
-
-        BollingerResult result = bollingerService.calculateAtDate(symbol, period, nbDev, targetDate);
+            @RequestParam(defaultValue = "2.0") double numberOfDeviations,
+            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "0.05") double squeezeConfidence
+    ) {
+        BollingerResult result = bollingerService.calculateAtDate(symbol, period, numberOfDeviations, date, squeezeConfidence);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 

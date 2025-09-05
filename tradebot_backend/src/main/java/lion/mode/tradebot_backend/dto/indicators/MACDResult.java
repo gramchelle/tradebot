@@ -1,11 +1,9 @@
 package lion.mode.tradebot_backend.dto.indicators;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.annotation.Nullable;
 import lombok.Data;
 
 @Data
-public class MacdResult { // MACD is a momentum indicator that shows the relationship between two moving averages of a security’s price.
+public class MACDResult {
     
     private String symbol;
 
@@ -28,6 +26,8 @@ public class MacdResult { // MACD is a momentum indicator that shows the relatio
     private String divergence;
 
     private String maCross;
+
+    private double confidence;
 
     private String signal;
 

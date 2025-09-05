@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.service.technicalanalysis;
+package lion.mode.tradebot_backend.service.technicalanalysis.indicators;
 
 import lion.mode.tradebot_backend.dto.indicators.TrendlineResult;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
@@ -15,39 +15,23 @@ public class TrendlineService extends IndicatorService {
         super(repository);
     }
 
-    public TrendlineResult calculateTrendline(String symbol, int period, int lookback) {
+    public TrendlineResult calculateTrendline(String symbol, int period, int lookback, LocalDateTime date) {
         BarSeries series = loadSeries(symbol);
 
         if (series.getBarCount() < period + lookback) {
-            throw new NotEnoughDataException("Not enough data for Trendline calculation for " + symbol);
-        }
-
-        int lastIndex = series.getEndIndex();
-        double slope = computeSlope(series, period, lastIndex);
-
-        TrendlineResult result = buildResult(symbol, period, lookback, slope, series.getLastBar().getEndTime().toLocalDateTime());
-        checkSupportResistance(series, result, lastIndex, period, lookback);
-
-        return result;
-    }
-
-    public TrendlineResult calculateTrendlineAt(String symbol, int period, int lookback, LocalDateTime targetDate) {
-        BarSeries series = loadSeries(symbol);
-
-        if (series.getBarCount() < period + lookback) {
-            throw new NotEnoughDataException("Not enough data for Trendline at " + targetDate + " for " + symbol);
+            throw new NotEnoughDataException("Not enough data for Trendline at " + date + " for " + symbol);
         }
 
         int targetIndex = -1;
         for (int i = 0; i < series.getBarCount(); i++) {
             LocalDateTime barTime = series.getBar(i).getEndTime().toLocalDateTime();
-            if (!barTime.isAfter(targetDate)) {
+            if (!barTime.isAfter(date)) {
                 targetIndex = i;
             } else break;
         }
 
         if (targetIndex == -1 || targetIndex < period) {
-            throw new NotEnoughDataException("No bar found before or at " + targetDate + " for " + symbol);
+            throw new NotEnoughDataException("No bar found before or at " + date + " for " + symbol);
         }
 
         double slope = computeSlope(series, period, targetIndex);
@@ -102,6 +86,7 @@ public class TrendlineService extends IndicatorService {
         return result;
     }
 
+    // TODO: refine logic
     private void checkSupportResistance(BarSeries series, TrendlineResult result, int endIndex, int period, int lookback) {
         int startIndex = Math.max(0, endIndex - lookback);
         double intercept = series.getBar(endIndex).getClosePrice().doubleValue() - result.getSlope() * (period - 1);
@@ -110,7 +95,7 @@ public class TrendlineService extends IndicatorService {
         for (int i = startIndex; i <= endIndex; i++) {
             double expected = intercept + result.getSlope() * i;
             double actual = series.getBar(i).getClosePrice().doubleValue();
-            double tolerance = expected * 0.01; // %1 hata payı
+            double tolerance = expected * 0.9; // error tolerance
             if (Math.abs(expected - actual) <= tolerance) {
                 touches++;
             }

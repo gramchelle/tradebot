@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.service.technicalanalysis;
+package lion.mode.tradebot_backend.service.technicalanalysis.indicators;
 
 import lion.mode.tradebot_backend.dto.indicators.MFIResult;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
@@ -16,41 +16,28 @@ public class MFIService extends IndicatorService{
         super(repository);
     }
 
-    public MFIResult calculateMFI(String symbol, int period) {
+    public MFIResult calculateMFI(String symbol, int period, LocalDateTime date, int lowerLimit, int upperLimit) {
         BarSeries series = loadSeries(symbol);
 
         if (series.getBarCount() < period + 1) {
-            throw new NotEnoughDataException("Not enough data for MFI calculation for " + symbol);
-        }
-
-        int lastIndex = series.getEndIndex();
-        double mfiValue = computeMFI(series, period, lastIndex);
-
-        return buildResult(symbol, period, mfiValue);
-    }
-
-    public MFIResult calculateMFIAt(String symbol, int period, LocalDateTime targetDate) {
-        BarSeries series = loadSeries(symbol);
-
-        if (series.getBarCount() < period + 1) {
-            throw new NotEnoughDataException("Not enough data for MFI at " + targetDate + " for " + symbol);
+            throw new NotEnoughDataException("Not enough data for MFI at " + date + " for " + symbol);
         }
 
         int targetIndex = -1;
         for (int i = 0; i < series.getBarCount(); i++) {
             LocalDateTime barTime = series.getBar(i).getEndTime().toLocalDateTime();
-            if (!barTime.isAfter(targetDate)) {
+            if (!barTime.isAfter(date)) {
                 targetIndex = i;
             } else break;
         }
 
         if (targetIndex == -1 || targetIndex < period) {
-            throw new NotEnoughDataException("No bar found before or at " + targetDate + " for " + symbol);
+            throw new NotEnoughDataException("No bar found before or at " + date + " for " + symbol);
         }
 
         double mfiValue = computeMFI(series, period, targetIndex);
 
-        return buildResult(symbol, period, mfiValue);
+        return buildResult(symbol, period, mfiValue, lowerLimit, upperLimit);
     }
 
     private double computeMFI(BarSeries series, int period, int index) {
@@ -79,30 +66,29 @@ public class MFIService extends IndicatorService{
         }
 
         if (negativeFlow == 0) {
-            return 100.0; // tamamen pozitif akış varsa MFI = 100
+            return 100.0; // full positive flow MFI = 100
         }
 
         double moneyFlowRatio = positiveFlow / negativeFlow;
         return 100 - (100 / (1 + moneyFlowRatio));
     }
 
-    private MFIResult buildResult(String symbol, int period, double mfiValue) {
+    private MFIResult buildResult(String symbol, int period, double mfiValue, int lowerLimit, int upperLimit) {
         MFIResult result = new MFIResult();
         result.setSymbol(symbol);
         result.setPeriod(period);
         result.setMfiValue(mfiValue);
 
-        if (mfiValue > 80) {
-            result.setSignal("sell");
+        if (mfiValue > upperLimit) {
+            result.setSignal("Sell");
             result.setScore(-1);
-        } else if (mfiValue < 20) {
-            result.setSignal("buy");
+        } else if (mfiValue < lowerLimit) {
+            result.setSignal("Buy");
             result.setScore(1);
         } else {
-            result.setSignal("hold");
+            result.setSignal("Hold");
             result.setScore(0);
         }
         return result;
     }
-
 }

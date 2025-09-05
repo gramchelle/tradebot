@@ -1,6 +1,6 @@
-package lion.mode.tradebot_backend.service.technicalanalysis;
+package lion.mode.tradebot_backend.service.technicalanalysis.indicators;
 
-import lion.mode.tradebot_backend.dto.indicators.MacdResult;
+import lion.mode.tradebot_backend.dto.indicators.MACDResult;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.Bar;
@@ -14,63 +14,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class MacdService extends IndicatorService {
+public class MACDService extends IndicatorService {
 
-    public MacdService(StockDataRepository repository) {
+    public MACDService(StockDataRepository repository) {
         super(repository);
     }
 
-    public MacdResult calculateMacd(String symbol, int shortPeriod, int longPeriod, int signalPeriod, int histogramTrendPeriod, double histogramConfidence) {
-        BarSeries series = loadSeries(symbol);
-
-        if (series == null || series.isEmpty()) {
-            throw new IllegalArgumentException("No data available for symbol: " + symbol);
-        }
-
-        MacdResult result = new MacdResult();
-        result.setSymbol(symbol);
-        result.setShortPeriod(shortPeriod);
-        result.setLongPeriod(longPeriod);
-        result.setSignalPeriod(signalPeriod);
-
-        ClosePriceIndicator close = new ClosePriceIndicator(series);
-        MACDIndicator macd = new MACDIndicator(close, shortPeriod, longPeriod);
-        EMAIndicator signal = new EMAIndicator(macd, signalPeriod);
-
-        int lastIndex = series.getEndIndex();
-        result.setMacdScore(macd.getValue(lastIndex).doubleValue());
-        result.setSignalScore(signal.getValue(lastIndex).doubleValue());
-        result.setHistogramValue(result.getMacdScore() - result.getSignalScore());
-
-        if (result.getHistogramValue() > 0) result.setMaCross("Bullish-Increase");
-        else result.setMaCross("Bearish-Decrease");
-
-        result.setHistogramTrendPeriod(histogramTrendPeriod);
-        result.setHistogramTrend(detectHistogramTrend(series, macd, signal, histogramTrendPeriod, histogramConfidence));
-
-        result.setDivergence(detectDivergence(series, macd, longPeriod));
-
-        if (result.getMaCross().equals("Bullish-Increase") && result.getHistogramTrend().equals("Increasing")) {
-            result.setSignal("Hold");
-            result.setScore(0);
-        } else if (result.getMaCross().equals("Bullish-Increase") && result.getHistogramTrend().equals("Decreasing")) {
-            result.setSignal("Sell");
-            result.setScore(-1);
-        } else if (result.getMaCross().equals("Bearish-Decrease") && result.getHistogramTrend().equals("Decreasing")) {
-            result.setSignal("Hold");
-            result.setScore(-1);
-        } else if (result.getMaCross().equals("Bearish-Decrease") && result.getHistogramTrend().equals("Increasing")) {
-            result.setSignal("Buy");
-            result.setScore(1);
-        } else {
-            result.setSignal("Hold - Market Indecisive");
-            result.setScore(0);
-        }
-
-        return result;
-    }
-
-    public MacdResult calculateMacdAt(String symbol, int shortPeriod, int longPeriod, int signalPeriod, LocalDateTime targetDateTime, int histogramTrendPeriod, double histogramConfidence) {
+    public MACDResult calculateMacd(String symbol, int shortPeriod, int longPeriod, int signalPeriod, LocalDateTime targetDateTime, int histogramTrendPeriod, double histogramConfidence) {
         BarSeries series = loadSeries(symbol);
 
         if (series == null || series.isEmpty()) {
@@ -81,7 +31,6 @@ public class MacdService extends IndicatorService {
         for (int i = 0; i < series.getBarCount(); i++) {
             Bar bar = series.getBar(i);
             LocalDateTime barTime = bar.getEndTime().toLocalDateTime();
-
             if (!barTime.isAfter(targetDateTime)) {
                 targetIndex = i;
             } else {
@@ -97,7 +46,7 @@ public class MacdService extends IndicatorService {
         MACDIndicator macd = new MACDIndicator(close, shortPeriod, longPeriod);
         EMAIndicator signal = new EMAIndicator(macd, signalPeriod);
 
-        MacdResult result = new MacdResult();
+        MACDResult result = new MACDResult();
         result.setSymbol(symbol);
         result.setShortPeriod(shortPeriod);
         result.setLongPeriod(longPeriod);
@@ -107,31 +56,31 @@ public class MacdService extends IndicatorService {
         result.setSignalScore(signal.getValue(targetIndex).doubleValue());
         result.setHistogramValue(result.getMacdScore() - result.getSignalScore());
 
-        if (result.getHistogramValue() > 0) result.setMaCross("Bullish-Increase");
-        else result.setMaCross("Bearish-Decrease");
+        if (result.getHistogramValue() > 0) result.setMaCross("Bullish");
+        else result.setMaCross("Bearish");
 
         result.setHistogramTrendPeriod(histogramTrendPeriod);
         result.setHistogramTrend(detectHistogramTrend(series, macd, signal, histogramTrendPeriod, histogramConfidence));
         result.setDivergence(detectDivergence(series, macd, longPeriod));
 
-        if (result.getMaCross().equals("Bullish-Increase") && result.getHistogramTrend().equals("Increasing")) {
-            result.setSignal("Hold");
-            result.setScore(0);
-        } else if (result.getMaCross().equals("Bullish-Increase") && result.getHistogramTrend().equals("Decreasing")) {
+        if (result.getMaCross().equals("Bullish") && result.getHistogramTrend().equals("Increasing")) {
             result.setSignal("Sell");
             result.setScore(-1);
-        } else if (result.getMaCross().equals("Bearish-Decrease") && result.getHistogramTrend().equals("Decreasing")) {
+        } else if (result.getMaCross().equals("Bullish") && result.getHistogramTrend().equals("Decreasing")) {
             result.setSignal("Hold");
-            result.setScore(-1);
-        } else if (result.getMaCross().equals("Bearish-Decrease") && result.getHistogramTrend().equals("Increasing")) {
+            result.setScore(0);
+        } else if (result.getMaCross().equals("Bearish") && result.getHistogramTrend().equals("Decreasing")) {
             result.setSignal("Buy");
             result.setScore(1);
-        } else if (result.getMaCross().equals("Bearish-Decrease") && result.getHistogramTrend().equals("Sideways")) {
+        } else if (result.getMaCross().equals("Bearish") && result.getHistogramTrend().equals("Increasing")) {
+            result.setSignal("Hold");
+            result.setScore(0);
+        } else if (result.getMaCross().equals("Bearish") && result.getHistogramTrend().equals("Sideways")) {
             result.setSignal("Buy");
             result.setScore(1);
         } else {
-            result.setSignal("Sell");
-            result.setScore(-1);
+            result.setSignal("Hold");
+            result.setScore(0);
         }
 
         return result;
@@ -164,6 +113,7 @@ public class MacdService extends IndicatorService {
         }
     }
 
+    // TODO: Enhance this method
     private String detectDivergence(BarSeries series, MACDIndicator macd, int lookback) {
         int endIndex = series.getEndIndex();
         if (endIndex < lookback + 2) {

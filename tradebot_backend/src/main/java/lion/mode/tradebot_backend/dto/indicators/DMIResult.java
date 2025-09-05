@@ -17,7 +17,9 @@ public class DMIResult {
 
     private double minusDi;
 
-    private String signal = "none determined yet";
+    private double confidence;
 
-    private int score; // -1, 0, 1
+    private String signal;
+
+    private int score;
 }

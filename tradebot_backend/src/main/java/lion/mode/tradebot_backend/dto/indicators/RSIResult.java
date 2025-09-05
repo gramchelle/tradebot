@@ -21,12 +21,12 @@ public class RSIResult {
 
     private int score;
 
-    // private double confidence = 0; // Later in the process
+    private double confidence = 0;
 
     private String divergence = "none detected yet";
 
     @JsonIgnore
-    private int trendPeriod = 2;
+    private int trendPeriod;
 
     private String trendComment;
 

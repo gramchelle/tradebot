@@ -12,15 +12,11 @@ public class ADXResult {
 
     private double prevAdx;
 
-    private double prev2Adx; // previous and 2 previous adx values are stored to calculate the trend
-
     private int adxPeriod;
 
     @JsonIgnore
-    private int adxLookback = 3; // TBD: this is the number of previous adx values to consider
+    private int adxLookback;
 
-    private String signal;
-
-    private int score;
+    private String trend;
 
 }

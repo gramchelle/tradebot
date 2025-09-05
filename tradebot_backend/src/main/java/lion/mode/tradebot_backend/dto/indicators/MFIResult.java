@@ -7,11 +7,13 @@ public class MFIResult {
 
     private String symbol;
 
-    private int period = 14;
+    private int period;
 
     private double mfiValue;
 
-    private String signal = "none"; // buy / sell / hold
+    private double confidence;
+
+    private String signal;
 
     private int score;
 

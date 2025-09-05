@@ -1,6 +1,7 @@
-package lion.mode.tradebot_backend.service.technicalanalysis;
+package lion.mode.tradebot_backend.service.technicalanalysis.indicators;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
@@ -126,6 +127,11 @@ public class MACrossService extends IndicatorService {
         result.setScore(signal.equals("Bullish") ? 1 : -1);
 
         return result;
+    }
+
+    // TODO: Implement this method
+    public List<String> getCrossAmountAndDate(String symbol, int period, LocalDateTime date, int lookback){
+        return null;
     }
 
 }

@@ -14,17 +14,19 @@ public class TrendlineResult {
 
     private LocalDateTime date;
 
-    private double slope;           // Trend eğimi
+    private double slope;
 
-    private String direction;       // Uptrend, Downtrend, Sideways
+    private String direction;
 
-    private String signal;          // Buy, Sell, Hold
+    private double confidence;
 
-    private int score;              // +1, -1, 0
+    private String signal;
 
-    private String comment;         // Trend hakkında yorum
+    private int score;
 
-    private boolean actsAsSupport;  // true/false
+    private String comment;
 
-    private boolean actsAsResistance; // true/false
+    private boolean actsAsSupport;
+
+    private boolean actsAsResistance;
 }

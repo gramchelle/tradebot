@@ -1,5 +1,6 @@
-package lion.mode.tradebot_backend.service.technicalanalysis;
+package lion.mode.tradebot_backend.service.technicalanalysis.indicators;
 
+import com.fasterxml.jackson.datatype.jsr310.deser.key.LocalDateKeyDeserializer;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
 import lion.mode.tradebot_backend.model.StockData;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
@@ -7,10 +8,10 @@ import org.ta4j.core.Bar;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.BaseBar;
 import org.ta4j.core.BaseBarSeries;
-import org.ta4j.core.indicators.RSIIndicator;
-import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.num.DecimalNum;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -23,6 +24,8 @@ abstract class IndicatorService{
         this.repository = repository;
     }
 
+    private String zoneId = "America/New_York";
+
     protected BarSeries loadSeries(String symbol) {
 
         if (repository.findBySymbol(symbol).isEmpty()) {
@@ -32,8 +35,9 @@ abstract class IndicatorService{
         List<StockData> dataList = repository.findBySymbolOrderByTimestampAsc(symbol);
         BarSeries series = new BaseBarSeries(symbol, DecimalNum::valueOf);
 
+
         for (StockData data : dataList) {
-            ZonedDateTime endTime = data.getTimestamp().atZone(ZoneId.of("America/New_York"));
+            ZonedDateTime endTime = data.getTimestamp().atZone(ZoneId.of(zoneId));
 
             if (series.getBarCount() > 0) {
                 ZonedDateTime lastEnd = series.getBar(series.getEndIndex()).getEndTime();
@@ -43,7 +47,7 @@ abstract class IndicatorService{
             }
 
             Bar bar = BaseBar.builder()
-                    .timePeriod(java.time.Duration.ofMinutes(1))
+                    .timePeriod(java.time.Duration.ofDays(1)) // Be careful with this line, the time interval is 1 day
                     .endTime(endTime)
                     .openPrice(DecimalNum.valueOf(data.getOpen()))
                     .highPrice(DecimalNum.valueOf(data.getHigh()))
@@ -55,9 +59,6 @@ abstract class IndicatorService{
         }
         return series;
     }
-
-    // TODO: divergence engine
-
 }
 
 

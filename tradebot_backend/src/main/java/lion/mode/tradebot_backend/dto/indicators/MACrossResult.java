@@ -19,11 +19,9 @@ public class MACrossResult {
 
     private double crossoverPoint;
 
+    private double confidence;
+
     private String signal;
 
     private int score;
-
-    //private double confidence = 1.0;
-
-    //private String trend = "none detected yet";
 }
