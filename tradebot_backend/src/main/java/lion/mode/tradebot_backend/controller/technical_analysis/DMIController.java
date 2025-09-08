@@ -1,7 +1,7 @@
 package lion.mode.tradebot_backend.controller.technical_analysis;
 
 import lion.mode.tradebot_backend.dto.indicators.DMIResult;
-import lion.mode.tradebot_backend.service.technicalanalysis.indicators.DMIService;
+import lion.mode.tradebot_backend.service.technicalanalysis.DMIService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;

@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.service.technicalanalysis.indicators;
+package lion.mode.tradebot_backend.service.technicalanalysis;
 
 import lion.mode.tradebot_backend.dto.indicators.ADXResult;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.indicators.adx.ADXIndicator;
 import org.ta4j.core.indicators.adx.PlusDIIndicator;
-import org.ta4j.core.indicators.adx.MinusDIIndicator;
 
 import java.time.LocalDateTime;
 
@@ -25,6 +24,7 @@ public class ADXService extends IndicatorService {
             throw new NotEnoughDataException("Not enough data for ADX at " + targetDate + " for " + symbol);
         }
 
+        /*
         int targetIndex = -1;
         for (int i = 0; i < series.getBarCount(); i++) {
             LocalDateTime barTime = series.getBar(i).getEndTime().toLocalDateTime();
@@ -36,6 +36,9 @@ public class ADXService extends IndicatorService {
         if (targetIndex == -1) {
             throw new NotEnoughDataException("No bar found before or at " + targetDate + " for " + symbol);
         }
+        */
+
+        int targetIndex = seriesAmountValidator(symbol, series, targetDate);
 
         ADXIndicator adx = new ADXIndicator(series, adxPeriod);
         PlusDIIndicator plusDI = new PlusDIIndicator(series, adxPeriod);
@@ -51,7 +54,7 @@ public class ADXService extends IndicatorService {
         result.setAdxPeriod(adxPeriod);
         result.setAdxLookback(adxLookback);
 
-        if (adxValue > 38) result.setTrend("really strong");
+        if (adxValue > 38) result.setTrend("very strong");
         else if (adxValue > 25)  result.setTrend("strong");
         else result.setTrend("weak");
 

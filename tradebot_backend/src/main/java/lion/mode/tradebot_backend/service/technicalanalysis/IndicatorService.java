@@ -1,6 +1,5 @@
-package lion.mode.tradebot_backend.service.technicalanalysis.indicators;
+package lion.mode.tradebot_backend.service.technicalanalysis;
 
-import com.fasterxml.jackson.datatype.jsr310.deser.key.LocalDateKeyDeserializer;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
 import lion.mode.tradebot_backend.model.StockData;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
@@ -8,15 +7,21 @@ import org.ta4j.core.Bar;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.BaseBar;
 import org.ta4j.core.BaseBarSeries;
+import org.ta4j.core.indicators.AbstractIndicator;
+import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
+import org.ta4j.core.indicators.helpers.HighPriceIndicator;
+import org.ta4j.core.indicators.helpers.LowPriceIndicator;
+import org.ta4j.core.indicators.helpers.OpenPriceIndicator;
 import org.ta4j.core.num.DecimalNum;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 
 abstract class IndicatorService{
+
+    //TODO: Add OHLC selector to all indicators
 
     protected final StockDataRepository repository;
 
@@ -58,6 +63,34 @@ abstract class IndicatorService{
             series.addBar(bar);
         }
         return series;
+    }
+
+    protected int seriesAmountValidator(String symbol, BarSeries series, LocalDateTime targetDate){
+        int targetIndex = -1;
+        for (int i = 0; i < series.getBarCount(); i++) {
+            LocalDateTime barTime = series.getBar(i).getEndTime().toLocalDateTime();
+            if (!barTime.isAfter(targetDate)) {
+                targetIndex = i;
+            } else break;
+        }
+
+        if (targetIndex == -1) throw new NotEnoughDataException("No bar found before or at " + targetDate + " for " + symbol);
+        else return targetIndex;
+    }
+
+    protected AbstractIndicator<?> priceTypeSelector(String priceType, BarSeries series){
+        switch (priceType) {
+            case "open":
+                return new OpenPriceIndicator(series);
+            case "close":
+                return new ClosePriceIndicator(series);
+            case "high":
+                return new HighPriceIndicator(series);
+            case "low":
+                return new LowPriceIndicator(series);
+            default:
+                throw new IllegalArgumentException("Invalid price type: " + priceType);
+        }
     }
 }
 

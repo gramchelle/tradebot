@@ -2,16 +2,14 @@ package lion.mode.tradebot_backend;
 
 import lion.mode.tradebot_backend.model.StockData;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
-import lion.mode.tradebot_backend.service.technicalanalysis.indicators.RSIService;
+import lion.mode.tradebot_backend.service.technicalanalysis.RSIService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.ta4j.core.BarSeries;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class RSIServiceTest {

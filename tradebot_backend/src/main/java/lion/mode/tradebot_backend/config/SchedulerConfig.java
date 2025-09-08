@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import lion.mode.tradebot_backend.service.data.AlphaVantageDataCollectorService;
+import lion.mode.tradebot_backend.service.fetchdata.AlphaVantageDataCollectorService;
 
 import java.time.LocalDateTime;
 import java.util.List;

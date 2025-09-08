@@ -1,7 +1,7 @@
 package lion.mode.tradebot_backend.controller.technical_analysis;
 
 import lion.mode.tradebot_backend.dto.indicators.ADXResult;
-import lion.mode.tradebot_backend.service.technicalanalysis.indicators.ADXService;
+import lion.mode.tradebot_backend.service.technicalanalysis.ADXService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;

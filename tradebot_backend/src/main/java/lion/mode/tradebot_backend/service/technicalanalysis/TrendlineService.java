@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.service.technicalanalysis.indicators;
+package lion.mode.tradebot_backend.service.technicalanalysis;
 
 import lion.mode.tradebot_backend.dto.indicators.TrendlineResult;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
@@ -22,17 +22,7 @@ public class TrendlineService extends IndicatorService {
             throw new NotEnoughDataException("Not enough data for Trendline at " + date + " for " + symbol);
         }
 
-        int targetIndex = -1;
-        for (int i = 0; i < series.getBarCount(); i++) {
-            LocalDateTime barTime = series.getBar(i).getEndTime().toLocalDateTime();
-            if (!barTime.isAfter(date)) {
-                targetIndex = i;
-            } else break;
-        }
-
-        if (targetIndex == -1 || targetIndex < period) {
-            throw new NotEnoughDataException("No bar found before or at " + date + " for " + symbol);
-        }
+        int targetIndex = seriesAmountValidator(symbol, series, date);
 
         double slope = computeSlope(series, period, targetIndex);
 
@@ -67,12 +57,12 @@ public class TrendlineService extends IndicatorService {
         result.setSlope(slope);
         result.setDate(date);
 
-        if (slope > 0.0) {
+        if (slope > 5.0) {
             result.setDirection("Uptrend");
             result.setSignal("Buy");
             result.setScore(1);
             result.setComment("Trendline indicates an upward trend.");
-        } else if (slope < 0.0) {
+        } else if (slope < -5.0) {
             result.setDirection("Downtrend");
             result.setSignal("Sell");
             result.setScore(-1);
@@ -109,5 +99,6 @@ public class TrendlineService extends IndicatorService {
                 result.setActsAsResistance(true);
             }
         }
+            
     }
 }

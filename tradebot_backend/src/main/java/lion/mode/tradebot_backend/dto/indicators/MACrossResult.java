@@ -7,9 +7,9 @@ public class MACrossResult {
 
     private String symbol;
 
-    private int shortPeriod = 9;
+    private int shortPeriod;
 
-    private int longPeriod = 21;
+    private int longPeriod;
 
     private String maType;
 

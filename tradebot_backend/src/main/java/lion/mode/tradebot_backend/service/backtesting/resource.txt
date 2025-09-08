@@ -1,0 +1,2 @@
+https://ta4j.github.io/ta4j-wiki/Backtesting.html
+https://ta4j.github.io/ta4j-wiki/Trading-strategies.html

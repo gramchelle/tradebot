@@ -1,7 +1,7 @@
 package lion.mode.tradebot_backend.controller.technical_analysis;
 
 import lion.mode.tradebot_backend.dto.indicators.TrendlineResult;
-import lion.mode.tradebot_backend.service.technicalanalysis.indicators.TrendlineService;
+import lion.mode.tradebot_backend.service.technicalanalysis.TrendlineService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;

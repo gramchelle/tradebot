@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.service.technicalanalysis.indicators;
+package lion.mode.tradebot_backend.service.technicalanalysis;
 
 import lion.mode.tradebot_backend.dto.indicators.DMIResult;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
@@ -24,16 +24,7 @@ public class DMIService extends IndicatorService {
             throw new NotEnoughDataException("Not enough data for DMI at " + date + " for " + symbol);
         }
 
-        int targetIndex = -1;
-        for (int i = 0; i < series.getBarCount(); i++) {
-            LocalDateTime barTime = series.getBar(i).getEndTime().toLocalDateTime();
-            if (!barTime.isAfter(date)) {
-                targetIndex = i;
-            } else break;
-        }
-        if (targetIndex == -1) {
-            throw new NotEnoughDataException("No bar found before or at " + date + " for " + symbol);
-        }
+        int targetIndex = seriesAmountValidator(symbol, series, date);
 
         ADXIndicator adx = new ADXIndicator(series, period);
         PlusDIIndicator plusDI = new PlusDIIndicator(series, period);
@@ -53,6 +44,7 @@ public class DMIService extends IndicatorService {
         result.setAdxScore(adxValue);
         result.setAdxTrend(detectAdxTrend(adxValue, prevAdx, prev2Adx));
 
+        /*
         if (adxValue > 25) {
             if (plusDiValue > minusDiValue) {
                 result.setSignal("Sell");
@@ -66,16 +58,27 @@ public class DMIService extends IndicatorService {
             }
         } else {
             if (plusDiValue > minusDiValue) {
-                result.setSignal("Sell -> Weak Trend");
+                result.setSignal("Sell"); // weak trend
                 result.setScore(-1);
             } else if (plusDiValue < minusDiValue) {
-                result.setSignal("Buy -> Weak Trend");
+                result.setSignal("Buy"); // weak trend
                 result.setScore(1);
             } else {
                 result.setSignal("Hold");
                 result.setScore(0);
             }
-        }
+        }*/
+        
+        if (plusDiValue > minusDiValue) {
+                result.setSignal("Sell");
+                result.setScore(-1);
+            } else if (plusDiValue < minusDiValue) {
+                result.setSignal("Buy");
+                result.setScore(1);
+            } else {
+                result.setSignal("Hold");
+                result.setScore(0);
+            }
 
         return result;
     }

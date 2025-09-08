@@ -1,13 +1,13 @@
-package lion.mode.tradebot_backend.service.technicalanalysis.indicators;
+package lion.mode.tradebot_backend.service.technicalanalysis;
 
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
 import lion.mode.tradebot_backend.dto.indicators.RSIResult;
-import lion.mode.tradebot_backend.model.StockData;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.indicators.RSIIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
+import org.ta4j.core.indicators.helpers.OpenPriceIndicator;
 
 import java.time.*;
 import java.util.ArrayList;
@@ -20,27 +20,17 @@ public class RSIService extends IndicatorService {
         super(repository);
     }
 
-    public RSIResult calculateRSI(String symbol, int period, LocalDateTime targetDate, int trendPeriod, int lowerLimit, int upperLimit, int lookbackPeriod) {
+    public RSIResult calculateRSI(String symbol, int period, LocalDateTime date, int trendPeriod, int lowerLimit, int upperLimit, int lookbackPeriod) {
         BarSeries series = loadSeries(symbol);
         RSIResult result = new RSIResult();
         result.setSymbol(symbol);
         result.setPeriod(period);
 
         if (series.getBarCount() < period + 1) {
-            throw new NotEnoughDataException("Not enough data for RSI at " + targetDate + " for " + symbol);
+            throw new NotEnoughDataException("Not enough data for RSI at " + date + " for " + symbol);
         }
 
-        int targetIndex = -1;
-        for (int i = 0; i < series.getBarCount(); i++) {
-            LocalDateTime barTime = series.getBar(i).getEndTime().toLocalDateTime();
-            if (!barTime.isAfter(targetDate)) {
-                targetIndex = i;
-            } else break;
-        }
-
-        if (targetIndex == -1) {
-            throw new NotEnoughDataException("No bar found before or at " + targetDate + " for " + symbol);
-        }
+        int targetIndex = seriesAmountValidator(symbol, series, date);
 
         ClosePriceIndicator close = new ClosePriceIndicator(series);
         RSIIndicator rsi = new RSIIndicator(close, period);

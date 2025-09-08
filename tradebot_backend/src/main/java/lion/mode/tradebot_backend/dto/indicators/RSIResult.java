@@ -21,8 +21,9 @@ public class RSIResult {
 
     private int score;
 
-    private double confidence = 0;
+    private double confidence;
 
+    @JsonIgnore //ignore in serialization
     private String divergence = "none detected yet";
 
     @JsonIgnore

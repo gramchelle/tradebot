@@ -3,3 +3,9 @@
 alpha_vantage_api_key.txt
 secrets/
 data/
+.idea/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+csv files/

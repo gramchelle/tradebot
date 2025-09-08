@@ -1,9 +1,8 @@
-package lion.mode.tradebot_backend.service.technicalanalysis.indicators;
+package lion.mode.tradebot_backend.service.technicalanalysis;
 
 import lion.mode.tradebot_backend.dto.indicators.BollingerResult;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
-import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.*;
 import org.ta4j.core.indicators.SMAIndicator;
@@ -30,16 +29,8 @@ public class BollingerBandsService extends IndicatorService {
             throw new NotEnoughDataException("Not enough data for Bollinger Bands for symbol: " + symbol);
         }
 
-        int targetIndex = -1;
-        for (int i = 0; i < series.getBarCount(); i++) {
-            LocalDateTime barTime = series.getBar(i).getEndTime().toLocalDateTime();
-            if (!barTime.isAfter(date)) {
-                targetIndex = i;
-            } else break;
-        }
-        if (targetIndex == -1) {
-            throw new NotEnoughDataException("Not enough data before target date: " + date);
-        }
+        int targetIndex = seriesAmountValidator(symbol, series, date);
+
         return calculateAtIndex(symbol, series, period, nbDev, targetIndex, squeezeConfidence);
     }
 
@@ -73,13 +64,13 @@ public class BollingerBandsService extends IndicatorService {
         result.setSqueeze(squeeze ? "squeeze detected" : "squeeze not detected");
 
         if (close >= upper) {
-            result.setSignal("sell");
+            result.setSignal("Sell");
             result.setScore(-1);
         } else if (close <= lower) {
-            result.setSignal("buy");
+            result.setSignal("Buy");
             result.setScore(1);
         } else {
-            result.setSignal("hold");
+            result.setSignal("Hold");
             result.setScore(0);
         }
 

@@ -1,7 +1,7 @@
 package lion.mode.tradebot_backend.controller;
 
 import lion.mode.tradebot_backend.model.StockData;
-import lion.mode.tradebot_backend.service.data.StockDataService;
+import lion.mode.tradebot_backend.service.fetchdata.StockDataService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

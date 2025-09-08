@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.service.data;
+package lion.mode.tradebot_backend.service.fetchdata;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

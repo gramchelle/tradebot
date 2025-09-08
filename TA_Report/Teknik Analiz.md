@@ -196,20 +196,22 @@ Trend çizgileri çoğu zaman bazen tek başına çok güvenilir bir anlam ifade
 ```pseudo
 TrendlineHesaplama
 
-Girdi: FiyatListesi
+Girdi: FiyatListesi, TrendPeriyodu
 
-1. Fiyat grafiğinde yüksek ve düşük noktaları belirle
+1. Fiyat grafiğinde TrendPeriyodu kadar yüksek ve düşük noktaları belirle
 2. Yükselen trend için düşük noktaları birleştir
 3. Düşen trend için yüksek noktaları birleştir
 4. Trend çizgisini çiz ve eğimini belirle
 5. Trendin yönünü tespit et (yükselen, düşen, yatay)
 
-Çıktı: TrendYönleri
+Çıktı: TrendYönü
 
 Bitir
 ```
 
-Peki, yukarıda sözde kod ile yazdığımız TrendlineHesaplama algoritmasının ana çıktısı olan TrendYönleri'ni nasıl yorumlarız?
+Peki, yukarıda sözde kod ile yazdığımız TrendlineHesaplama algoritmasının ana çıktısı olan TrendYönü'nü nasıl yorumlarız?
+
+En basit haliyle, eğer trend çizgimizin eğimi 0'dan yükseldikçe artış, düştükçe azalış gösterecektir. Basit bir güven aralığı ile trendin eğimine göre artış mı, azalış mı yoksa yatay trend mi olduğunu hesaplayabiliriz.
 
 Trend çizgilerimizi oluşturmak için kullandığımız teknik ve kalıplar kadar, bunları nerede kullanacağımız ve hangi formasyonlar üzerinden yorumlama yapacağımız da önem taşımaktadır. Trend çizgileri envai çeşit alanda kullanılabilir ve çok farklı yorumlama teknikleri bulunabilir. En basit 3 trend yönü Artış, Azalış ve Sabit kalma trendleridir, ancak bunlarla yetinilmemelidir. Grafikler üzerinden trend kalıplarını yorumlamaya başlamak üzere bazı yaygın formasyonları inceleyelim. [6]
 
@@ -276,7 +278,9 @@ Destek Direnç Hesaplama
 
 Başla
 
-Girdi: FiyatlarListesi
+Girdi: FiyatlarListesi, Periyot
+
+Destek ve direnç çizgilerinin aranacağı periyot miktarında fiyat verisi alınır
 
 For her fiyat noktasında:
     Eğer fiyat daha önce birden çok kez aynı seviyeden yukarı dönmüşse:
@@ -291,12 +295,12 @@ Eğer fiyat DESTEK seviyesini aşağı kırarsa:
 Eğer fiyat DİRENÇ seviyesini yukarı kırarsa:
     Yeni direnç seviyesi daha yukarıda aranır
 
-Çıktı: DestekDirençAralıkları
+Çıktı: actsAsSupport, actsAsResistance
 
 Bitir
 ```
 
-Bu algoritmanın verdiği çıktı, diğer indikatör çıktılarının sonuçlarını desteklemek amaçlı kullanılarak daha güvenli bir al/sat/tut sinyali gönderen bir sistem geliştirilebilir.
+Bu algoritmanın verdiği çıktı, diğer indikatör çıktılarının sonuçlarını desteklemek amaçlı kullanılarak daha güvenli bir al/sat/tut sinyali gönderen bir sistem geliştirilebilir. Örneğin, trend çizgisinin destek çizgisi olduğundan ve bu destek çizgisinin uzun zamandan sonra kırılması durumundan kullanıcının haberdar edilmesi kararlarını önemli ölçüde etkileyecektir. Çünkü bu, fiyatların dip yapabileceği anlamına da gelmektedir.
 
 En basit haliyle trend çizgileri bu amaçlarla kullanılmakta ve bu şekilde hesaplanarak yorumlanmaktadır. 
 
@@ -371,7 +375,7 @@ Girdi: FiyatlarListesi, KısaMA_Periyot, UzunMA_Periyot
 4. Eğer Kısa MA, Uzun MA'yı aşağı keserse: Sat sinyali
 5. Sinyalleri listele ve gün gün takip et
 
-Çıktı: Al, Sat, Tut sinyal listesi
+Çıktı: SinyalListesi
 
 Bitir
 ```
@@ -528,6 +532,64 @@ Bollinger Bantları da fiyat hareketiyle birlikte analiz edildiğinde uyumsuzluk
 
 ---
 
+
+### 8. MFI (Money Flow Index)
+
+**MFI**, yani **Para Akışı Endeksi**, teknik analizde kullanılan bir momentum göstergesidir ve **hacim verilerini de dikkate alır**. RSI’ya benzer şekilde çalışır, ancak fiyat hareketlerinin yanında **işlem hacmini** de kullanarak daha güvenilir sinyaller verir.  
+
+- MFI 0 ile 100 arasında değişir.  
+  - **80’in üzeri** → aşırı alım bölgesi (fiyatın yüksek ve hacimli bir şekilde yükseldiği, düzeltme gelebileceği düşünülür)  
+  - **20’nin altı** → aşırı satım bölgesi (fiyatın düştüğü ve tepki yükselişi gelebileceği düşünülür)
+
+#### MFI Hesaplama
+
+Para Akış Endeksi hesaplanırken aşağıdaki formülden yararlanılır:
+
+![MFI Hesaplama](mfi_hesaplama.png)
+
+MFI algoritmasını ise daha iyi anlayabilmek üzere sözde kod ile aşağıdaki gibi yazabiliriz:
+
+```pseudo
+Başla MFI Hesaplama
+
+Girdi: FiyatlarListesi, HacimListesi, Periyot
+
+1. Tipik Fiyat = (Yüksek + Düşük + Kapanış) / 3  
+2. Para Akışı = Tipik Fiyat * Hacim  
+3. Pozitif ve Negatif Para Akışlarını ayır  
+   - Bugünkü Tipik Fiyat > Önceki Gün Tipik Fiyat → Pozitif  
+   - Bugünkü Tipik Fiyat < Önceki Gün Tipik Fiyat → Negatif  
+4. Para Akışı Oranı = Son 'Periyot' günün Pozitif / Negatif para akışları  
+5. MFI = 100 - (100 / (1 + Para Akışı Oranı))  
+6. Her gün için MFI değerini listele
+
+Çıktı: MfiDegerListesi
+
+Bitir
+```
+
+#### MFI Nasıl Yorumlanır?
+
+1. **Aşırı alım / aşırı satım:**  
+   - MFI 80 üzerindeyse → potansiyel satış fırsatı  
+   - MFI 20 altındaysa → potansiyel alım fırsatı  
+
+2. **Divergence (Uyumsuzluk):**  
+   - Fiyat yeni zirve yaparken MFI düşüyorsa → yükseliş trendi zayıflıyor olabilir  
+   - Fiyat yeni dip yaparken MFI yükseliyorsa → düşüş trendi zayıflıyor olabilir 
+
+> *"The most helpful MFI signals come from **divergence**—when price and money flow move in opposite directions, often foreshadowing reversals before most traders spot them. Suppose a stock is climbing to new highs while the MFI fails to match its previous peak. This divergence suggests that despite rising prices, buyer enthusiasm is waning—institutional investors might be quietly distributing shares while retail investors continue buying."* [8]
+
+Aşağıdaki görselde GARAN 1h/3M fiyat grafiğini MFI indikatörü ile inceleyebiliriz. 
+
+![GARAN 3 aylık MFI](mfi_garanti.png)
+
+> *RSI, fiyat momentumu üzerine odaklanır ve fiyat hareketlerinin yönsel hızını ve büyüklüğünü hesaplarken MFI, hacmi ağırlıklandırma faktörü olarak entegre ederek fiyat değişimlerinin arkasındaki piyasa kuvvetini ölçer.* [8]
+
+> MFI, fiyat ve hacim birleşimi sayesinde RSI’ya göre daha güvenilir sinyaller sunabilir. Ancak tek başına kullanılmamalı, diğer indikatörlerle birlikte değerlendirilmelidir.
+
+---
+
 ### 6. ADX (Average Directional Index)
 
 **ADX**, yani Ortalama Yönlü Hareket İndeksi, bir trendin **güçlü mü yoksa zayıf mı** olduğunu ölçmek için kullanılan bir göstergedir.  
@@ -626,63 +688,6 @@ Bitir
 4. **ADX ile kombinasyon:** DMI trendin yönünü, ADX trendin gücünü gösterir; birlikte kullanıldığında yatırımcıya güçlü ve güvenilir sinyaller sağlar.  
 
 > DMI ve ADX’i tek başına kullanmak risklidir; diğer indikatörlerle desteklenerek analiz yapmak en güvenli yöntemdir.
-
----
-
-### 8. MFI (Money Flow Index)
-
-**MFI**, yani **Para Akışı Endeksi**, teknik analizde kullanılan bir momentum göstergesidir ve **hacim verilerini de dikkate alır**. RSI’ya benzer şekilde çalışır, ancak fiyat hareketlerinin yanında **işlem hacmini** de kullanarak daha güvenilir sinyaller verir.  
-
-- MFI 0 ile 100 arasında değişir.  
-  - **80’in üzeri** → aşırı alım bölgesi (fiyatın yüksek ve hacimli bir şekilde yükseldiği, düzeltme gelebileceği düşünülür)  
-  - **20’nin altı** → aşırı satım bölgesi (fiyatın düştüğü ve tepki yükselişi gelebileceği düşünülür)
-
-#### MFI Hesaplama
-
-Para Akış Endeksi hesaplanırken aşağıdaki formülden yararlanılır:
-
-![MFI Hesaplama](mfi_hesaplama.png)
-
-MFI algoritmasını ise daha iyi anlayabilmek üzere sözde kod ile aşağıdaki gibi yazabiliriz:
-
-```pseudo
-Başla MFI Hesaplama
-
-Girdi: FiyatlarListesi, HacimListesi, Periyot
-
-1. Tipik Fiyat = (Yüksek + Düşük + Kapanış) / 3  
-2. Para Akışı = Tipik Fiyat * Hacim  
-3. Pozitif ve Negatif Para Akışlarını ayır  
-   - Bugünkü Tipik Fiyat > Önceki Gün Tipik Fiyat → Pozitif  
-   - Bugünkü Tipik Fiyat < Önceki Gün Tipik Fiyat → Negatif  
-4. Para Akışı Oranı = Son 'Periyot' günün Pozitif / Negatif para akışları  
-5. MFI = 100 - (100 / (1 + Para Akışı Oranı))  
-6. Her gün için MFI değerini listele
-
-Çıktı: MfiDegerListesi
-
-Bitir
-```
-
-#### MFI Nasıl Yorumlanır?
-
-1. **Aşırı alım / aşırı satım:**  
-   - MFI 80 üzerindeyse → potansiyel satış fırsatı  
-   - MFI 20 altındaysa → potansiyel alım fırsatı  
-
-2. **Divergence (Uyumsuzluk):**  
-   - Fiyat yeni zirve yaparken MFI düşüyorsa → yükseliş trendi zayıflıyor olabilir  
-   - Fiyat yeni dip yaparken MFI yükseliyorsa → düşüş trendi zayıflıyor olabilir 
-
-> *"The most helpful MFI signals come from **divergence**—when price and money flow move in opposite directions, often foreshadowing reversals before most traders spot them. Suppose a stock is climbing to new highs while the MFI fails to match its previous peak. This divergence suggests that despite rising prices, buyer enthusiasm is waning—institutional investors might be quietly distributing shares while retail investors continue buying."* [8]
-
-Aşağıdaki görselde GARAN 1h/3M fiyat grafiğini MFI indikatörü ile inceleyebiliriz. 
-
-![GARAN 3 aylık MFI](mfi_garanti.png)
-
-> *RSI, fiyat momentumu üzerine odaklanır ve fiyat hareketlerinin yönsel hızını ve büyüklüğünü hesaplarken MFI, hacmi ağırlıklandırma faktörü olarak entegre ederek fiyat değişimlerinin arkasındaki piyasa kuvvetini ölçer.* [8]
-
-> MFI, fiyat ve hacim birleşimi sayesinde RSI’ya göre daha güvenilir sinyaller sunabilir. Ancak tek başına kullanılmamalı, diğer indikatörlerle birlikte değerlendirilmelidir.
 
 ---
 

@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.service.technicalanalysis.indicators;
+package lion.mode.tradebot_backend.service.technicalanalysis;
 
 import lion.mode.tradebot_backend.dto.indicators.MFIResult;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
@@ -23,17 +23,7 @@ public class MFIService extends IndicatorService{
             throw new NotEnoughDataException("Not enough data for MFI at " + date + " for " + symbol);
         }
 
-        int targetIndex = -1;
-        for (int i = 0; i < series.getBarCount(); i++) {
-            LocalDateTime barTime = series.getBar(i).getEndTime().toLocalDateTime();
-            if (!barTime.isAfter(date)) {
-                targetIndex = i;
-            } else break;
-        }
-
-        if (targetIndex == -1 || targetIndex < period) {
-            throw new NotEnoughDataException("No bar found before or at " + date + " for " + symbol);
-        }
+        int targetIndex = seriesAmountValidator(symbol, series, date);
 
         double mfiValue = computeMFI(series, period, targetIndex);
 

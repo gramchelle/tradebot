@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lion.mode.tradebot_backend.dto.indicators.MACDResult;
-import lion.mode.tradebot_backend.service.technicalanalysis.indicators.MACDService;
+import lion.mode.tradebot_backend.service.technicalanalysis.MACDService;
 import lombok.RequiredArgsConstructor;
 
 @RestController

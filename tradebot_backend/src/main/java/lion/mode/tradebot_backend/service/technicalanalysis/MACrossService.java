@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.service.technicalanalysis.indicators;
+package lion.mode.tradebot_backend.service.technicalanalysis;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -40,8 +40,97 @@ public class MACrossService extends IndicatorService {
         result.setShortMAValue(shortEma.getValue(series.getEndIndex()).doubleValue());
         result.setLongMAValue(longEma.getValue(series.getEndIndex()).doubleValue());
         result.setCrossoverPoint(macd.getValue(series.getEndIndex()).doubleValue());
-        result.setSignal(macd.getValue(series.getEndIndex()).doubleValue() > 0 ? "Bullish" : "Bearish");
-        result.setScore(result.getSignal().equals("Bullish") ? 1 : -1);
+        result.setSignal(macd.getValue(series.getEndIndex()).doubleValue() > 0 ? "Buy" : "Sell");
+        result.setScore(result.getSignal().equals("Buy") ? 1 : -1);
+
+        return result;
+    }
+
+    public MACrossResult calculateEMACrossUntil(String symbol, int shortPeriod, int longPeriod,
+                                                LocalDateTime date, int lookback) {
+        BarSeries series = loadSeries(symbol);
+        MACrossResult result = new MACrossResult();
+
+        if (series.getBarCount() < longPeriod) {
+            throw new IllegalArgumentException("Not enough data to calculate MA Cross for " + symbol);
+        }
+
+        int targetIndex = seriesAmountValidator(symbol, series, date);
+
+        ClosePriceIndicator close = new ClosePriceIndicator(series);
+        EMAIndicator shortEma = new EMAIndicator(close, shortPeriod);
+        EMAIndicator longEma = new EMAIndicator(close, longPeriod);
+
+        double shortMA = shortEma.getValue(targetIndex).doubleValue();
+        double longMA  = longEma.getValue(targetIndex).doubleValue();
+
+        result.setSymbol(symbol);
+        result.setShortPeriod(shortPeriod);
+        result.setLongPeriod(longPeriod);
+        result.setMaType("EMA");
+        result.setShortMAValue(shortMA);
+        result.setLongMAValue(longMA);
+
+        // compute lookback window (ensure we have previous value for diff calculation)
+        // ensure startIndex >= 1 so (i-1) is valid
+        int startIndex = Math.max(1, targetIndex - lookback);
+        int lastCrossIdx = -1;
+        boolean lastCrossBullish = false;
+
+        // scan for last sign change of (shortEma - longEma) in window
+        for (int i = startIndex; i <= targetIndex; i++) {
+            // guard against invalid indices
+            if (i - 1 < 0 || i > series.getEndIndex()) continue;
+            double prevDiff = shortEma.getValue(i - 1).doubleValue() - longEma.getValue(i - 1).doubleValue();
+            double diff = shortEma.getValue(i).doubleValue() - longEma.getValue(i).doubleValue();
+            if (prevDiff < 0 && diff > 0) {
+                lastCrossIdx = i;
+                lastCrossBullish = true;
+            } else if (prevDiff > 0 && diff < 0) {
+                lastCrossIdx = i;
+                lastCrossBullish = false;
+            }
+        }
+
+        // threshold relative to longMA to avoid tiny noise triggers
+        double diffAtTarget = shortMA - longMA;
+        double relThreshold = 0.005; // 0.5% relative threshold (tunable)
+        double absThreshold = Math.max(1e-8, Math.abs(longMA) * relThreshold);
+
+        if (lastCrossIdx != -1) {
+            // use the last crossover found within lookback
+            double crossDiff = shortEma.getValue(lastCrossIdx).doubleValue() - longEma.getValue(lastCrossIdx).doubleValue();
+            result.setCrossoverPoint(crossDiff);
+            // require confirmation: current diff should be in same direction and above threshold
+            if (lastCrossBullish) {
+                if (diffAtTarget >= absThreshold) {
+                    result.setSignal("Buy");
+                } else {
+                    // crossover happened but not yet confirmed
+                    result.setSignal("Hold");
+                }
+            } else {
+                if (diffAtTarget <= -absThreshold) {
+                    result.setSignal("Sell");
+                } else {
+                    result.setSignal("Hold");
+                }
+            }
+        } else {
+            // no crossover found in lookback -> evaluate current relationship with threshold
+            result.setCrossoverPoint(diffAtTarget);
+            if (diffAtTarget >= absThreshold) {
+                result.setSignal("Buy");
+            } else if (diffAtTarget <= -absThreshold) {
+                result.setSignal("Sell");
+            } else {
+                result.setSignal("Hold");
+            }
+        }
+
+        // score: 1 buy, -1 sell, 0 hold
+        String sig = result.getSignal();
+        result.setScore("Buy".equals(sig) ? 1 : "Sell".equals(sig) ? -1 : 0);
 
         return result;
     }
@@ -66,8 +155,8 @@ public class MACrossService extends IndicatorService {
         result.setShortMAValue(shortSma.getValue(series.getEndIndex()).doubleValue());
         result.setLongMAValue(longSma.getValue(series.getEndIndex()).doubleValue());
         result.setCrossoverPoint(macd.getValue(series.getEndIndex()).doubleValue());
-        result.setSignal(macd.getValue(series.getEndIndex()).doubleValue() > 0 ? "Bullish" : "Bearish");
-        result.setScore(result.getSignal().equals("Bullish") ? 1 : -1);
+        result.setSignal(macd.getValue(series.getEndIndex()).doubleValue() > 0 ? "Buy" : "Sell");
+        result.setScore(result.getSignal().equals("Buy") ? 1 : -1);
 
         return result;
     }
@@ -81,17 +170,7 @@ public class MACrossService extends IndicatorService {
             throw new IllegalArgumentException("Not enough data to calculate MA Cross for " + symbol);
         }
 
-        int targetIndex = -1;
-        for (int i = 0; i < series.getBarCount(); i++) {
-            LocalDateTime barTime = series.getBar(i).getEndTime().toLocalDateTime();
-            if (!barTime.isAfter(targetDate)) {
-                targetIndex = i;
-            } else break;
-        }
-
-        if (targetIndex == -1) {
-            throw new IllegalArgumentException("No bar found before or at " + targetDate);
-        }
+        int targetIndex = seriesAmountValidator(symbol, series, targetDate);
 
         ClosePriceIndicator close = new ClosePriceIndicator(series);
 
@@ -114,7 +193,7 @@ public class MACrossService extends IndicatorService {
             throw new IllegalArgumentException("Invalid MA type: " + maType);
         }
 
-        signal = crossover > 0 ? "Bullish" : "Bearish";
+        signal = crossover > 0 ? "Buy" : "Sell";
 
         result.setSymbol(symbol);
         result.setShortPeriod(shortPeriod);
@@ -122,9 +201,10 @@ public class MACrossService extends IndicatorService {
         result.setMaType(maType.toUpperCase());
         result.setShortMAValue(shortMA);
         result.setLongMAValue(longMA);
+        //result.setMaType("EMA"); // THIS LINE WILL BE REMOVED AFTER TESTING
         result.setCrossoverPoint(crossover);
         result.setSignal(signal);
-        result.setScore(signal.equals("Bullish") ? 1 : -1);
+        result.setScore(signal.equals("Buy") ? 1 : -1);
 
         return result;
     }

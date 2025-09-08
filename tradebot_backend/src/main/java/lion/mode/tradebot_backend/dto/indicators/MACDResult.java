@@ -33,4 +33,7 @@ public class MACDResult {
 
     private int score;
 
+    // TODO: Add seriesType and interval to calculate and send signal between that interval
+    // seriesType The desired price type in the time series. Four types are supported: close, open, high, low
+
 }

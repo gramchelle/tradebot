@@ -1,7 +1,7 @@
 package lion.mode.tradebot_backend.controller.technical_analysis;
 
 import lion.mode.tradebot_backend.dto.indicators.MFIResult;
-import lion.mode.tradebot_backend.service.technicalanalysis.indicators.MFIService;
+import lion.mode.tradebot_backend.service.technicalanalysis.MFIService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
