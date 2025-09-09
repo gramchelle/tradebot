@@ -3,7 +3,7 @@ package lion.mode.tradebot_backend.service.fetchdata;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import lion.mode.tradebot_backend.model.StockData;
+import lion.mode.tradebot_backend.model.Stock;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,18 +25,20 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AlphaVantageDataCollectorService {
 
+    //Get daily data
+
     private final StockDataRepository repository;
     private final HttpClient httpClient;
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Value("${alpha.vantage.api.key}")
     private String apiKey;
 
     public boolean saveStockData(String symbol) {
         try {
-            String url = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY"
+            String url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY"
                     + "&symbol=" + symbol
-                    + "&interval=60min&apikey=" + apiKey;
+                    + "&apikey=" + apiKey;
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -45,44 +47,40 @@ public class AlphaVantageDataCollectorService {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
-            JsonObject timeSeries = json.getAsJsonObject("Time Series (60min)");
+            JsonObject timeSeries = json.getAsJsonObject("Time Series (Daily)");
 
             if (timeSeries == null) {
                 System.err.println("[!] Not able to fetch data for " + symbol + ". API Answer: " + response.body());
                 return false;
             }
 
-            List<StockData> newStockDataList = new ArrayList<>();
+            List<Stock> newStockList = new ArrayList<>();
             LocalDateTime lastTimestampInDb = repository.findTopBySymbolOrderByTimestampDesc(symbol)
-                    .map(StockData::getTimestamp)
+                    .map(Stock::getTimestamp)
                     .orElse(null);
 
             for (Map.Entry<String, JsonElement> entry : timeSeries.entrySet()) {
-                // Alpha Vantage timestamp is in New York time
-                ZonedDateTime nyTime = LocalDateTime.parse(entry.getKey(), FORMATTER)
-                        .atZone(ZoneId.of("America/New_York"));
-
-                // Convert to UTC
-                LocalDateTime utcTime = nyTime.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+                LocalDate date = LocalDate.parse(entry.getKey(), FORMATTER);
+                LocalDateTime utcTime = date.atStartOfDay(ZoneOffset.UTC).toLocalDateTime();
 
                 if (lastTimestampInDb == null || utcTime.isAfter(lastTimestampInDb)) {
                     JsonObject values = entry.getValue().getAsJsonObject();
-                    StockData data = new StockData();
+                    Stock data = new Stock();
                     data.setSymbol(symbol);
                     data.setOpen(values.get("1. open").getAsDouble());
                     data.setHigh(values.get("2. high").getAsDouble());
                     data.setLow(values.get("3. low").getAsDouble());
                     data.setClose(values.get("4. close").getAsDouble());
                     data.setVolume(values.get("5. volume").getAsLong());
-                    data.setTimestamp(utcTime); // ✅ Always UTC
-                    newStockDataList.add(data);
+                    data.setTimestamp(utcTime);
+                    newStockList.add(data);
                 }
             }
 
-            if (!newStockDataList.isEmpty()) {
-                Collections.reverse(newStockDataList);
-                repository.saveAll(newStockDataList);
-                System.out.println("[i] Saved " + newStockDataList.size() + " new bars for " + symbol);
+            if (!newStockList.isEmpty()) {
+                Collections.reverse(newStockList);
+                repository.saveAll(newStockList);
+                System.out.println("[i] Saved " + newStockList.size() + " new bars for " + symbol);
                 return true;
             }
             return false;
