@@ -31,14 +31,6 @@ public class BacktestService{
     private final StockDataRepository repository;
     private final BacktestRepository backtestRepository;
 
-    /*
-        TODO: bi tane kod parcasi yazacaksin bu bahsettigin 3 hisse senedine sinyal soracak ve bu sonucu gidip veritabaninda bir tabloya yazacak ve sonra diger tablodaki diger gunle kiyasla
-        TODO: algoritmalarin dogrulugunu yukseltmek 1. oncelik 2. oncelik decision matrix, ki kolay degil
-        TODO: gercek datayla bizim algoritmayi kiyaslayan bi sey olsun ordan bile decision matrix agirligi cikartilabilir
-        TODO: 1 tane daha servis yaz iki tarih araliginda rsi da cagirabilir, bununla satin alma sinyali talep edersem gidip bunu bir tabloya yazacak, rsi bana 8 nisan icin buy dedi gibi. elindeki datayi da tabloya bas, 8 nisanda al demis 9 nisandaki gerçek data nedir tarzi sql sorgusu yap
-        TODO: birden fazla makul degerlerle olusan sutun tablosu olusturup, olustudugun sinyalleri tabloya kaydet
-     */
-
     public Backtest rsiHistoricalBacktest(String symbol, int period, int lowerLimit, int upperLimit, LocalDateTime date, int lookback, int lookbackPeriod, String priceType, double calculationConfidence) {
         BarSeries series = loadSeries(symbol);
         Backtest backtest = new Backtest();
