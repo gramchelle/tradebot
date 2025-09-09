@@ -68,7 +68,7 @@ public class BacktestService{
             int rsiScore2 = rsiService.calculateRSI(symbol, period, dateAtIndex2, 1, lowerLimit, upperLimit, 1, priceType).getScore();
 
             double price2 = prices.getValue(index2).doubleValue();
-            double priceDiff = price2 - price;
+            double priceDiff = (price2 - price) / price2;
 
             if (rsiScore == 1) {
                 if (priceDiff > calculationConfidence) {
