@@ -11,8 +11,6 @@ public class MFIResult {
 
     private double mfiValue;
 
-    private double confidence;
-
     private String signal;
 
     private int score;

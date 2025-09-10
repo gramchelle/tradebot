@@ -1,5 +1,7 @@
 package lion.mode.tradebot_backend.dto.indicator;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Data;
 
 @Data
@@ -7,10 +9,13 @@ public class MACDResult {
     
     private String symbol;
 
+    @JsonIgnore
     private int shortPeriod;
 
+    @JsonIgnore
     private int longPeriod;
 
+    @JsonIgnore
     private int signalPeriod;
 
     private double macdScore;
@@ -19,21 +24,20 @@ public class MACDResult {
 
     private double histogramValue;
 
+    @JsonIgnore
     private int histogramTrendPeriod;
 
+    @JsonIgnore
     private String histogramTrend;
 
+    @JsonIgnore
     private String divergence;
 
+    @JsonIgnore
     private String maCross;
-
-    private double confidence;
 
     private String signal;
 
     private int score;
-
-    // TODO: Add seriesType and interval to calculate and send signal between that interval
-    // seriesType The desired price type in the time series. Four types are supported: close, open, high, low
 
 }

@@ -21,14 +21,13 @@ public class RSIResult {
 
     private int score;
 
-    private double confidence;
-
     @JsonIgnore //ignore in serialization
     private String divergence = "none detected yet";
 
     @JsonIgnore
     private int trendPeriod;
 
+    @JsonIgnore
     private String trendComment;
 
 }

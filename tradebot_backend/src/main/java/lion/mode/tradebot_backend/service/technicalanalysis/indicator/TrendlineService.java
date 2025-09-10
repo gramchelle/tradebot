@@ -17,18 +17,18 @@ public class TrendlineService extends IndicatorService {
 
     public TrendlineResult calculateTrendline(String symbol, int period, int lookback, LocalDateTime date) {
         BarSeries series = loadSeries(symbol);
+        return calculateTrendlineWithSeries(symbol, period, lookback, series);
+    }
 
-        if (series.getBarCount() < period + lookback) {
-            throw new NotEnoughDataException("Not enough data for Trendline at " + date + " for " + symbol);
-        }
+    public TrendlineResult calculateTrendlineWithSeries(String symbol, int period, int lookback, BarSeries series) {
+        if (series.getBarCount() < period + lookback) throw new NotEnoughDataException("Not enough data for Trendline for " + symbol);
 
-        int targetIndex = seriesAmountValidator(symbol, series, date);
+        int targetIndex = series.getEndIndex();
 
         double slope = computeSlope(series, period, targetIndex);
 
         TrendlineResult result = buildResult(symbol, period, lookback, slope, series.getBar(targetIndex).getEndTime().toLocalDateTime());
         checkSupportResistance(series, result, targetIndex, period, lookback);
-
         return result;
     }
 
@@ -85,7 +85,7 @@ public class TrendlineService extends IndicatorService {
         for (int i = startIndex; i <= endIndex; i++) {
             double expected = intercept + result.getSlope() * i;
             double actual = series.getBar(i).getClosePrice().doubleValue();
-            double tolerance = expected * 0.9; // error tolerance
+            double tolerance = expected * 0.01; // error tolerance
             if (Math.abs(expected - actual) <= tolerance) {
                 touches++;
             }

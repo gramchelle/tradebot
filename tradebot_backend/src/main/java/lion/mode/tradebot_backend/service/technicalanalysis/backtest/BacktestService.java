@@ -41,10 +41,12 @@ public class BacktestService{
 
         Indicator<Num> prices = priceTypeSelector(priceType, series);
 
+        //initialize variables
         LocalDateTime targetDate = null;
         String signal = "";
         int score = 0;
-        double temp = 0;
+        int trials = 0;
+        double successCount = 0;
         double confidenceWeight = 0;
 
         System.out.println("---- START RSI BACKTEST ----");
@@ -57,7 +59,7 @@ public class BacktestService{
             System.out.println("Index: " + index + "\n");
 
             LocalDateTime dateAtIndex = series.getBar(index).getEndTime().toLocalDateTime();
-            int rsiScore = rsiService.calculateRSI(symbol, period, dateAtIndex, 1, lowerLimit, upperLimit, 1, priceType).getScore();
+            int rsiScore = rsiService.calculateRSIWithSeries(symbol, period, dateAtIndex, lowerLimit, upperLimit, priceType, series).getScore();
 
             double price = prices.getValue(index).doubleValue();
 
@@ -65,7 +67,7 @@ public class BacktestService{
             if (index2 >= series.getBarCount()) break;
 
             LocalDateTime dateAtIndex2 = series.getBar(index2).getEndTime().toLocalDateTime();
-            int rsiScore2 = rsiService.calculateRSI(symbol, period, dateAtIndex2, 1, lowerLimit, upperLimit, 1, priceType).getScore();
+            int rsiScore2 = rsiService.calculateRSIWithSeries(symbol, period, dateAtIndex2, lowerLimit, upperLimit, priceType, series).getScore();
 
             double price2 = prices.getValue(index2).doubleValue();
             double priceDiff = (price2 - price) / price2;
@@ -73,28 +75,29 @@ public class BacktestService{
             if (rsiScore == 1) {
                 if (priceDiff > calculationConfidence) {
                     System.out.println("SUCCESS: BUY predicted at " + dateAtIndex + " price moved " + priceDiff + " by " + dateAtIndex2);
-                    temp++;
+                    successCount++;
                 } else
                     System.out.println("VIOLENCE: BUY predicted at " + dateAtIndex + " price moved " + priceDiff + " by " + dateAtIndex2);
             } else if (rsiScore == -1) {
                 if (priceDiff < -calculationConfidence) {
                     System.out.println("SUCCESS: SELL predicted at " + dateAtIndex + " price moved " + priceDiff + " by " + dateAtIndex2);
-                    temp++;
+                    successCount++;
                 } else
                     System.out.println("VIOLENCE: SELL predicted at " + dateAtIndex + " price moved " + priceDiff + " by " + dateAtIndex2);
             } else {
                 if (Math.abs(priceDiff) <= calculationConfidence) {
                     System.out.println("SUCCESS: HOLD predicted at " + dateAtIndex + " price moved " + priceDiff + " by " + dateAtIndex2);
-                    temp++;
+                    successCount++;
                 } else
                     System.out.println("VIOLENCE: HOLD predicted at " + dateAtIndex + " price moved " + priceDiff + " by " + dateAtIndex2);
             }
-            confidenceWeight = temp / ((double) lookback / lookbackPeriod);
-            System.out.println("- Confidence Weight " + confidenceWeight);
-            System.out.println(" ");
+            trials ++;
+            confidenceWeight = successCount / trials; // check divide by zero exception
+            System.out.println("- Confidence Weight " + confidenceWeight + "\n");
             targetDate = dateAtIndex2;
             score = rsiScore2;
         }
+
         System.out.println("---- END RSI BACKTEST ----\n");
         if (score == 1){
             System.out.println("For " + targetDate + " the signal is BUY\n");
@@ -121,8 +124,7 @@ public class BacktestService{
         return backtest;
     }
 
-
-    // Helper Functions (duplicate)
+    // Helper Functions (duplicate) -> TODO: pack them within an utils dir
 
     private BarSeries loadSeries(String symbol) {
 

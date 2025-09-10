@@ -1,5 +1,7 @@
 package lion.mode.tradebot_backend.dto.indicator;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Data;
 
 @Data
@@ -11,13 +13,12 @@ public class DMIResult {
 
     private double adxScore;
 
+    @JsonIgnore
     private String adxTrend;
 
     private double plusDi;
 
     private double minusDi;
-
-    private double confidence;
 
     private String signal;
 

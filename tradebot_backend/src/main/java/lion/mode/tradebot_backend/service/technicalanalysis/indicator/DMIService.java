@@ -70,10 +70,10 @@ public class DMIService extends IndicatorService {
         }*/
         
         if (plusDiValue > minusDiValue) {
-                result.setSignal("Sell");
+                result.setSignal("Buy");
                 result.setScore(-1);
             } else if (plusDiValue < minusDiValue) {
-                result.setSignal("Buy");
+                result.setSignal("Sell");
                 result.setScore(1);
             } else {
                 result.setSignal("Hold");

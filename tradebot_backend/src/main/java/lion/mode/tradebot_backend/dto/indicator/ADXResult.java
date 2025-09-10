@@ -8,15 +8,18 @@ public class ADXResult {
 
     private double adx;
 
-    private double plusDi;
-
-    private double prevAdx;
-
-    private int adxPeriod;
+    private int period;
 
     @JsonIgnore
-    private int adxLookback;
+    private double plusDi;
 
+    @JsonIgnore
+    private double prevAdx;
+
+    @JsonIgnore
+    private int lookback;
+
+    @JsonIgnore
     private String trend;
 
 }

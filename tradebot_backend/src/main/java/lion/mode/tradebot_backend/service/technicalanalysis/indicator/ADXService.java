@@ -37,8 +37,8 @@ public class ADXService extends IndicatorService {
         result.setAdx(adxValue);
         result.setPrevAdx(prevAdx);
         result.setPlusDi(plusDiValue);
-        result.setAdxPeriod(adxPeriod);
-        result.setAdxLookback(adxLookback);
+        result.setPeriod(adxPeriod);
+        result.setLookback(adxLookback);
 
         if (adxValue > 38) result.setTrend("very strong");
         else if (adxValue > 25)  result.setTrend("strong");

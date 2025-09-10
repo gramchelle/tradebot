@@ -19,6 +19,8 @@ import org.ta4j.core.num.Num;
 @Service
 public class MACrossService extends IndicatorService {
 
+    // TODO: EMA longPeriod doesn't work properly
+
     public MACrossService(StockDataRepository repository) {
         super(repository);
     }
@@ -97,7 +99,6 @@ public class MACrossService extends IndicatorService {
 
         String sig = result.getSignal();
         result.setScore("Buy".equals(sig) ? 1 : "Sell".equals(sig) ? -1 : 0);
-
         return result;
     }
 

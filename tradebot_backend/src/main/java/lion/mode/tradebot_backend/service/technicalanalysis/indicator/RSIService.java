@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.Indicator;
 import org.ta4j.core.indicators.RSIIndicator;
-import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.num.Num;
 
 import java.time.*;
@@ -23,6 +22,11 @@ public class RSIService extends IndicatorService {
 
     public RSIResult calculateRSI(String symbol, int period, LocalDateTime date, int trendPeriod, int lowerLimit, int upperLimit, int lookbackPeriod, String priceType) {
         BarSeries series = loadSeries(symbol);
+        RSIResult result = calculateRSIWithSeries(symbol, period, date, lowerLimit, upperLimit, priceType, series);
+        return result;
+    }
+
+    public RSIResult calculateRSIWithSeries(String symbol, int period, LocalDateTime date, int lowerLimit, int upperLimit, String priceType, BarSeries series) {
         RSIResult result = new RSIResult();
         result.setSymbol(symbol);
         result.setPeriod(period);
@@ -35,43 +39,25 @@ public class RSIService extends IndicatorService {
         RSIIndicator rsi = new RSIIndicator(prices, period);
 
         double rsiValue = rsi.getValue(targetIndex).doubleValue();
-        double onePeriodPrevRsi = rsi.getValue(targetIndex - trendPeriod).doubleValue();
 
         result.setRsiValue(rsiValue);
         result.setDate(series.getBar(targetIndex).getEndTime().toLocalDateTime());
 
-        generateSignalScoreAndComment(result, rsiValue, onePeriodPrevRsi, lowerLimit, upperLimit);
+        generateSignalScoreAndComment(result, rsiValue, lowerLimit, upperLimit);
 
         return result;
     }
 
-    private void generateSignalScoreAndComment(RSIResult result, double rsiValue, double onePeriodPrevRsi, int lowerLimit, int upperLimit) {
-        double rsi_diff = rsiValue - onePeriodPrevRsi;
-        if (rsiValue > upperLimit) { //TODO: RSI's default values 70 and 30 will be parameterized.
+    private void generateSignalScoreAndComment(RSIResult result, double rsiValue, int lowerLimit, int upperLimit) {
+        if (rsiValue > upperLimit) {
             result.setSignal("Sell");
             result.setScore(-1);
-            if ((rsi_diff) > 0){
-                result.setTrendComment("RSI is above 70 and is increasing. You can also sell or hold.");
-            } else {
-                result.setTrendComment("RSI is above 70 and is decreasing. You can certainly sell.");
-            }
         } else if (rsiValue < lowerLimit) {
             result.setSignal("Buy");
             result.setScore(1);
-            if (rsi_diff > 0){
-                result.setTrendComment("RSI is below 30 and is increasing. You can buy.");
-            } else {
-                result.setTrendComment("RSI is below 30 and is decreasing. You can buy or hold.");
-            }
         } else {
             result.setSignal("Hold");
             result.setScore(0);
-            if  (rsi_diff > 0){
-                result.setTrendComment("RSI is between 30 and 70 and is increasing. You can hold.");
-            } else {
-                result.setTrendComment("RSI is between 30 and 70 and is decreasing. You can hold.");
-            }
-
         }
     }
 

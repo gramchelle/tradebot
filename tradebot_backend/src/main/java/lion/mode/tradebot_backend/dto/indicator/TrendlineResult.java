@@ -14,6 +14,7 @@ public class TrendlineResult {
     private int period;
 
     // Lookback period for support - resistance calculation
+    @JsonIgnore
     private int lookback;
 
     @JsonIgnore
@@ -23,12 +24,11 @@ public class TrendlineResult {
 
     private String direction;
 
-    private double confidence = 0;
-
     private String signal;
 
     private int score;
 
+    @JsonIgnore
     private String comment;
 
     private boolean actsAsSupport;
