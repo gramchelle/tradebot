@@ -1,4 +1,4 @@
-# TradeBot - Teknik Analiz
+# Teknik Analiz
 
 > Bu rapor, geliştirilmekte olan TradeBot projesinin teknik analiz katmanını özetleyen bir araştırma raporudur. Bu sadece bir araştırma raporu olduğundan ve raporda yazan hiçbir şey bir uzman tarafından yazılmamış olduğundan ötürü yatırım tavsiyesi niteliğinde değildir.
 
@@ -27,7 +27,7 @@ Aşağıdaki görselde fiyat grafiği üzerinde, üstünde ve altında olacak ş
 
 ### Temel Terminoloji
 
-* **Trade:** Finansal piyasalarda alım-satım işlemleri yapma işleminin bütününe verilen isimdir.
+* **Trade:** Türkçesi ile takas, finansal piyasalarda alım-satım işlemleri yapma işleminin bütününe verilen isimdir.
 
 * **Trading:** Finansal piyasalarda alım-satım işlemleri yapma işlemine verilen isimdir.
 
@@ -42,6 +42,8 @@ Aşağıdaki görselde fiyat grafiği üzerinde, üstünde ve altında olacak ş
 * **Stock:** Hisse
 
 * **Security:** Menkul kıymet
+
+* **Hacim**: Borsada hacim, belirli bir zaman diliminde (gün, saat, dakika) bir hisse senedi veya finansal enstrüman üzerinde gerçekleşen işlem miktarını ifade eder.
 
 * **Indicator:** Geçmiş fiyat ve hacim verilerini kullanarak piyasanın yönü, momentumu veya gücü hakkında ipuçları veren teknik analiz araçlarıdır. Yatırımcılara alım, satım veya bekleme kararlarında yardımcı olur.
 
@@ -219,11 +221,11 @@ Peki, yukarıda sözde kod ile yazdığımız TrendlineHesaplama algoritmasını
 
 En basit haliyle, eğer trend çizgimizin eğimi 0'dan yükseldikçe artış, düştükçe azalış gösterecektir. Basit bir güven aralığı ile trendin eğimine göre artış mı, azalış mı yoksa yatay trend mi olduğunu hesaplayabiliriz. Aşağıda, GOOGL sembolünün günlük bazda yıllık fiyat verisi üzerinden **destek** çizgisi görevi gören bir trendline çizimini görebilirsiniz.
 
-![alt text](image-1.png)
+![Trendline - Support Line](trendline_support.png)
 
 Yukarıdaki grafikte gördüğümüz 473 periyotluk bu destek, TradeBot tarafından aşağıdaki şekilde tespit edilmiştir:
 
-![alt text](image-19.png)
+![Trendline Output](trendline_output.png)
 
 Trend çizgilerimizi oluşturmak için kullandığımız teknik ve kalıplar kadar, bunları nerede kullanacağımız ve hangi formasyonlar üzerinden yorumlama yapacağımız da önem taşımaktadır. Trend çizgileri envai çeşit alanda kullanılabilir ve çok farklı yorumlama teknikleri bulunabilir. En basit 3 trend yönü Artış, Azalış ve Sabit kalma trendleridir, ancak bunlarla yetinilmemelidir. Grafikler üzerinden trend kalıplarını yorumlamaya başlamak üzere bazı yaygın formasyonları inceleyelim. [6]
 
@@ -314,7 +316,7 @@ Bitir
 
 Bu algoritmanın verdiği çıktı, diğer indikatör çıktılarının sonuçlarını desteklemek amaçlı kullanılarak daha güvenli bir al/sat/tut sinyali gönderen bir sistem geliştirilebilir. Örneğin, trend çizgisinin destek çizgisi olduğundan ve bu destek çizgisinin uzun zamandan sonra kırılması durumundan kullanıcının haberdar edilmesi kararlarını önemli ölçüde etkileyecektir. Çünkü bu, fiyatların dip yapabileceği anlamına da gelmektedir. Aşağıdaki GOOGL 1d/1Y grafiğinde örnek birer destek ve direnç çizgilerini gözlemleyebiliriz. Kırmızı olan çizgi fiyatın yukarı çıkmasını engelleyen bir direnç gibi davranırken, mavi olan support çizgisi bir nevi fiyatın uzun dönemde aşağı düşmesini engelleyen destek görevi görmektedir.
 
-![alt text](image-5.png)
+![GOOGL Support and Resistance](tv_support_and_resistance.png)
 
 En basit haliyle trend çizgileri bu amaçlarla kullanılmakta ve bu şekilde hesaplanarak yorumlanmaktadır. 
 
@@ -351,7 +353,7 @@ En yaygın kullanılan üç hareketli ortalama türü şunlardır:
 
 GOOGL sembolü üzerinden günlük bazda yıllık fiyat grafiğini gösteren EMA çizgilerini inceleyelim:
 
-![alt text](image-6.png)
+![EMA Crossover](ema_crossover.png)
 
 Yukarıdaki görselde bir **Golden Cross** ve **Death Cross** örneği gözlemlenebilir.  
 - Uzun vadeli (200 günlük MA) kırmızı ile,  
@@ -388,7 +390,7 @@ Bitir
 
 Yukarıdaki GOOGL sembolü üzerindeki EMA Crossover'ın bullish trende geçtiği (golden cross) noktada, 22-05-2023 tarihinde TradeBot MA-Crossover servisi tarafından yazdırılan sonuç aşağıdaki gibidir. 
 
-![alt text](image-7.png)
+![TradeBot GOOGL EMA Cross Output](googl_ema_cross.png)
 
 MA Crossover algoritmasının girdileri fiyatlar listesi ile kısa ve uzun vadeli hareketli ortalama periyotlarıdır. Her gün bu iki ortalama hesaplanır. Eğer kısa vadeli ortalama uzun vadeli ortalamayı yukarı keserse “Al”, aşağı keserse “Sat” sinyali üretilir. Kesişim yoksa “Tut” sinyali verilir. Çıktı ise gün gün üretilen bu sinyallerin listesidir ve bu liste tahminlerde yardımcı indikatör olarak kullanılır.
 
@@ -442,11 +444,11 @@ Bitir
 
 TradeBot, RSI'ı en basit halde implemente edecek ve yatırımcıların stratejilerine uygun olarak değiştirebilecekleri bir formatta şekilde geliştirilmiştir. Aşağıda GOOGL 1d/1Y bazda fiyat verileri ile 14 periyotluk RSI grafiği yer almaktadır.
 
-![alt text](image-2.png)
+![TradingView GOOGL RSI](googl_rsi.png)
 
 İşaretle gösterilen 11-12-2024 tarihli günlük bazda fiyat grafiğinin TradeBot RSI çıktısı:
 
-![alt text](image-3.png)
+![TradeBot GOOGL RSI Output](tradebot_rsi_output.png)
 
 şeklindedir.
 
@@ -464,7 +466,7 @@ Aşağıdaki görselde bir pozitif uyumsuzluk yer almaktadır. Yani uyumsuzluğu
 
 GOOGL sembolü üzerinde positif ve negatif uyumsuzluk örnekleri aşağıdaki gibidir.
 
-![alt text](image-8.png)
+![TradingView RSI Divergence](tv_rsi_divergence.png)
 
 > Ancak, bu asla unutulmamalıdır ki, RSI tek başına kullanılmamalıdır; tıpkı diğer göstergeler gibi, trendler ve diğer indikatörlerle birlikte değerlendirildiğinde daha güvenilir sonuç verir.  
 
@@ -485,19 +487,19 @@ MACD ```12-period EMA - 26-period EMA``` ile hesaplanır. Periyotlar stratejiden
 
 #### MACD Yorumlama
 
-- MACD çizgisi, Sinyal çizgisini **yukarı keserse** → Genellikle **al sinyali** olarak yorumlanır.  
-- MACD çizgisi, Sinyal çizgisini **aşağı keserse** → Genellikle **sat sinyali** olarak yorumlanır.  
+- MACD çizgisi, Sinyal çizgisini **yukarı kesmeye başladığında** → Genellikle **al sinyali** olarak yorumlanır.  
+- MACD çizgisi, Sinyal çizgisini **aşağı kesmeye başladığında** → Genellikle **sat sinyali** olarak yorumlanır.  
 - Histogramın büyümesi → Momentumun arttığını, küçülmesi → Momentumun zayıfladığını gösterir.
 
 > Aşağıdaki görselde GOOGL sembolünün günlük bazda fiyat grafiğinin altında varsayılan parametrelerin kullanıldığı MACD grafiğini inceleyebiliriz.  
 
-![alt text](image-9.png)
+![TradingView GOOGL MACD](tv_googl_macd.png)
 
 Yukarıdaki grafikte de açıkça görüldüğü üzere MACD çizgisinin Sinyal çizgisini kestiği yönde fiyatta paralel değişiklikler olmuştur.
 
 Yukarıdaki grafiğin artış yönündeki kesişiminden sonraki tarihte TradeBot tarafından gönderilen çıktı aşağıdaki gibidir.
 
-![alt text](image-10.png)
+![TradeBot MACD Output](macd_output.png)
 
 ### MACD’de Uyumsuzluk (Divergence)
 
@@ -516,7 +518,7 @@ Aşağıdaki grafikte GOOGL sembolünün günlük bazdaki fiyat verisi üzerinde
 
 Aşağıdaki örnekte iki yöntem de birden kullanılarak örnekler verilmiştir.
 
-![alt text](image-11.png)
+![MACD Divergence](macd_divergence.png)
 
 **Önemli Not: MACD ≠ Golden/Death Cross**  
 MACD kesişimleri (MACD Line – Signal Line) ile hareketli ortalama kesişimleri (Golden Cross / Death Cross) farklı kavramlardır.  
@@ -549,13 +551,13 @@ yorumları yapılabilir.
 
 Aşağıdaki GOOGL sembolünün günlük bazdaki fiyat grafiğine eklenmiş olan Bollinger Bands üzerinden Bollinger Squeeze ve üst bantın dışına çıkıldığında geri dönülme durumlarını inceleyebiliriz.
 
-![alt text](image-12.png)
+![TradingView Bollinger Bands](tv_bollinger_bands.png)
 
 ### Bollinger Bands Hesaplama
 
 Bollinger Bands formülü aşağıdaki gibidir.
 
-![alt text](bollinger-bands-formula.jpg)
+![Bollinger Bands Formula](bollinger-bands-formula.jpg)
 
 Bollinger bands hesaplama mantığını bir sözde kod algoritması ile oluşturarak daha detaylı inceleyebiliriz.
 
@@ -579,7 +581,7 @@ Bitir
 
 Yukarıdaki algoritmanın sonucunda yatırımcı, kendi risk yönetimini kullanarak bollinger bantlarını stratejisinde uygulayabilir. Yukarıda incelemiş olduğumuz GOOGL grafiğinin sıkıştığı tarihin, TradeBot tarafından çıktısı aşağıdaki gibidir.
 
-![alt text](image-13.png)
+![TradeBot Bollinger Bands Output](bollinger_output.png)
 
 > Bollinger Bantları tek başına kullanılmamalıdır. RSI, MACD ve trend analizleriyle birlikte değerlendirildiğinde çok daha güçlü sinyaller üretir.  
 
@@ -593,7 +595,7 @@ Yukarıdaki algoritmanın sonucunda yatırımcı, kendi risk yönetimini kullana
   - **80’in üzeri** → aşırı alım bölgesi (fiyatın yüksek ve hacimli bir şekilde yükseldiği, düzeltme gelebileceği düşünülür)  
   - **20’nin altı** → aşırı satım bölgesi (fiyatın düştüğü ve tepki yükselişi gelebileceği düşünülür)
 
-#### MFI Hesaplama
+##### MFI Hesaplama
 
 Para Akış Endeksi hesaplanırken aşağıdaki formülden yararlanılır:
 
@@ -601,7 +603,7 @@ Para Akış Endeksi hesaplanırken aşağıdaki formülden yararlanılır:
 
 MFI yorumlama yöntemlerini anlamak, RSI'a çok benzer olduğundan, zor olmayacaktır.
 
-### MFI Yorumlama
+#### MFI Yorumlama
 
 1. **Aşırı alım / aşırı satım:**  
    - MFI 80 üzerindeyse → potansiyel satış fırsatı  
@@ -636,11 +638,11 @@ Bitir
 
 Algoritmadan da anlaşılacağı üzere, pozitif ve negatif para akışları da dahil olduğundan hacim de dahil olmaktadır ve daha kapsamlı bir gösterge konumuna gelmektedir. Ancak piyasanın hareketliliğini RSI kadar keskin göstermediği unutulmamalıdır. Aşağıdaki görselde GOOGL sembolünün günlük bazdaki fiyat grafiğini MFI indikatörü ile yorumlayalım. 
 
-![alt text](image-18.png)
+![TradingView GOOGL MFI](mfi_divergence.png)
 
 Yukarıdaki sözde kod algoritması, yukarıdaki grafiğin üzerinde çekilen son trendin ilk günü için uygulandığında TradeBot tarafından elde edilen çıktı
 
-![alt text](image-14.png)
+![TradeBot GOOGL MFI Output](mfi_output.png)
 
 şeklinde olmaktadır.
 
@@ -713,11 +715,11 @@ Bu algoritmayı kullanarak DMI indiktaörünün nasıl yorumlandığını incele
 
 Aşağıdaki GOOGL sembolünün 1 günlük bazdaki yıllık fiyat grafiğinin DMI ve ADX ile olan uyumu gösterilmiştir. DMI grafiğindeki mavi çizgi +DI, kırmızı çizgi -DI'ı ve sarı çizgi ise ADX'i simgelemektedir.
 
-![alt text](image-16.png)
+![TradingView GOOGL DMI](tv_googl_dmi.png)
 
 Yukarıdaki grafiğin üzerine çizilen sonuncu trendin başlangıç tarihinde TradeBot'a gönderilen sorgunun çıktısı aşağıdaki gibi olmaktadır. Grafikte de görüldüğü üzere bariz bir düşüş yaşanmıştır ve botun teknik analiz katmanı tarafından Sat sinyali gönderilmiştir. 
 
-![alt text](image-17.png)
+![TradeBot GOOGL DMI Output](dmi_output.png)
 
 > Özetle: DMI, +DI ve −DI ile trendin yönünü, ADX ile trendin gücünü gösterir. Her gösterge gibi DMI da geçmişe dayanır; geçmiş başarı gelecek başarıyı garanti etmez, yönü söyler ama tek başına bir giriş/çıkış stratejisi olmamalıdır. Yanlış tetiklemeleri azaltmak için ADX gibi güç ölçerlerle filtrelemek gerekir. 
 
@@ -727,7 +729,7 @@ Yukarıdaki grafiğin üzerine çizilen sonuncu trendin başlangıç tarihinde T
 
 [1] - [Türkiye Finans - Finansal Analiz Türleri](https://www.turkiyefinans.com.tr/tr-tr/blog/sayfalar/finansal-analiz-turleri-nelerdir.aspx)
 
-[2] - [TradingView - 1 Year GARAN Stocks](https://www.tradingview.com/chart/GgCX5Z7V/?symbol=GARAN) 
+[2] - [TradingView](https://www.tradingview.com/chart/GgCX5Z7V/?symbol=GOOGL) 
 
 [3] - [VantageMarkets - 16 Candlestick Charts Traders Need to Know](https://www.vantagemarkets.com/academy/16-candlestick-charts-traders-need-to-know/)
 
