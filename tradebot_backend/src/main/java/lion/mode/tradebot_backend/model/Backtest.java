@@ -26,10 +26,6 @@ public class Backtest {
     @Column(name = "indicator", nullable = false)
     private String indicator;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "strategy_id", nullable = false)
-//    private Strategy strategy;
-
     @Column(name = "signal", nullable = false)
     private String signal;
 
@@ -41,9 +37,6 @@ public class Backtest {
 
     @Column(name = "confidenceScore")
     private double confidenceScore;
-
-//    @Column(name = "isMatch", nullable = false)
-//    private boolean isMatch;
 
     @Column(name = "createdAt", nullable = false)
     private LocalDateTime createdAt;
