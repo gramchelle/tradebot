@@ -9,34 +9,37 @@ import java.time.LocalDateTime;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Entity
-@Table(name = "strategies")
+@Table(name = "strategy")
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 public class Strategy {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "strategy_id")
     private Long id;
 
-    @Column(name = "name", nullable = false)
-    private String name; // ör: "RSI basic strategy"
+    private Long userId;  // kullanıcı varsa
 
-    @Column(name = "indicator")
-    private String indicator; // şimdilik tek indikatör
+    private String name;
 
-    // @Column(name = "params", columnDefinition = "TEXT")
-    // private String params; // JSON string: {"period":14,"lower":30,"upper":70}
+    private String description;
 
-    @Column(name = "created_at")
-    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
+    // Strategy ↔ Indicator: Many-to-Many
+    @ManyToMany
+    @JoinTable(
+        name = "strategy_indicator",
+        joinColumns = @JoinColumn(name = "strategy_id"),
+        inverseJoinColumns = @JoinColumn(name = "indicator_id")
+    )
+    private List<Indicator> indicators;
+
+    // Strategy ↔ Backtest: One-to-Many
+    @OneToMany(mappedBy = "strategy", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<BacktestEntity> backtests;
 }
-

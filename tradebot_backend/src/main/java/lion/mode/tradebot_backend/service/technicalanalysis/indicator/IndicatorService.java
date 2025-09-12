@@ -4,7 +4,6 @@ import lion.mode.tradebot_backend.exception.NotEnoughDataException;
 import lion.mode.tradebot_backend.model.Stock;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 import org.ta4j.core.*;
-import org.ta4j.core.indicators.AbstractIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.indicators.helpers.HighPriceIndicator;
 import org.ta4j.core.indicators.helpers.LowPriceIndicator;
@@ -17,9 +16,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-abstract class IndicatorService{
-
-    //TODO: Add OHLC selector to all indicators
+public abstract class IndicatorService{
 
     protected final StockDataRepository repository;
 

@@ -21,8 +21,9 @@ public class TrendlineController {
             @PathVariable String symbol,
             @RequestParam(defaultValue = "14") int period,
             @RequestParam(defaultValue = "30") int lookback,
-            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date
+            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "0.5") double slopeConfidence
     ) {
-        return ResponseEntity.ok(trendlineService.calculateTrendline(symbol, period, lookback, date));
+        return ResponseEntity.ok(trendlineService.calculateTrendline(symbol, period, lookback, date, slopeConfidence));
     }
 }

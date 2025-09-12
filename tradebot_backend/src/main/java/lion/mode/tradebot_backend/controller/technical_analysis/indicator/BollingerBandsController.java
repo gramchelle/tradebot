@@ -28,9 +28,10 @@ public class BollingerBandsController {
             @RequestParam(defaultValue = "20") int period,
             @RequestParam(defaultValue = "2.0") double numberOfDeviations,
             @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
-            @RequestParam(defaultValue = "0.05") double squeezeConfidence
+            @RequestParam(defaultValue = "0.05") double squeezeConfidence,
+            @RequestParam(defaultValue = "close") String priceType
     ) {
-        BollingerResult result = bollingerService.calculateAtDate(symbol, period, numberOfDeviations, date, squeezeConfidence);
+        BollingerResult result = bollingerService.calculateBollinger(symbol, period, numberOfDeviations, date, squeezeConfidence, priceType);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 

@@ -18,11 +18,14 @@ public class DMIService extends IndicatorService {
         super(repository);
     }
 
-    public DMIResult calculateDMI(String symbol, int period, LocalDateTime date) {
+    public DMIResult calculateDMI(String symbol, int period, LocalDateTime date){
         BarSeries series = loadSeries(symbol);
-        if (series.getBarCount() < period + 1) {
-            throw new NotEnoughDataException("Not enough data for DMI at " + date + " for " + symbol);
-        }
+        DMIResult result = calculateDmiWithSeries(symbol, period, date, series);
+        return result;
+    }
+
+    public DMIResult calculateDmiWithSeries(String symbol, int period, LocalDateTime date, BarSeries series) {
+        if (series.getBarCount() < period + 1) throw new NotEnoughDataException("Not enough data for DMI at " + date + " for " + symbol);
 
         int targetIndex = seriesAmountValidator(symbol, series, date);
 
@@ -44,7 +47,7 @@ public class DMIService extends IndicatorService {
         result.setAdxScore(adxValue);
         result.setAdxTrend(detectAdxTrend(adxValue, prevAdx, prev2Adx));
 
-        /*
+        /* TODO: review the logic
         if (adxValue > 25) {
             if (plusDiValue > minusDiValue) {
                 result.setSignal("Sell");
@@ -71,10 +74,10 @@ public class DMIService extends IndicatorService {
         
         if (plusDiValue > minusDiValue) {
                 result.setSignal("Buy");
-                result.setScore(-1);
+                result.setScore(1);
             } else if (plusDiValue < minusDiValue) {
                 result.setSignal("Sell");
-                result.setScore(1);
+                result.setScore(-1);
             } else {
                 result.setSignal("Hold");
                 result.setScore(0);

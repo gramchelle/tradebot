@@ -16,23 +16,16 @@ public class MFIService extends IndicatorService{
         super(repository);
     }
 
-    public MFIResult calculateMFI(String symbol, int period, LocalDateTime date, int lowerLimit, int upperLimit) {
-        BarSeries series = loadSeries(symbol);
-
+    public MFIResult calculateMfiWithSeries(String symbol, int period, LocalDateTime date, int lowerLimit, int upperLimit, BarSeries series) {
         if (series.getBarCount() < period + 1) throw new NotEnoughDataException("Not enough data for MFI at " + date + " for " + symbol);
 
         int targetIndex = seriesAmountValidator(symbol, series, date);
 
-        double mfiValue = computeMFI(series, period, targetIndex);
-
-        return buildResult(symbol, period, mfiValue, lowerLimit, upperLimit);
-    }
-
-    private double computeMFI(BarSeries series, int period, int index) {
         double positiveFlow = 0.0;
         double negativeFlow = 0.0;
+        double mfiValue = 0;
 
-        for (int i = index - period + 1; i <= index; i++) {
+        for (int i = targetIndex - period + 1; i <= targetIndex; i++) {
             Bar currentBar = series.getBar(i);
             Bar prevBar = series.getBar(i - 1);
 
@@ -51,14 +44,12 @@ public class MFIService extends IndicatorService{
         }
 
         if (negativeFlow == 0) {
-            return 100.0;
+            mfiValue = 100.0;
         }
 
         double moneyFlowRatio = positiveFlow / negativeFlow;
-        return 100 - (100 / (1 + moneyFlowRatio));
-    }
+        mfiValue = 100 - (100 / (1 + moneyFlowRatio));
 
-    private MFIResult buildResult(String symbol, int period, double mfiValue, int lowerLimit, int upperLimit) {
         MFIResult result = new MFIResult();
         result.setSymbol(symbol);
         result.setPeriod(period);
@@ -75,5 +66,13 @@ public class MFIService extends IndicatorService{
             result.setScore(0);
         }
         return result;
+
     }
+
+    public MFIResult calculateMFI(String symbol, int period, LocalDateTime date, int lowerLimit, int upperLimit) {
+        BarSeries series = loadSeries(symbol);
+        MFIResult result = calculateMfiWithSeries(symbol, period, date, lowerLimit, upperLimit, series);
+        return result;        
+    }
+
 }

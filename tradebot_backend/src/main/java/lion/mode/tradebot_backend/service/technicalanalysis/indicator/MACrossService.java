@@ -27,11 +27,18 @@ public class MACrossService extends IndicatorService {
 
     public MACrossResult calculateEMACross(String symbol, int shortPeriod, int longPeriod, LocalDateTime date, int lookback, String priceType) {
         BarSeries series = loadSeries(symbol);
-        MACrossResult result = new MACrossResult();
+        MACrossResult result = calculateEMACrossWithSeries(symbol, shortPeriod, longPeriod, date, lookback, priceType, series);
+        return result;
+    }
 
-        if (series.getBarCount() < longPeriod) {
-            throw new IllegalArgumentException("Not enough data to calculate MA Cross for " + symbol);
-        }
+    public MACrossResult calculateSMACross(String symbol, int shortPeriod, int longPeriod, LocalDateTime date, int lookback, String priceType) {
+        BarSeries series = loadSeries(symbol);
+        MACrossResult result = calculateSMACrossWithSeries(symbol, shortPeriod, longPeriod, date, lookback, priceType, series);
+        return result;
+    }
+
+    public MACrossResult calculateEMACrossWithSeries(String symbol, int shortPeriod, int longPeriod, LocalDateTime date, int lookback, String priceType, BarSeries series){
+        if (series.getBarCount() < longPeriod) throw new IllegalArgumentException("Not enough data to calculate EMA Cross for " + symbol);
 
         int targetIndex = seriesAmountValidator(symbol, series, date);
 
@@ -42,6 +49,7 @@ public class MACrossService extends IndicatorService {
         double shortMA = shortEma.getValue(targetIndex).doubleValue();
         double longMA  = longEma.getValue(targetIndex).doubleValue();
 
+        MACrossResult result = new MACrossResult();
         result.setSymbol(symbol);
         result.setShortPeriod(shortPeriod);
         result.setLongPeriod(longPeriod);
@@ -55,8 +63,10 @@ public class MACrossService extends IndicatorService {
 
         for (int i = startIndex; i <= targetIndex; i++) {
             if (i - 1 < 0 || i > series.getEndIndex()) continue;
+
             double prevDiff = shortEma.getValue(i - 1).doubleValue() - longEma.getValue(i - 1).doubleValue();
             double diff = shortEma.getValue(i).doubleValue() - longEma.getValue(i).doubleValue();
+
             if (prevDiff < 0 && diff > 0) {
                 lastCrossIdx = i;
                 lastCrossBullish = true;
@@ -67,7 +77,7 @@ public class MACrossService extends IndicatorService {
         }
 
         double diffAtTarget = shortMA - longMA;
-        double relThreshold = 0.005; // 0.5% relative threshold (tunable)
+        double relThreshold = 0.05; // 0.5% relative threshold
         double absThreshold = Math.max(1e-8, Math.abs(longMA) * relThreshold);
 
         if (lastCrossIdx != -1) {
@@ -97,18 +107,15 @@ public class MACrossService extends IndicatorService {
             }
         }
 
-        String sig = result.getSignal();
-        result.setScore("Buy".equals(sig) ? 1 : "Sell".equals(sig) ? -1 : 0);
+        String signal = result.getSignal();
+        result.setScore("Buy".equals(signal) ? 1 : "Sell".equals(signal) ? -1 : 0);
         return result;
     }
 
-    public MACrossResult calculateSMACross(String symbol, int shortPeriod, int longPeriod, LocalDateTime date, int lookback, String priceType) {
-        BarSeries series = loadSeries(symbol);
+    public MACrossResult calculateSMACrossWithSeries(String symbol, int shortPeriod, int longPeriod, LocalDateTime date, int lookback, String priceType, BarSeries series){
         MACrossResult result = new MACrossResult();
 
-        if (series.getBarCount() < longPeriod) {
-            throw new IllegalArgumentException("Not enough data to calculate MA Cross for " + symbol);
-        }
+        if (series.getBarCount() < longPeriod) throw new IllegalArgumentException("Not enough data to calculate MA Cross for " + symbol);
 
         int targetIndex = seriesAmountValidator(symbol, series, date);
 
@@ -179,7 +186,5 @@ public class MACrossService extends IndicatorService {
 
         return result;
     }
-
-
 
 }

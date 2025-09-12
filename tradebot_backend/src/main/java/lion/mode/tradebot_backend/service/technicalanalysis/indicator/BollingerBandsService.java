@@ -12,6 +12,7 @@ import org.ta4j.core.indicators.bollinger.BollingerBandsUpperIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.indicators.statistics.StandardDeviationIndicator;
 import org.ta4j.core.num.DecimalNum;
+import org.ta4j.core.num.Num;
 
 import java.time.*;
 
@@ -22,33 +23,31 @@ public class BollingerBandsService extends IndicatorService {
         super(repository);
     }
 
-    public BollingerResult calculateAtDate(String symbol, int period, double nbDev, LocalDateTime date, double squeezeConfidence) {
+    public BollingerResult calculateBollinger(String symbol, int period, double nbDev, LocalDateTime date, double squeezeConfidence, String priceType){
         BarSeries series = loadSeries(symbol);
+        BollingerResult result = calculateBollingerWithSeries(symbol, period, nbDev, date, squeezeConfidence, priceType, series);
+        return result;
+    }
 
-        if (series.getBarCount() < period) {
-            throw new NotEnoughDataException("Not enough data for Bollinger Bands for symbol: " + symbol);
-        }
+    public BollingerResult calculateBollingerWithSeries(String symbol, int period, double nbDev, LocalDateTime date, double squeezeConfidence, String priceType, BarSeries series){
+        if (series.getBarCount() < period) throw new NotEnoughDataException("Not enough data for Bollinger Bands for symbol: " + symbol);
 
         int targetIndex = seriesAmountValidator(symbol, series, date);
 
-        return calculateAtIndex(symbol, series, period, nbDev, targetIndex, squeezeConfidence);
-    }
-
-    private BollingerResult calculateAtIndex(String symbol, BarSeries series, int period, double nbDev, int index, double squeezeConfidence) {
-        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
-        SMAIndicator sma = new SMAIndicator(closePrice, period);
-        StandardDeviationIndicator sd = new StandardDeviationIndicator(closePrice, period);
+        Indicator<Num> prices = priceTypeSelector(priceType, series);
+        SMAIndicator sma = new SMAIndicator(prices, period);
+        StandardDeviationIndicator sd = new StandardDeviationIndicator(prices, period);
 
         BollingerBandsMiddleIndicator bbm = new BollingerBandsMiddleIndicator(sma);
         BollingerBandsUpperIndicator bbu = new BollingerBandsUpperIndicator(bbm, sd, DecimalNum.valueOf(nbDev));
         BollingerBandsLowerIndicator bbl = new BollingerBandsLowerIndicator(bbm, sd, DecimalNum.valueOf(nbDev));
 
-        double middle = bbm.getValue(index).doubleValue();
-        double upper = bbu.getValue(index).doubleValue();
-        double lower = bbl.getValue(index).doubleValue();
+        double middle = bbm.getValue(targetIndex).doubleValue();
+        double upper = bbu.getValue(targetIndex).doubleValue();
+        double lower = bbl.getValue(targetIndex).doubleValue();
         double bandwidth = (upper - lower) / middle;
 
-        double close = closePrice.getValue(index).doubleValue();
+        double close = prices.getValue(targetIndex).doubleValue();
 
         BollingerResult result = new BollingerResult();
         result.setSymbol(symbol);

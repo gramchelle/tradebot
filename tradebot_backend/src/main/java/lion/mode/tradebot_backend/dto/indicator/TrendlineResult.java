@@ -31,6 +31,11 @@ public class TrendlineResult {
     @JsonIgnore
     private String comment;
 
+    private double intercept;
+
+    @JsonIgnore
+    private int startIndex;
+
     private boolean actsAsSupport;
 
     private boolean actsAsResistance;

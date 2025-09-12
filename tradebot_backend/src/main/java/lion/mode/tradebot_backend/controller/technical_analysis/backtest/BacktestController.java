@@ -28,9 +28,119 @@ public class BacktestController {
             @RequestParam(defaultValue = "14") int lookback,
             @RequestParam(defaultValue = "1") int lookbackPeriod,
             @RequestParam(defaultValue = "close") String priceType,
-            @RequestParam(defaultValue = "4.4") double calculationConfidence
+            @RequestParam(defaultValue = "0.01") double calculationConfidence
             ){
         return new ResponseEntity<Backtest>(backtestService.rsiHistoricalBacktest(symbol, period, lowerLimit, upperLimit, date, lookback, lookbackPeriod, priceType, calculationConfidence), HttpStatus.OK);
     }
+
+    @GetMapping("/ema-cross/{symbol}")
+    public ResponseEntity<Backtest> getBacktestResultsForEMACross(
+            @PathVariable String symbol,
+            @RequestParam(defaultValue = "50") int shortPeriod,
+            @RequestParam(defaultValue = "200") int longPeriod,
+            @RequestParam(defaultValue = "5") int lookback,
+            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "20") int backtestLookback,
+            @RequestParam(defaultValue = "2") int lookbackPeriod,
+            @RequestParam(defaultValue = "close") String priceType,
+            @RequestParam(defaultValue = "0.01") double calculationConfidence
+    ){
+        return new ResponseEntity<Backtest>(backtestService.emaCrossoverHistoricalBacktest(symbol, shortPeriod, longPeriod, lookback, date, priceType, backtestLookback, lookbackPeriod, calculationConfidence), HttpStatus.OK);
+    }
+
+    @GetMapping("/sma-cross/{symbol}")
+    public ResponseEntity<Backtest> getBacktestResultsForSMACross(
+            @PathVariable String symbol,
+            @RequestParam(defaultValue = "50") int shortPeriod,
+            @RequestParam(defaultValue = "200") int longPeriod,
+            @RequestParam(defaultValue = "5") int lookback,
+            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "20") int backtestLookback,
+            @RequestParam(defaultValue = "2") int lookbackPeriod,
+            @RequestParam(defaultValue = "close") String priceType,
+            @RequestParam(defaultValue = "0.1") double calculationConfidence
+    ){
+        return new ResponseEntity<Backtest>(backtestService.smaCrossoverHistoricalBacktest(symbol, shortPeriod, longPeriod, lookback, date, priceType, backtestLookback, lookbackPeriod, calculationConfidence), HttpStatus.OK);
+    }
+
+    @GetMapping("/macd/{symbol}")
+    public ResponseEntity<Backtest> getBacktestResultsForMACD(
+            @PathVariable String symbol,
+            @RequestParam(defaultValue = "12") int shortPeriod,
+            @RequestParam(defaultValue = "26") int longPeriod,
+            @RequestParam(defaultValue = "9") int signalPeriod,
+            @RequestParam(defaultValue = "5") int lookback,
+            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "20") int backtestLookback,
+            @RequestParam(defaultValue = "2") int lookbackPeriod,
+            @RequestParam(defaultValue = "close") String priceType,
+            @RequestParam(defaultValue = "0.01") double calculationConfidence
+    ){
+        return new ResponseEntity<Backtest>(backtestService.macdHistoricalBacktest(symbol, shortPeriod, longPeriod, signalPeriod, date, priceType, backtestLookback, lookbackPeriod, calculationConfidence), HttpStatus.OK);
+    }
+
+    @GetMapping("/bollinger/{symbol}")
+    public ResponseEntity<Backtest> getBacktestResultsForBollinger(
+            @PathVariable String symbol,
+            @RequestParam(defaultValue = "20") int period,
+            @RequestParam(defaultValue = "2.0") double nbDev,
+            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "1.0") double squeezeConfidence,
+            @RequestParam(defaultValue = "close") String priceType,
+            @RequestParam(defaultValue = "20") int backtestLookback,
+            @RequestParam(defaultValue = "2") int lookbackPeriod,
+            @RequestParam(defaultValue = "0.01") double calculationConfidence
+    ){
+        return new ResponseEntity<Backtest>(backtestService.bollingerHistoricalBacktest(symbol, period, nbDev, date, squeezeConfidence, priceType, backtestLookback, lookbackPeriod, calculationConfidence), HttpStatus.OK);
+    }
+
+    // TEST EDİLECEK
+
+    @GetMapping("/trendline/{symbol}")
+    public ResponseEntity<Backtest> getBacktestResultsForTrendline(
+            @PathVariable String symbol,
+            @RequestParam(defaultValue = "14") int period,
+            @RequestParam(defaultValue = "5") int lookback,
+            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "0.01") double calculationConfidence,
+            @RequestParam(defaultValue = "0.01") double slopeConfidence,
+            @RequestParam(defaultValue = "close") String priceType,
+            @RequestParam(defaultValue = "20") int backtestLookback,
+            @RequestParam(defaultValue = "2") int lookbackPeriod
+    ){
+        return new ResponseEntity<Backtest>(backtestService.trendlineHistoricalBacktest(symbol, period, date, lookback, slopeConfidence, priceType, backtestLookback, lookbackPeriod, calculationConfidence), HttpStatus.OK);
+    }
+
+    @GetMapping("/dmi/{symbol}")
+    public ResponseEntity<Backtest> getBacktestResultsForDMI(
+            @PathVariable String symbol,
+            @RequestParam(defaultValue = "14") int period,
+            @RequestParam(defaultValue = "25.0") double adxThreshold,
+            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "14") int lookback,
+            @RequestParam(defaultValue = "2") int lookbackPeriod,
+            @RequestParam(defaultValue = "close") String priceType,
+            @RequestParam(defaultValue = "0.01") double calculationConfidence,
+            @RequestParam(defaultValue = "20") int backtestLookback
+    ){
+        return new ResponseEntity<Backtest>(backtestService.dmiHistoricalBacktest(symbol, period, date, priceType, backtestLookback, lookbackPeriod, calculationConfidence), HttpStatus.OK);
+    }
+
+    @GetMapping("/mfi/{symbol}")
+    public ResponseEntity<Backtest> getBacktestResultsForMFI(
+            @PathVariable String symbol,
+            @RequestParam(defaultValue = "14") int period,
+            @RequestParam(defaultValue = "80") int upperLimit,
+            @RequestParam(defaultValue = "20") int lowerLimit,
+            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "14") int lookback,
+            @RequestParam(defaultValue = "2") int lookbackPeriod,
+            @RequestParam(defaultValue = "close") String priceType,
+            @RequestParam(defaultValue = "0.01") double calculationConfidence,
+            @RequestParam(defaultValue = "20") int backtestLookback
+    ){
+        return new ResponseEntity<Backtest>(backtestService.mfiHistoricalBacktest(symbol, period, date, lowerLimit, upperLimit, priceType, backtestLookback, lookbackPeriod, calculationConfidence), HttpStatus.OK);
+    }
+
 
 }

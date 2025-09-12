@@ -14,6 +14,8 @@ public class BacktestResult {
 
     private String indicator;
 
+    private String timeframe;
+
     private List<String> strategy; // can be one indicator or multiple indicators
 
     private String signal;
@@ -21,8 +23,6 @@ public class BacktestResult {
     private int score;
 
     private LocalDateTime stockDate;
-
-    private boolean isMatch;
 
     private LocalDateTime queriedAt;
 }

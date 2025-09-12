@@ -1,6 +1,6 @@
 # Teknik Analiz
 
-> Bu rapor, geliştirilmekte olan TradeBot projesinin teknik analiz katmanını özetleyen bir araştırma raporudur. Bu sadece bir araştırma raporu olduğundan ve raporda yazan hiçbir şey bir uzman tarafından yazılmamış olduğundan ötürü yatırım tavsiyesi niteliğinde değildir.
+> Bu rapor, geliştirilmekte olan TradeBot projesinin teknik analiz katmanını açıklayan ve özetleyen bir araştırma raporudur. Bu sadece bir araştırma raporu olduğundan ve raporda yazan hiçbir şey bir uzman tarafından yazılmamış olduğundan ötürü yatırım tavsiyesi niteliğinde değildir.
 
 Finans piyasasında şirketlerin hisselerinin (stock), fonların, dövizlerin ve benzeri diğer menkul kıymetlerin (security) satın alınıp satılmasına karar verebilmek üzere kullanılan birçok çeşit analiz yöntemleri bulunmaktadır. Bunlardan en yaygın bilinenleri
 
@@ -52,6 +52,10 @@ Aşağıdaki görselde fiyat grafiği üzerinde, üstünde ve altında olacak ş
 * **Bullish:** Piyasanın veya bir varlığın fiyatının yükseleceği beklentisi. Yatırımcıların iyimser olduğu, alım baskısının yüksek olduğu dönemleri tanımlar. Türkçede genellikle “boğa piyasası” olarak geçer.
 
 * **Bearish:** Piyasanın veya bir varlığın fiyatının düşeceği beklentisi. Yatırımcıların kötümser olduğu, satış baskısının yüksek olduğu dönemleri tanımlar. Türkçede genellikle “ayı piyasası” olarak geçer.
+
+* **Take Profit (TP):** Belirlenen kar hedefi seviyesine ulaşıldığında pozisyonun otomatik olarak kapanmasını sağlayan emir.
+
+* **Stop Loss (SL):** Belirlenen zarar sınırına ulaşıldığında pozisyonun otomatik olarak kapanmasını sağlayan emir.
 
 ## Fiyat Grafiği Okuma
 

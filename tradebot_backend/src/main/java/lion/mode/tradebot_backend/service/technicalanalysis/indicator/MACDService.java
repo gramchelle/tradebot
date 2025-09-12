@@ -23,23 +23,23 @@ public class MACDService extends IndicatorService {
 
     public MACDResult calculateMacd(String symbol, int shortPeriod, int longPeriod, int signalPeriod, LocalDateTime date, int histogramTrendPeriod, double histogramConfidence, String priceType) {
         BarSeries series = loadSeries(symbol);
-        return calculateMacdwithSeries(symbol, shortPeriod, longPeriod, signalPeriod, date, histogramTrendPeriod, histogramConfidence, priceType, series);
+        return calculateMacdWithSeries(symbol, shortPeriod, longPeriod, signalPeriod, date, histogramTrendPeriod, histogramConfidence, priceType, series);
     }
 
-    public MACDResult calculateMacdwithSeries(String symbol, int shortPeriod, int longPeriod, int signalPeriod, LocalDateTime date, int histogramTrendPeriod, double histogramConfidence, String priceType, BarSeries series) {
+    public MACDResult calculateMacdWithSeries(String symbol, int shortPeriod, int longPeriod, int signalPeriod, LocalDateTime date, int histogramTrendPeriod, double histogramConfidence, String priceType, BarSeries series) {
         if (series == null || series.isEmpty()) throw new IllegalArgumentException("No data available for symbol: " + symbol);
 
         int targetIndex = seriesAmountValidator(symbol, series, date);
-
-        Indicator<Num> prices = priceTypeSelector(priceType, series);
-        MACDIndicator macd = new MACDIndicator(prices, shortPeriod, longPeriod);
-        EMAIndicator signal = new EMAIndicator(macd, signalPeriod);
 
         MACDResult result = new MACDResult();
         result.setSymbol(symbol);
         result.setShortPeriod(shortPeriod);
         result.setLongPeriod(longPeriod);
         result.setSignalPeriod(signalPeriod);
+
+        Indicator<Num> prices = priceTypeSelector(priceType, series);
+        MACDIndicator macd = new MACDIndicator(prices, shortPeriod, longPeriod);
+        EMAIndicator signal = new EMAIndicator(macd, signalPeriod);
 
         result.setMacdScore(macd.getValue(targetIndex).doubleValue());
         result.setSignalScore(signal.getValue(targetIndex).doubleValue());

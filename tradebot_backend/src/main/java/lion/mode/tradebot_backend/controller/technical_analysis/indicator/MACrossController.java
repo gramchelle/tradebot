@@ -28,7 +28,7 @@ public class MACrossController {
             @RequestParam(defaultValue = "9") int shortPeriod,
             @RequestParam(defaultValue = "26") int longPeriod,
             @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
-            @RequestParam(defaultValue = "14") int lookback,
+            @RequestParam(defaultValue = "5") int lookback,
             @RequestParam(defaultValue = "close") String priceType) {
 
             MACrossResult result = macrossService.calculateEMACross(symbol, shortPeriod, longPeriod, date, lookback, priceType);
@@ -41,7 +41,7 @@ public class MACrossController {
             @RequestParam(defaultValue = "9") int shortPeriod,
             @RequestParam(defaultValue = "26") int longPeriod,
             @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
-            @RequestParam(defaultValue = "14") int lookback,
+            @RequestParam(defaultValue = "5") int lookback,
             @RequestParam(defaultValue = "close") String priceType) {
 
         MACrossResult result = macrossService.calculateSMACross(symbol, shortPeriod, longPeriod, date, lookback, priceType);
