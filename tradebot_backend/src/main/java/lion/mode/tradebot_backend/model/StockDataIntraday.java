@@ -1,0 +1,38 @@
+package lion.mode.tradebot_backend.model;
+
+import jakarta.persistence.*;
+import lombok.Data;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "stock_data_per30mins")
+@Data
+public class StockDataPer30Mins {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name= "symbol")
+    private String symbol;
+
+    @Column(name = "open")
+    private Double open;
+
+    @Column(name = "high")
+    private Double high;
+
+    @Column(name = "low")
+    private Double low;
+
+    @Column(name = "close")
+    private Double close;
+
+    @Column(name = "volume")
+    private Long volume;
+
+    @Column(name = "timestamp", nullable = false)
+    private LocalDateTime timestamp;
+
+}

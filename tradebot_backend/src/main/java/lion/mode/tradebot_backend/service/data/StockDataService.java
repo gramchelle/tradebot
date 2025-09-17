@@ -1,6 +1,6 @@
 package lion.mode.tradebot_backend.service.fetchdata;
 
-import lion.mode.tradebot_backend.model.Stock;
+import lion.mode.tradebot_backend.model.StockDataDaily;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,15 +14,15 @@ public class StockDataService {
 
     private final StockDataRepository repository;
 
-    public List<Stock> getAllStockData() {
+    public List<StockDataDaily> getAllStockData() {
         return repository.findAll();
     }
 
-    public List<Stock> getStockDataBySymbol(String symbol) {
+    public List<StockDataDaily> getStockDataBySymbol(String symbol) {
         return repository.findBySymbol(symbol);
     }
 
-    public List<Stock> getStockDataBySymbolAndDateRange(String symbol, LocalDateTime startDate, LocalDateTime endDate) {
+    public List<StockDataDaily> getStockDataBySymbolAndDateRange(String symbol, LocalDateTime startDate, LocalDateTime endDate) {
         return repository.findBySymbolAndTimestampBetween(symbol, startDate, endDate);
     }
 

@@ -3,7 +3,7 @@ package lion.mode.tradebot_backend.service.fetchdata;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import lion.mode.tradebot_backend.model.Stock;
+import lion.mode.tradebot_backend.model.StockDataDaily;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,9 +24,6 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class AlphaVantageDataCollectorService {
-
-    //Get daily data
-
     private final StockDataRepository repository;
     private final HttpClient httpClient;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -54,9 +51,9 @@ public class AlphaVantageDataCollectorService {
                 return false;
             }
 
-            List<Stock> newStockList = new ArrayList<>();
+            List<StockDataDaily> newStockList = new ArrayList<>();
             LocalDateTime lastTimestampInDb = repository.findTopBySymbolOrderByTimestampDesc(symbol)
-                    .map(Stock::getTimestamp)
+                    .map(StockDataDaily::getTimestamp)
                     .orElse(null);
 
             for (Map.Entry<String, JsonElement> entry : timeSeries.entrySet()) {
@@ -65,7 +62,7 @@ public class AlphaVantageDataCollectorService {
 
                 if (lastTimestampInDb == null || utcTime.isAfter(lastTimestampInDb)) {
                     JsonObject values = entry.getValue().getAsJsonObject();
-                    Stock data = new Stock();
+                    StockDataDaily data = new StockDataDaily();
                     data.setSymbol(symbol);
                     data.setOpen(values.get("1. open").getAsDouble());
                     data.setHigh(values.get("2. high").getAsDouble());

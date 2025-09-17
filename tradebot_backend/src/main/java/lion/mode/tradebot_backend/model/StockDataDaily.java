@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "stock_data_historical")
+@Table(name = "stock_data_daily")
 @Data
 public class Stock {
 
@@ -20,19 +20,19 @@ public class Stock {
     private String symbol;
 
     @Column(name = "open")
-    private double open;
+    private Double open;
 
     @Column(name = "high")
-    private double high;
+    private Double high;
 
     @Column(name = "low")
-    private double low;
+    private Double low;
 
     @Column(name = "close")
-    private double close;
+    private Double close;
 
     @Column(name = "volume")
-    private long volume;
+    private Long volume;
 
     @Column(name = "timestamp", nullable = false)
     private LocalDateTime timestamp;
