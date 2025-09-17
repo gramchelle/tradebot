@@ -1,7 +1,7 @@
-package lion.mode.tradebot_backend.service.technicalanalysis.indicator;
+package lion.mode.tradebot_backend.service.technicalanalysis;
 
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
-import lion.mode.tradebot_backend.model.Stock;
+import lion.mode.tradebot_backend.model.StockDataDaily;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 import org.ta4j.core.*;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
@@ -24,16 +24,17 @@ public abstract class IndicatorService{
         this.repository = repository;
     }
 
+    // TODO: Make this method generic to support different timeframes
     protected BarSeries loadSeries(String symbol) {
 
         if (repository.findBySymbol(symbol).isEmpty()) {
             throw new NotEnoughDataException("No data found for symbol: " + symbol);
         }
         
-        List<Stock> dataList = repository.findBySymbolOrderByTimestampAsc(symbol);
+        List<StockDataDaily> dataList = repository.findBySymbolOrderByTimestampAsc(symbol);
         BarSeries series = new BaseBarSeries(symbol, DecimalNum::valueOf);
 
-        for (Stock data : dataList) {
+        for (StockDataDaily data : dataList) {
             ZonedDateTime endTime = data.getTimestamp().atZone(ZoneId.systemDefault());
             if (series.getBarCount() > 0) {
                 ZonedDateTime lastEnd = series.getBar(series.getEndIndex()).getEndTime();
@@ -43,7 +44,7 @@ public abstract class IndicatorService{
             }
 
             Bar bar = BaseBar.builder()
-                    .timePeriod(java.time.Duration.ofDays(1)) // [!] The time interval is 1 day
+                    .timePeriod(java.time.Duration.ofDays(1))
                     .endTime(endTime)
                     .openPrice(DecimalNum.valueOf(data.getOpen()))
                     .highPrice(DecimalNum.valueOf(data.getHigh()))
@@ -56,20 +57,23 @@ public abstract class IndicatorService{
         return series;
     }
 
-    protected int seriesAmountValidator(String symbol, BarSeries series, LocalDateTime targetDate){
+    protected int seriesAmountValidator(String symbol, BarSeries series, LocalDateTime date){
         int targetIndex = -1;
         for (int i = 0; i < series.getBarCount(); i++) {
             LocalDateTime barTime = series.getBar(i).getEndTime().toLocalDateTime();
-            if (!barTime.isAfter(targetDate)) {
+            if (!barTime.isAfter(date)) {
                 targetIndex = i;
             } else break;
         }
 
-        if (targetIndex == -1) throw new NotEnoughDataException("No bar found before or at " + targetDate + " for " + symbol);
-        else return targetIndex;
+        if (targetIndex == -1) {
+            throw new NotEnoughDataException("No bar found before or at " + date + " for " + symbol);
+        }
+        
+        return targetIndex;
     }
 
-    protected Indicator<Num> priceTypeSelector(String priceType, BarSeries series){
+    protected Indicator<Num> sourceSelector(String priceType, BarSeries series){
         switch (priceType.toLowerCase()) {
             case "open":
                 return new OpenPriceIndicator(series);

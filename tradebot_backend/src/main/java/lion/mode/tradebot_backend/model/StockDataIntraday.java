@@ -6,9 +6,9 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "stock_data_per30mins")
+@Table(name = "stock_data_intraday")
 @Data
-public class StockDataPer30Mins {
+public class StockDataIntraday {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -1,14 +1,14 @@
 package lion.mode.tradebot_backend.service.technicalanalysis.indicator;
 
-import lion.mode.tradebot_backend.dto.indicator.TrendlineResult;
-import lion.mode.tradebot_backend.exception.NotEnoughDataException;
+import lion.mode.tradebot_backend.dto.BaseIndicatorResponse;
+import lion.mode.tradebot_backend.dto.indicator.TrendlineEntry;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
+import lion.mode.tradebot_backend.service.technicalanalysis.IndicatorService;
+
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
 
-import java.sql.Date;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 @Service
 public class TrendlineService extends IndicatorService {
@@ -17,101 +17,151 @@ public class TrendlineService extends IndicatorService {
         super(repository);
     }
 
-    public TrendlineResult calculateTrendline(String symbol, int period, int lookback, LocalDateTime date, double slopeConfidence) {
-        BarSeries series = loadSeries(symbol);
-        TrendlineResult result = calculateTrendlineWithSeries(symbol, period, date, lookback, series, slopeConfidence);
-        return result;
+    public BaseIndicatorResponse calculate(TrendlineEntry entry) {
+        BarSeries series = loadSeries(entry.getSymbol());
+        return calculateWithSeries(entry, series);
     }
 
-    public TrendlineResult calculateTrendlineWithSeries(String symbol, int period, LocalDateTime date, int lookback, BarSeries series, double slopeConfidence) {
-        if (series.getBarCount() < period) throw new NotEnoughDataException("Not enough bars for trendline for " + symbol + " (need period=" + period + ")");
+    public BaseIndicatorResponse calculateWithSeries(TrendlineEntry entry, BarSeries series) {
+        String symbol = entry.getSymbol();
+        int period = entry.getPeriod();
+        int lookback = entry.getLookback();
+        LocalDateTime date = entry.getDate();
 
         int targetIndex = seriesAmountValidator(symbol, series, date);
 
-        if (targetIndex < period - 1) throw new NotEnoughDataException("Not enough past bars ending at targetDate for period=" + period);
+        // lookback period'da swing high ve low
+        double swingHigh = findSwingHigh(series, targetIndex, lookback);
+        double swingLow = findSwingLow(series, targetIndex, lookback);
+        double currentPrice = series.getBar(targetIndex).getClosePrice().doubleValue();
 
-        int startIndex = targetIndex - period + 1;
-
-        double sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-        for (int i = 0; i < period; i++) {
-            double x = i;
-            double y = series.getBar(startIndex + i).getClosePrice().doubleValue();
-            sumX += x;
-            sumY += y;
-            sumXY += x * y;
-            sumXX += x * x;
-        }
-        double n = period;
-        double denom = n * sumXX - sumX * sumX;
-        double slope = denom == 0 ? 0.0 : (n * sumXY - sumX * sumY) / denom;
-        double intercept = (sumY - slope * sumX) / n;
-
-        double lastPrice = series.getBar(targetIndex).getClosePrice().doubleValue();
-        double slopeRatio = lastPrice == 0 ? 0.0 : slope / lastPrice;
-
-        TrendlineResult result = new TrendlineResult();
+        BaseIndicatorResponse result = new BaseIndicatorResponse();
         result.setSymbol(symbol);
-        result.setPeriod(period);
-        result.setLookback(lookback);
-        result.setSlope(slope);
-        result.setIntercept(intercept);
-        result.setStartIndex(startIndex);
-        result.setDate(date);
+        result.setIndicator("Trendline");
+        result.setDate(series.getBar(targetIndex).getEndTime().toLocalDateTime());
+        result.getValues().put("currentPrice", currentPrice);
+        result.getValues().put("swingHigh", swingHigh);
+        result.getValues().put("swingLow", swingLow);
 
-        if (slopeRatio > slopeConfidence) {
-            result.setDirection("Uptrend");
-            result.setSignal("Buy");
-            result.setScore(1);
-            result.setComment("Trendline indicates an upward trend.");
-        } else if (slopeRatio < -slopeConfidence) {
-            result.setDirection("Downtrend");
-            result.setSignal("Sell");
-            result.setScore(-1);
-            result.setComment("Trendline indicates a downward trend.");
+        double highBreakout = (currentPrice - swingHigh) / swingHigh * 100;
+        double lowBreakdown = (swingLow - currentPrice) / swingLow * 100;
+        
+        if (currentPrice > swingHigh) {
+            if (highBreakout > 5) {
+                result.setSignal("Strong Buy");
+                result.setScore(3.0/3.0);
+            } else if (highBreakout > 2) {
+                result.setSignal("Buy");
+                result.setScore(2.0/3.0);
+            } else {
+                result.setSignal("Weak Buy");
+                result.setScore(1.0/3.0);
+            }
+        } else if (currentPrice < swingLow) {
+            if (lowBreakdown > 5) {
+                result.setSignal("Strong Sell");
+                result.setScore(-3.0/3.0);
+            } else if (lowBreakdown > 2) {
+                result.setSignal("Sell");
+                result.setScore(-2.0/3.0);
+            } else {
+                result.setSignal("Weak Sell");
+                result.setScore(-1.0/3.0);
+            }
         } else {
-            result.setDirection("Sideways");
             result.setSignal("Hold");
-            result.setScore(0);
-            result.setComment("Trendline is flat (sideways market).");
+            result.setScore(0.0);
         }
 
-        System.out.println("");
-        System.out.println("Start Date : " + series.getBar(startIndex).getEndTime().toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-        System.out.println("Signal" + result.getSignal());
-        System.out.println("Slope : " + slope);
-        System.out.println("Slope Ratio : " + slopeRatio);
-        System.out.println("Slope Confidence : " + slopeConfidence+"\n");
-
-        checkSupportResistance(series, result, targetIndex, startIndex, lookback);
+        String supportResistance = checkSupportResistance(series, targetIndex, lookback, swingHigh, swingLow);
+        result.setStatus(supportResistance);
+        
+        int barsSinceSignal = calculateBarsSinceSignal(series, targetIndex, lookback, swingHigh, swingLow);
+        result.setBarsSinceSignal(barsSinceSignal);
+        
         return result;
     }
 
-    private void checkSupportResistance(BarSeries series, TrendlineResult result, int endIndex, int startIndex, int lookback) {
-        int srStart = Math.max(startIndex, endIndex - lookback);
-        int srEnd = endIndex;
-
-        double slope = result.getSlope();
-        double intercept = result.getIntercept();
-        int baseX = startIndex;
-
-        int touches = 0;
-        double tolPercent = 0.01;
-
-        for (int j = srStart; j <= srEnd; j++) {
-            int relX = j - baseX;
-            double expected = intercept + slope * relX;
-            double actual = series.getBar(j).getClosePrice().doubleValue();
-            double tolerance = Math.max(1e-8, Math.abs(expected) * tolPercent);
-
-            if (Math.abs(expected - actual) <= tolerance) {
-                touches++;
+    private String checkSupportResistance(BarSeries series, int targetIndex, int lookback, double swingHigh, double swingLow) {
+        double tolerance = 0.02;
+        int highTouches = 0;
+        int lowTouches = 0;
+        
+        int start = Math.max(0, targetIndex - lookback);
+        for (int i = start; i < targetIndex; i++) {
+            double high = series.getBar(i).getHighPrice().doubleValue();
+            double low = series.getBar(i).getLowPrice().doubleValue();
+            
+            if (Math.abs(high - swingHigh) / swingHigh <= tolerance) {
+                highTouches++;
+            }
+            
+            if (Math.abs(low - swingLow) / swingLow <= tolerance) {
+                lowTouches++;
             }
         }
-
-        if (touches >= 2) {
-            if (slope > 0) result.setActsAsResistance(true);
-            else if (slope < 0) result.setActsAsSupport(true);
+        
+        if (highTouches >= 2) {
+            return "RESISTANCE LEVEL DETECTED at " + swingHigh;
         }
+        if (lowTouches >= 2) {
+            return "SUPPORT LEVEL DETECTED at " + swingLow;
+        }
+        return "No significant support/resistance levels detected.";
     }
 
+    private double findSwingHigh(BarSeries series, int targetIndex, int lookback) {
+        double high = 0;
+        int start = Math.max(0, targetIndex - lookback);
+        for (int i = start; i < targetIndex; i++) {
+            double barHigh = series.getBar(i).getHighPrice().doubleValue();
+            if (barHigh > high) high = barHigh;
+        }
+        return high;
+    }
+
+    private double findSwingLow(BarSeries series, int targetIndex, int lookback) {
+        double low = Double.MAX_VALUE;
+        int start = Math.max(0, targetIndex - lookback);
+        for (int i = start; i < targetIndex; i++) {
+            double barLow = series.getBar(i).getLowPrice().doubleValue();
+            if (barLow < low) low = barLow;
+        }
+        return low;
+    }
+
+    private int calculateBarsSinceSignal(BarSeries series, int targetIndex, int lookback, double swingHigh, double swingLow) {
+        if (targetIndex <= 0) {
+            return -1;
+        }
+        
+        double currentPrice = series.getBar(targetIndex).getClosePrice().doubleValue();
+        
+        boolean currentAboveResistance = currentPrice > swingHigh;
+        boolean currentBelowSupport = currentPrice < swingLow;
+        
+        if (!currentAboveResistance && !currentBelowSupport) {
+            return -1;
+        }
+        
+        int start = Math.max(0, targetIndex - lookback);
+        
+        for (int i = targetIndex - 1; i >= start; i--) {
+            double prevClose = series.getBar(i).getClosePrice().doubleValue();
+            
+            if (currentAboveResistance) {
+                // Resistance breakout
+                if (prevClose <= swingHigh) {
+                    return targetIndex - i;
+                }
+            } else if (currentBelowSupport) {
+                // Support breakdown
+                if (prevClose >= swingLow) {
+                    return targetIndex - i;
+                }
+            }
+        }
+        
+        return -1;
+    }
 }

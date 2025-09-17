@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.dto.indicator_entry;
+package lion.mode.tradebot_backend.dto.indicator;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

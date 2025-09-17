@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import lion.mode.tradebot_backend.service.fetchdata.AlphaVantageDataCollectorService;
+import lion.mode.tradebot_backend.service.data.AlphaVantageDataCollectorService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,12 +19,13 @@ public class SchedulerConfig {
     @Value("${tradebot.tracked-symbols-nasdaq}")
     private List<String> symbols;
 
-    @Scheduled(fixedRate = 86400000) // executes per 24 hours
+    @Scheduled(fixedRate = 10800000) // executes per 3 hours
     public void scheduleDataFetch() {
         System.out.println("[START] Scheduled data fetch starting at " + LocalDateTime.now());
 
         for (String symbol : symbols) {
-            dataCollectorService.saveStockData(symbol);
+            dataCollectorService.saveStockDataDaily(symbol);
+            //dataCollectorService.saveStockDataIntraday(symbol, "30min");
         }
 
         System.out.println("[DONE] Scheduled data fetch finished at " + LocalDateTime.now());

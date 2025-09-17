@@ -1,49 +1,85 @@
 package lion.mode.tradebot_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
+import lion.mode.tradebot_backend.utils.BacktestParameterHelper;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
-import java.util.List;
+
+import java.util.Map;
 
 @Entity
-@Table(name = "backtest_results")
+@Table(name = "backtests")
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 public class Backtest {
 
     @Id
-    @Column(name = "backtestId", nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "symbol", nullable = false)
     private String symbol;
-
-    @Column(name = "indicator", nullable = false)
     private String indicator;
-
-    @Column(name = "signal", nullable = false)
     private String signal;
+    private double score;
 
-    @Column(name = "score", nullable = false)
-    private int score;
+    @Column(name = "date")
+    private LocalDateTime date;
 
-    @Column(name = "stockDate", nullable = false)
-    private LocalDateTime stockDate;
-
-    @Column(name = "confidenceScore")
+    @Column(name = "confidence_score")
     private double confidenceScore;
 
-    @Column(name = "createdAt", nullable = false)
+    private int totalTrials;
+    private int successfulPredictions;
+    private int failedPredictions;
+
+    private int lookback;
+    private int lookbackPeriod;
+    private double calculationConfidence;
+    private String priceType;
+
+    @Column(name = "indicator_parameters", columnDefinition = "TEXT")
+    @JsonIgnore
+    private String indicatorParametersJson;
+
+    private double averagePriceMovement;
+    private double maxPriceMovement;
+    private double minPriceMovement;
+    private double volatility;
+
+    private LocalDateTime backtestStartDate;
+    private LocalDateTime backtestEndDate;
+
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    private String status;
+
+    @Transient
+    private Map<String, Object> indicatorParameters;
+
+    public Map<String, Object> getIndicatorParameters() {
+        if (indicatorParameters == null && indicatorParametersJson != null) {
+            indicatorParameters = BacktestParameterHelper.parametersFromJson(indicatorParametersJson);
+        }
+        return indicatorParameters;
+    }
+
+    public void setIndicatorParameters(Map<String, Object> parameters) {
+        this.indicatorParameters = parameters;
+        this.indicatorParametersJson = BacktestParameterHelper.parametersToJson(parameters);
+    }
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

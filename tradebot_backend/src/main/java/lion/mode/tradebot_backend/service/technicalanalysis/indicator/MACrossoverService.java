@@ -8,6 +8,8 @@ import org.ta4j.core.BarSeries;
 import lion.mode.tradebot_backend.dto.BaseIndicatorResponse;
 import lion.mode.tradebot_backend.dto.indicator.MACrossoverEntry;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
+import lion.mode.tradebot_backend.service.technicalanalysis.IndicatorService;
+
 import org.ta4j.core.Indicator;
 import org.ta4j.core.indicators.CachedIndicator;
 import org.ta4j.core.indicators.EMAIndicator;
@@ -15,9 +17,9 @@ import org.ta4j.core.indicators.SMAIndicator;
 import org.ta4j.core.num.Num;
 
 @Service
-public class MACrossService extends IndicatorService{
+public class MACrossoverService extends IndicatorService{
 
-    public MACrossService(StockDataRepository repository) {
+    public MACrossoverService(StockDataRepository repository) {
         super(repository);
     }
 
@@ -34,9 +36,9 @@ public class MACrossService extends IndicatorService{
         int lookback = entry.getLookback();
         String source = entry.getSource();
         String maType = entry.getMaType(); // SMA or EMA
-        double relThreshold =  entry.getRelativeThreshold();
+        double relThreshold = entry.getRelativeThreshold();
 
-        if (series.getBarCount() < longPeriod) throw new IllegalArgumentException("Not enough data to calculate EMA Cross for " + symbol);
+        if (series.getBarCount() < longPeriod) throw new IllegalArgumentException("Not enough data to calculate " + maType + " Cross for " + symbol);
         int targetIndex = seriesAmountValidator(symbol, series, date);
 
         Indicator<Num> prices = sourceSelector(source, series);
@@ -50,26 +52,34 @@ public class MACrossService extends IndicatorService{
             shortMa = new SMAIndicator(prices, shortPeriod);
             longMa = new SMAIndicator(prices, longPeriod);
         } else {
-            throw new IllegalArgumentException("Invalid Moving Average Type " + maType);
+            throw new IllegalArgumentException("Invalid Moving Average Type " + maType + ". Use 'SMA' or 'EMA'.");
         }
 
         double shortMA = shortMa.getValue(targetIndex).doubleValue();
-        double longMA  = longMa.getValue(targetIndex).doubleValue();
+        double longMA = longMa.getValue(targetIndex).doubleValue();
 
-        int startIndex = Math.max(1, targetIndex - lookback);
+        int startIndex = Math.max(longPeriod, targetIndex - lookback);
         int lastCrossIdx = -1;
         boolean lastCrossBullish = false;
 
-        for (int i = startIndex; i <= targetIndex; i++) {
-            if (i - 1 < 0 || i > series.getEndIndex()) continue;
+        for (int i = startIndex + 1; i <= targetIndex; i++) {
+            if (i - 1 < longPeriod || i > series.getEndIndex()) continue;
 
-            double prevDiff = shortMa.getValue(i - 1).doubleValue() - longMa.getValue(i - 1).doubleValue();
-            double diff = shortMa.getValue(i).doubleValue() - longMa.getValue(i).doubleValue();
+            double prevShort = shortMa.getValue(i - 1).doubleValue();
+            double prevLong = longMa.getValue(i - 1).doubleValue();
+            double currShort = shortMa.getValue(i).doubleValue();
+            double currLong = longMa.getValue(i).doubleValue();
 
-            if (prevDiff < 0 && diff > 0) {
+            double prevDiff = prevShort - prevLong;
+            double currDiff = currShort - currLong;
+
+            // Bullish crossover
+            if (prevDiff <= 0 && currDiff > 0) {
                 lastCrossIdx = i;
                 lastCrossBullish = true;
-            } else if (prevDiff > 0 && diff < 0) {
+            }
+            // Bearish crossover
+            else if (prevDiff >= 0 && currDiff < 0) {
                 lastCrossIdx = i;
                 lastCrossBullish = false;
             }
@@ -81,38 +91,87 @@ public class MACrossService extends IndicatorService{
         BaseIndicatorResponse result = new BaseIndicatorResponse();
         result.setSymbol(symbol);
         result.setDate(series.getBar(targetIndex).getEndTime().toLocalDateTime());
-        result.setIndicator(maType + "MA Crossover");
+        result.setIndicator(maType.toUpperCase() + " MA Crossover");
         result.getValues().put("shortPeriod", (double) shortPeriod);
         result.getValues().put("longPeriod", (double) longPeriod);
         result.getValues().put("shortMaValue", shortMA);
         result.getValues().put("longMaValue", longMA);
+        result.getValues().put("currentDifference", diffAtTarget);
+        result.getValues().put("threshold", absThreshold);
 
-        if (lastCrossIdx != -1) {
-            double crossDiff = shortMa.getValue(lastCrossIdx).doubleValue() - longMa.getValue(lastCrossIdx).doubleValue();
-            result.getValues().put("crossoverPoint", crossDiff);
-            if (lastCrossBullish) {
-                if (diffAtTarget >= absThreshold) {
-                    result.setSignal("Buy");
-                } else {
-                    result.setSignal("Hold");
-                }
-            } else {
-                if (diffAtTarget <= -absThreshold) {
-                    result.setSignal("Sell");
-                } else {
-                    result.setSignal("Hold");
-                }
-            }
-        } else {
-            result.getValues().put("crossoverPoint", diffAtTarget);
+    int barsSinceSignal = calculateBarsSinceSignal(shortMa, longMa, targetIndex);
+    result.setBarsSinceSignal(barsSinceSignal);
+
+    if (lastCrossIdx != -1) {
+        double crossDiff = shortMa.getValue(lastCrossIdx).doubleValue() - longMa.getValue(lastCrossIdx).doubleValue();
+        result.getValues().put("lastCrossoverDiff", crossDiff);
+        result.getValues().put("crossoverBarsAgo", (double)(targetIndex - lastCrossIdx));
+        String trend = lastCrossBullish ? "Bullish" : "Bearish";
+        result.setStatus("crossoverType: " + trend);
+
+        if (lastCrossBullish) {
+            // Bullish crossover
             if (diffAtTarget >= absThreshold) {
                 result.setSignal("Buy");
-            } else if (diffAtTarget <= -absThreshold) {
-                result.setSignal("Sell");
+                result.setScore(0.8); // Strong bullish
             } else {
-                result.setSignal("Hold");
+                result.setSignal("Hold"); // Crossover occurred but not strong enough
+                result.setScore(0.3); // Weak bullish
+            }
+        } else {
+            // Bearish crossover occurred
+            if (diffAtTarget <= -absThreshold) {
+                result.setSignal("Sell");
+                result.setScore(-0.8); // Strong bearish signal
+            } else {
+                result.setSignal("Hold"); // Crossover occurred but not strong enough
+                result.setScore(-0.3); // Weak bearish signal
             }
         }
+    } else {
+        result.setStatus("No recent crossover");
+        if (diffAtTarget >= absThreshold) {
+            result.setSignal("Buy");
+            result.setScore(0.5); // Moderate bullish signal
+        } else if (diffAtTarget <= -absThreshold) {
+            result.setSignal("Sell");
+            result.setScore(-0.5); // Moderate bearish signal
+        } else {
+            result.setSignal("Hold");
+            result.setScore(0.0); // Neutral
+        }
+    }
         return result;
     }
+
+    private int calculateBarsSinceSignal(CachedIndicator<Num> shortMa, CachedIndicator<Num> longMa, int targetIndex) {
+        if (targetIndex <= 0) {
+            return -1;
+        }
+        
+        double currentShort = shortMa.getValue(targetIndex).doubleValue();
+        double currentLong = longMa.getValue(targetIndex).doubleValue();
+        
+        double currentDiff = Math.abs(currentShort - currentLong);
+        double relativeDiff = currentDiff / Math.max(currentLong, 1e-8); // Avoid division by zero
+        
+        if (relativeDiff < 0.01) {
+            return -1;
+        }
+        
+        boolean currentlyBullish = currentShort > currentLong;
+        
+        for (int i = targetIndex - 1; i >= 0; i--) {
+            double prevShort = shortMa.getValue(i).doubleValue();
+            double prevLong = longMa.getValue(i).doubleValue();
+            boolean wasBullish = prevShort > prevLong;
+            
+            if (currentlyBullish != wasBullish) {
+                return targetIndex - i;
+            }
+        }
+        
+        return -1;
+    }
+
 }

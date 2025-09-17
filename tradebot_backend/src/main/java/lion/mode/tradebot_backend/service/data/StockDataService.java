@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.service.fetchdata;
+package lion.mode.tradebot_backend.service.data;
 
 import lion.mode.tradebot_backend.model.StockDataDaily;
 import lion.mode.tradebot_backend.repository.StockDataRepository;

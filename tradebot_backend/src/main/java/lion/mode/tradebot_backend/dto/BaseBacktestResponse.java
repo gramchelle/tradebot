@@ -8,7 +8,7 @@ import java.util.Map;
 
 @Data
 public class BaseBacktestResponse {
-    // Basic identification
+    
     private String symbol;
     private String indicator;
     private String signal;           // Final signal recommendation
@@ -47,17 +47,6 @@ public class BaseBacktestResponse {
     private LocalDateTime backtestStartDate;   // First date tested
     private LocalDateTime backtestEndDate;     // Last date tested
     private LocalDateTime calculatedAt;        // When backtest was performed
-
-    // Additional context
-    private String status;                     // "SUCCESS", "PARTIAL", "ERROR"
-    private List<String> warnings;             // Any warnings during backtest
-    private Map<String, Object> additionalMetrics; // Flexible field for custom metrics
-
-    // Constructor
-    public BaseBacktestResponse() {
-        this.calculatedAt = LocalDateTime.now();
-        this.status = "SUCCESS";
-    }
 
     // Helper methods
     public double getSuccessRate() {

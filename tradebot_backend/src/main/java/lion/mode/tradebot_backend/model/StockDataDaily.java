@@ -10,7 +10,7 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "stock_data_daily")
 @Data
-public class Stock {
+public class StockDataDaily {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

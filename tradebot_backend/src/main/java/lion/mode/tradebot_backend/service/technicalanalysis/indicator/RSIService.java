@@ -1,8 +1,11 @@
 package lion.mode.tradebot_backend.service.technicalanalysis.indicator;
 
+import lion.mode.tradebot_backend.dto.BaseIndicatorResponse;
+import lion.mode.tradebot_backend.dto.indicator.RSIEntry;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
-import lion.mode.tradebot_backend.dto.indicator.RSIResult;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
+import lion.mode.tradebot_backend.service.technicalanalysis.IndicatorService;
+
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.Indicator;
@@ -20,91 +23,188 @@ public class RSIService extends IndicatorService {
         super(repository);
     }
 
-    public RSIResult calculateRSI(String symbol, int period, LocalDateTime date, int trendPeriod, int lowerLimit, int upperLimit, int lookbackPeriod, String priceType) {
-        BarSeries series = loadSeries(symbol);
-        RSIResult result = calculateRSIWithSeries(symbol, period, date, lowerLimit, upperLimit, priceType, series);
-        return result;
+    public BaseIndicatorResponse calculate(RSIEntry rsiEntry) {
+        try {
+            if (rsiEntry.getSymbol() == null || rsiEntry.getSymbol().trim().isEmpty()) {
+                throw new IllegalArgumentException("Symbol cannot be null or empty");
+            }
+
+            BarSeries series = loadSeries(rsiEntry.getSymbol());
+            return calculateWithSeries(rsiEntry, series);
+
+        } catch (NotEnoughDataException e) {
+            throw new NotEnoughDataException("Not enough data/Invalid symbol to calculate RSI for symbol: " + rsiEntry.getSymbol());
+
+        } catch (Exception e) {
+            System.err.println("Error calculating RSI: " + e.getMessage());
+            return null;
+        }
     }
 
-    public RSIResult calculateRSIWithSeries(String symbol, int period, LocalDateTime date, int lowerLimit, int upperLimit, String priceType, BarSeries series) {
-        RSIResult result = new RSIResult();
-        result.setSymbol(symbol);
-        result.setPeriod(period);
+    public BaseIndicatorResponse calculateWithSeries(RSIEntry rsiEntry, BarSeries series) {
+        int previousBarsSinceSignal = -1;
 
-        if (series.getBarCount() < period + 1) throw new NotEnoughDataException("Not enough data for RSI at " + date + " for " + symbol);
+        if (rsiEntry.getLowerLimit() >= rsiEntry.getUpperLimit())
+            throw new IllegalArgumentException("Lower limit must be less than upper limit");
+
+        // RSIEntry Dto Fields
+        String symbol = rsiEntry.getSymbol();
+        LocalDateTime date = rsiEntry.getDate();
+        String source = rsiEntry.getSource();
+        int period = rsiEntry.getPeriod();
+        int lowerLimit = rsiEntry.getLowerLimit();
+        int upperLimit = rsiEntry.getUpperLimit();
+
+        // Build BaseIndicatorResponse Dto
+        BaseIndicatorResponse result = new BaseIndicatorResponse();
+        result.setSymbol(rsiEntry.getSymbol());
+        result.setIndicator("RSI");
+
+        // Check for bars
+        if (series.getBarCount() < period + 1) {
+            result.getErrors().put("INSUFFICIENT_DATA", "Not enough data to calculate RSI");
+            return result;
+        }
 
         int targetIndex = seriesAmountValidator(symbol, series, date);
 
-        Indicator<Num> prices = priceTypeSelector(priceType, series);
+        // Select source type and calculate RSI
+        Indicator<Num> prices = sourceSelector(source, series);
         RSIIndicator rsi = new RSIIndicator(prices, period);
 
         double rsiValue = rsi.getValue(targetIndex).doubleValue();
+        int barsSinceSignal = calculateBarsSinceSignal(rsi, lowerLimit, upperLimit, targetIndex);
+        generateAdvancedSignalAndScore(result, rsiValue, lowerLimit, upperLimit, barsSinceSignal);
 
-        result.setRsiValue(rsiValue);
         result.setDate(series.getBar(targetIndex).getEndTime().toLocalDateTime());
-
-        generateSignalScoreAndComment(result, rsiValue, lowerLimit, upperLimit);
+        result.getValues().put("rsiValue", rsiValue);
 
         return result;
     }
 
-    private void generateSignalScoreAndComment(RSIResult result, double rsiValue, int lowerLimit, int upperLimit) {
+    private void generateAdvancedSignalAndScore(BaseIndicatorResponse result, double rsiValue, int lowerLimit, int upperLimit, int barsSinceSignal) {
+        double weakThreshold = (upperLimit - lowerLimit) / 8.0;
+        double strongThreshold = 10.0;
+        String signal;
+        double score;
+
         if (rsiValue > upperLimit) {
-            result.setSignal("Sell");
-            result.setScore(-1);
+            if (rsiValue > upperLimit + strongThreshold) {
+                signal = "Strong Sell";
+                score = -3.0;
+            } else {
+                signal = "Sell";
+                score = -2.0;
+            }
         } else if (rsiValue < lowerLimit) {
-            result.setSignal("Buy");
-            result.setScore(1);
+            if (rsiValue < lowerLimit - strongThreshold) {
+                signal = "Strong Buy";
+                score = 3.0;
+            } else {
+                score = 2.0;
+                signal = "Buy";
+            }
         } else {
-            result.setSignal("Hold");
-            result.setScore(0);
+            if (rsiValue < (lowerLimit + weakThreshold)){
+                score = 1.0;
+                signal = "Weak Buy";
+            } else if (rsiValue > (upperLimit - weakThreshold)){
+                score = -1.0;
+                signal = "Weak Sell";
+            } else {
+                score = 0.0;
+                signal = "Hold";
+            }
         }
+
+        result.setSignal(signal);
+        result.setScore(score/3.0);
+        result.setBarsSinceSignal(barsSinceSignal);
+
     }
 
-    // TODO: Refine logic
-    private String detectDivergence(Indicator<Num> prices, RSIIndicator rsi, int endIndex, int lookbackPeriod) {
-        int startIndex = Math.max(1, endIndex - lookbackPeriod);
+    private int calculateBarsSinceSignal(RSIIndicator rsi, int lowerLimit, int upperLimit, int targetIndex) {
+        if (targetIndex <= 0) return -1;
+        
+        double currentRSI = rsi.getValue(targetIndex).doubleValue();
 
-        List<Integer> lowIndices = new ArrayList<>();
-        List<Integer> highIndices = new ArrayList<>();
-
-        // Local min/max
-        for (int i = startIndex + 1; i < endIndex; i++) {
-            double prevPrice = prices.getValue(i - 1).doubleValue();
-            double price = prices.getValue(i).doubleValue();
-            double nextPrice = prices.getValue(i + 1).doubleValue();
-
-            if (price < prevPrice && price < nextPrice) {
-                lowIndices.add(i);
+        if (currentRSI <= upperLimit && currentRSI >= lowerLimit) return -1;
+        
+        for (int i = targetIndex - 1; i >= 0; i--) {
+            double previousRSI = rsi.getValue(i).doubleValue();
+            
+            if (currentRSI > upperLimit) {
+                if (previousRSI <= upperLimit) {
+                    return targetIndex - i;
+                }
+            } else if (currentRSI < lowerLimit) {
+                if (previousRSI >= lowerLimit) {
+                    return targetIndex - i;
+                }
             }
-            if (price > prevPrice && price > nextPrice) {
-                highIndices.add(i);
+        }
+        return -1;
+    }
+
+    // TODO divergence için ayrı bir endpoint oluşturulabilir
+    private String detectDivergence(Indicator<Num> prices, RSIIndicator rsi, int endIndex, int lookbackPeriod) {
+        int startIndex = Math.max(2, endIndex - lookbackPeriod);
+        int minDistance = 5; // Minimum periods between peaks
+
+        List<Integer> lows = new ArrayList<>();
+        List<Integer> highs = new ArrayList<>();
+
+        for (int i = startIndex + 2; i < endIndex - 2; i++) {
+            double current = prices.getValue(i).doubleValue();
+
+            boolean isLow = current < prices.getValue(i - 2).doubleValue() &&
+                    current < prices.getValue(i - 1).doubleValue() &&
+                    current < prices.getValue(i + 1).doubleValue() &&
+                    current < prices.getValue(i + 2).doubleValue();
+
+            boolean isHigh = current > prices.getValue(i - 2).doubleValue() &&
+                    current > prices.getValue(i - 1).doubleValue() &&
+                    current > prices.getValue(i + 1).doubleValue() &&
+                    current > prices.getValue(i + 2).doubleValue();
+
+            if (isLow && (lows.isEmpty() || (i - lows.get(lows.size() - 1)) >= minDistance)) {
+                lows.add(i);
+            }
+            if (isHigh && (highs.isEmpty() || (i - highs.get(highs.size() - 1)) >= minDistance)) {
+                highs.add(i);
             }
         }
 
-        // Bullish divergence
-        for (int i = 0; i < lowIndices.size() - 1; i++) {
-            for (int j = i + 1; j < lowIndices.size(); j++) {
-                int idx1 = lowIndices.get(i);
-                int idx2 = lowIndices.get(j);
-                double priceDiff = prices.getValue(idx1).doubleValue() - prices.getValue(idx2).doubleValue();
-                double rsiDiff = rsi.getValue(idx2).doubleValue() - rsi.getValue(idx1).doubleValue();
+        // bullish divergence
+        if (lows.size() >= 2) {
+            for (int i = lows.size() - 2; i >= Math.max(0, lows.size() - 4); i--) {
+                int earlierLow = lows.get(i);
+                int laterLow = lows.get(lows.size() - 1);
 
-                if (priceDiff > 0 && rsiDiff > 0) {
+                double earlierPrice = prices.getValue(earlierLow).doubleValue();
+                double laterPrice = prices.getValue(laterLow).doubleValue();
+                double earlierRSI = rsi.getValue(earlierLow).doubleValue();
+                double laterRSI = rsi.getValue(laterLow).doubleValue();
+
+                if (laterPrice < earlierPrice && laterRSI > earlierRSI &&
+                        (earlierRSI < 35 || laterRSI < 35)) {
                     return "Bullish";
                 }
             }
         }
 
-        // Bearish divergence
-        for (int i = 0; i < highIndices.size() - 1; i++) {
-            for (int j = i + 1; j < highIndices.size(); j++) {
-                int idx1 = highIndices.get(i);
-                int idx2 = highIndices.get(j);
-                double priceDiff = prices.getValue(idx2).doubleValue() - prices.getValue(idx1).doubleValue();
-                double rsiDiff = rsi.getValue(idx1).doubleValue() - rsi.getValue(idx2).doubleValue();
+        if (highs.size() >= 2) {
+            for (int i = highs.size() - 2; i >= Math.max(0, highs.size() - 4); i--) {
+                int earlierHigh = highs.get(i);
+                int laterHigh = highs.get(highs.size() - 1);
 
-                if (priceDiff > 0 && rsiDiff > 0) {
+                double earlierPrice = prices.getValue(earlierHigh).doubleValue();
+                double laterPrice = prices.getValue(laterHigh).doubleValue();
+                double earlierRSI = rsi.getValue(earlierHigh).doubleValue();
+                double laterRSI = rsi.getValue(laterHigh).doubleValue();
+
+                if (laterPrice > earlierPrice && laterRSI < earlierRSI &&
+                        (earlierRSI > 65 || laterRSI > 65)) {
                     return "Bearish";
                 }
             }
@@ -112,5 +212,4 @@ public class RSIService extends IndicatorService {
 
         return "None";
     }
-
 }

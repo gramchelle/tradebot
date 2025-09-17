@@ -1,6 +1,7 @@
-package lion.mode.tradebot_backend.controller.technical_analysis.backtest;
+package lion.mode.tradebot_backend.controller;
 
-import lion.mode.tradebot_backend.dto.allResults;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lion.mode.tradebot_backend.dto.indicator.RSIEntry;
 import lion.mode.tradebot_backend.model.Backtest;
 import lion.mode.tradebot_backend.service.technicalanalysis.backtest.BacktestService;
 import lombok.RequiredArgsConstructor;
@@ -10,10 +11,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @RestController
-@RequestMapping("/ta/backtest")
+@RequestMapping("/technical-analysis/backtests")
+@Tag(name = "Technical Analysis Backtests", description = "TA Backtest Endpoints")
 @RequiredArgsConstructor
 public class BacktestController {
 
@@ -23,15 +24,27 @@ public class BacktestController {
     public ResponseEntity<Backtest> getBacktestResultsForRSI(
             @PathVariable String symbol,
             @RequestParam(defaultValue = "14") int period,
+            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "43") int lookback,
+            @RequestParam(defaultValue = "1") int horizon,
+            @RequestParam(defaultValue = "0.05") double calculationConfidence,
             @RequestParam(defaultValue = "70") int upperLimit,
             @RequestParam(defaultValue = "30") int lowerLimit,
-            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
-            @RequestParam(defaultValue = "14") int lookback,
-            @RequestParam(defaultValue = "1") int horizon,
-            @RequestParam(defaultValue = "close") String priceType,
-            @RequestParam(defaultValue = "0.01") double calculationConfidence
-            ){
-        return new ResponseEntity<Backtest>(backtestService.rsiHistoricalBacktest(symbol, period, lowerLimit, upperLimit, date, lookback, horizon, priceType, calculationConfidence), HttpStatus.OK);
+            @RequestParam(defaultValue = "close") String source) {
+        
+        RSIEntry entry = new RSIEntry(symbol, date, period, upperLimit, lowerLimit, source);
+        return new ResponseEntity<>(backtestService.rsiHistoricalBacktest(entry, lookback, horizon, calculationConfidence), HttpStatus.OK);
+    }
+    
+/*
+     @GetMapping("/ema-cross/{symbol}")
+     public ResponseEntity<Backtest> getBacktestResultsForEMACross(
+             @PathVariable String symbol,
+             @RequestParam(defaultValue = "1") int horizon,
+             @RequestParam(defaultValue = "close") String priceType,
+             @RequestParam(defaultValue = "0.01") double calculationConfidence
+             ){
+         return new ResponseEntity<Backtest>(backtestService.rsiHistoricalBacktest(symbol, period, lowerLimit, upperLimit, date, lookback, horizon, priceType, calculationConfidence), HttpStatus.OK);
     }
 
     @GetMapping("/ema-cross/{symbol}")
@@ -143,17 +156,5 @@ public class BacktestController {
         return new ResponseEntity<Backtest>(backtestService.mfiHistoricalBacktest(symbol, period, date, lowerLimit, upperLimit, priceType, backtestLookback, horizon, calculationConfidence), HttpStatus.OK);
     }
 
-    @GetMapping("/{symbol}")
-    public ResponseEntity<List<allResults>> getAll(
-        @PathVariable String symbol,
-        @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
-        @RequestParam(defaultValue = "400") int lookback,
-        @RequestParam(defaultValue = "4") int horizon,
-        @RequestParam(defaultValue = "close") String priceType,
-        @RequestParam(defaultValue = "0.01") double calculationConfidence
-    ){
-        List<allResults> results = backtestService.decisionMatrix(symbol, date, lookback, horizon, priceType, calculationConfidence);
-        return new ResponseEntity<List<allResults>>(results, HttpStatus.OK);
-    }
-
+ */
 }
