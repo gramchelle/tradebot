@@ -12,7 +12,9 @@ import org.ta4j.core.indicators.adx.PlusDIIndicator;
 import org.ta4j.core.num.Num;
 import org.ta4j.core.indicators.adx.MinusDIIndicator;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Service
 public class DMIService extends IndicatorService {
@@ -29,7 +31,7 @@ public class DMIService extends IndicatorService {
     public BaseIndicatorResponse calculateWithSeries(DMIEntry entry, BarSeries series) {
         String symbol = entry.getSymbol().toUpperCase();
         int period = entry.getPeriod();
-        LocalDateTime date = entry.getDate();
+        Instant date = entry.getDate();
         double strongTrendThreshold = entry.getStrongTrendThreshold();
         double moderateTrendThreshold = entry.getModerateTrendThreshold();
         double diDiff = entry.getSignificantDiDiff();
@@ -56,7 +58,7 @@ public class DMIService extends IndicatorService {
         BaseIndicatorResponse result = new BaseIndicatorResponse();
         result.setSymbol(symbol);
         result.setIndicator("DMI");
-        result.setDate(series.getBar(targetIndex).getEndTime().toLocalDateTime());
+        result.setDate(series.getBar(targetIndex).getEndTime());
         result.getValues().put("adxValue", adxValue.doubleValue());
         result.getValues().put("plusDI", plusDiValue.doubleValue());
         result.getValues().put("minusDI", minusDiValue.doubleValue());

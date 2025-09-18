@@ -48,7 +48,7 @@ public class RSIService extends IndicatorService {
 
         // RSIEntry Dto Fields
         String symbol = rsiEntry.getSymbol().toUpperCase();
-        LocalDateTime date = rsiEntry.getDate();
+        Instant date = rsiEntry.getDate();
         String source = rsiEntry.getSource();
         int period = rsiEntry.getPeriod();
         int lowerLimit = rsiEntry.getLowerLimit();
@@ -75,7 +75,7 @@ public class RSIService extends IndicatorService {
         int barsSinceSignal = calculateBarsSinceSignal(rsi, lowerLimit, upperLimit, targetIndex);
         generateAdvancedSignalAndScore(result, rsiValue, lowerLimit, upperLimit, barsSinceSignal);
 
-        result.setDate(series.getBar(targetIndex).getEndTime().toLocalDateTime());
+        result.setDate(series.getBar(targetIndex).getEndTime());
         result.getValues().put("rsiValue", rsiValue);
 
         return result;

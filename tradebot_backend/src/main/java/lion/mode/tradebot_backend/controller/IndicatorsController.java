@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @RestController
@@ -29,7 +30,7 @@ public class IndicatorsController {
     @GetMapping("/rsi")
     public ResponseEntity<BaseIndicatorResponse> calculateRSI(
             @RequestParam String symbol,
-            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "#{T(java.time.Instant).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant date,
             @RequestParam(defaultValue = "14") int period,
             @RequestParam(defaultValue = "70") int upperLimit,
             @RequestParam(defaultValue = "30") int lowerLimit,
@@ -41,7 +42,7 @@ public class IndicatorsController {
     @GetMapping("/macd")
     public ResponseEntity<BaseIndicatorResponse> calculateMACD(
             @RequestParam String symbol,
-            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "#{T(java.time.Instant).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant date,
             @RequestParam(defaultValue = "12") int shortPeriod,
             @RequestParam(defaultValue = "26") int longPeriod,
             @RequestParam(defaultValue = "9") int signalPeriod,
@@ -55,7 +56,7 @@ public class IndicatorsController {
     @GetMapping("/ma-crossover")
      public ResponseEntity<BaseIndicatorResponse> calculateEmaCrossover(
              @RequestParam String symbol,
-             @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+             @RequestParam(defaultValue = "#{T(java.time.Instant).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant date,
              @RequestParam(defaultValue = "9") int shortPeriod,
              @RequestParam(defaultValue = "26") int longPeriod,
              @RequestParam(defaultValue = "EMA") String maType,
@@ -70,7 +71,7 @@ public class IndicatorsController {
     public ResponseEntity<BaseIndicatorResponse> calculateBollingerBands(
             @RequestParam String symbol,
             @RequestParam(defaultValue = "20") int period,
-            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "#{T(java.time.Instant).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant date,
             @RequestParam(defaultValue = "2.0") double numberOfDeviations,
             @RequestParam(defaultValue = "5.0") double squeezeConfidence,
             @RequestParam(defaultValue = "close") String source){
@@ -83,7 +84,7 @@ public class IndicatorsController {
             @RequestParam String symbol,
             @RequestParam(defaultValue = "14") int period,
             @RequestParam(defaultValue = "30") int lookback,
-            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "#{T(java.time.Instant).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant date,
             @RequestParam(defaultValue = "0.05") double slopeConfidence,
             @RequestParam(defaultValue = "3") int supportResistanceTouchAmount){
         TrendlineEntry entry = new TrendlineEntry(symbol, period, date, lookback, slopeConfidence, supportResistanceTouchAmount);
@@ -93,7 +94,7 @@ public class IndicatorsController {
     @GetMapping("/mfi")
     public ResponseEntity<BaseIndicatorResponse> calculateMFI(
             @RequestParam String symbol,
-            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "#{T(java.time.Instant).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant date,
             @RequestParam(defaultValue = "14") int period,
             @RequestParam(defaultValue = "20") int lowerLimit,
             @RequestParam(defaultValue = "80") int upperLimit) {
@@ -104,7 +105,7 @@ public class IndicatorsController {
     @GetMapping("/dmi") // TODO: Add sensitivity confidence
     public ResponseEntity<BaseIndicatorResponse> calculateDMI(
             @RequestParam String symbol,
-            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "#{T(java.time.Instant).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant date,
             @RequestParam(defaultValue = "14") int period,
             @RequestParam(defaultValue = "25") double strongTrendThreshold,
             @RequestParam(defaultValue = "20") double moderateTrendThreshold,

@@ -11,12 +11,10 @@ import org.ta4j.core.indicators.helpers.OpenPriceIndicator;
 import org.ta4j.core.num.DecimalNum;
 import org.ta4j.core.num.Num;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.util.List;
 
-public abstract class IndicatorService{
+public abstract class IndicatorService {
 
     protected final StockDataRepository repository;
 
@@ -24,56 +22,61 @@ public abstract class IndicatorService{
         this.repository = repository;
     }
 
-    // TODO: Make this method generic to support different timeframes
     protected BarSeries loadSeries(String symbol) {
-
         if (repository.findBySymbol(symbol).isEmpty()) {
             throw new NotEnoughDataException("No data found for symbol: " + symbol);
         }
-        
+
         List<StockDataDaily> dataList = repository.findBySymbolOrderByTimestampAsc(symbol);
-        BarSeries series = new BaseBarSeries(symbol, DecimalNum::valueOf);
+        BarSeries series = new BaseBarSeriesBuilder()
+                .withName(symbol)
+                .build();
 
         for (StockDataDaily data : dataList) {
-            ZonedDateTime endTime = data.getTimestamp().atZone(ZoneId.systemDefault());
+            Instant endTimeInstant = data.getTimestamp().atZone(ZoneId.systemDefault()).toInstant();
+
             if (series.getBarCount() > 0) {
-                ZonedDateTime lastEnd = series.getBar(series.getEndIndex()).getEndTime();
-                if (!endTime.isAfter(lastEnd)) {
+                Instant lastEnd = series.getBar(series.getEndIndex()).getEndTime();
+                if (!endTimeInstant.isAfter(lastEnd)) {
                     continue;
                 }
             }
 
-            Bar bar = BaseBar.builder()
-                    .timePeriod(java.time.Duration.ofDays(1))
-                    .endTime(endTime)
-                    .openPrice(DecimalNum.valueOf(data.getOpen()))
-                    .highPrice(DecimalNum.valueOf(data.getHigh()))
-                    .lowPrice(DecimalNum.valueOf(data.getLow()))
-                    .closePrice(DecimalNum.valueOf(data.getClose()))
-                    .volume(DecimalNum.valueOf(data.getVolume()))
-                    .build();
+            Bar bar = new BaseBar(
+                    Duration.ofDays(1),
+                    endTimeInstant,
+                    DecimalNum.valueOf(data.getOpen()),
+                    DecimalNum.valueOf(data.getHigh()),
+                    DecimalNum.valueOf(data.getLow()),
+                    DecimalNum.valueOf(data.getClose()),
+                    DecimalNum.valueOf(data.getVolume()),
+                    DecimalNum.valueOf(0),
+                    0
+            );
+
             series.addBar(bar);
         }
+
         return series;
     }
 
-    protected int seriesAmountValidator(String symbol, BarSeries series, LocalDateTime date){
+    protected int seriesAmountValidator(String symbol, BarSeries series, Instant targetInstant) {
         int targetIndex = -1;
         for (int i = 0; i < series.getBarCount(); i++) {
-            LocalDateTime barTime = series.getBar(i).getEndTime().toLocalDateTime();
-            if (!barTime.isAfter(date)) {
+            Instant barEnd = series.getBar(i).getEndTime();
+            if (!barEnd.isAfter(targetInstant)) {
                 targetIndex = i;
             } else break;
         }
 
         if (targetIndex == -1) {
-            throw new NotEnoughDataException("No bar found before or at " + date + " for " + symbol);
+            throw new NotEnoughDataException("No bar found before or at " + targetInstant + " for " + symbol);
         }
-        
+
         return targetIndex;
     }
 
-    protected Indicator<Num> sourceSelector(String priceType, BarSeries series){
+    protected Indicator<Num> sourceSelector(String priceType, BarSeries series) {
         switch (priceType.toLowerCase()) {
             case "open":
                 return new OpenPriceIndicator(series);
@@ -88,5 +91,3 @@ public abstract class IndicatorService{
         }
     }
 }
-
-

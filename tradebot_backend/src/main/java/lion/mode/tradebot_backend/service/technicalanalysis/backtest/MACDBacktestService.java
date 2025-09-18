@@ -1,6 +1,8 @@
 package lion.mode.tradebot_backend.service.technicalanalysis.backtest;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +36,7 @@ public class MACDBacktestService extends AbstractBacktestService{
 
     public BaseBacktestResponse runBacktest(MACDEntry entry, int lookback, int horizon, String timeInterval, double takeProfit, double stopLoss, int tradeAmount) {
         String symbol = entry.getSymbol().toUpperCase();
-        LocalDateTime date = entry.getDate();
+        Instant date = entry.getDate();
         int shortPeriod = entry.getShortPeriod();
         int longPeriod = entry.getLongPeriod();
         int signalPeriod = entry.getSignalPeriod();
@@ -94,7 +96,7 @@ public class MACDBacktestService extends AbstractBacktestService{
 
             MACDEntry currentEntry = new MACDEntry();
             currentEntry.setSymbol(symbol);
-            currentEntry.setDate(series.getBar(i).getEndTime().toLocalDateTime());
+            currentEntry.setDate(series.getBar(targetIndex).getEndTime());
             currentEntry.setShortPeriod(shortPeriod);
             currentEntry.setLongPeriod(longPeriod);
             currentEntry.setSignalPeriod(signalPeriod);
@@ -236,9 +238,9 @@ public class MACDBacktestService extends AbstractBacktestService{
         response.setLookback(lookback);
         response.setHorizon(horizon);
         response.setPriceType(source);
-        response.setBacktestStartDate(series.getBar(startIndex).getEndTime().toLocalDateTime());
-        response.setBacktestEndDate(series.getBar(targetIndex).getEndTime().toLocalDateTime());
-        
+        response.setBacktestStartDate(series.getBar(startIndex).getEndTime());
+        response.setBacktestEndDate(series.getBar(targetIndex).getEndTime());
+
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("shortPeriod", shortPeriod);
         parameters.put("longPeriod", longPeriod);

@@ -1,5 +1,6 @@
 package lion.mode.tradebot_backend.dto.indicator;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
@@ -12,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class MACrossoverEntry {
 
     private String symbol;
-    private LocalDateTime date;
+    private Instant date;
     private int lookback;
     private int shortPeriod;
     private int longPeriod;

@@ -1,6 +1,8 @@
 package lion.mode.tradebot_backend.dto;
 
 import lombok.Data;
+
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -49,7 +51,7 @@ public class BaseBacktestResponse {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Map<String, Double> detailedMetrics;
 
-    private LocalDateTime backtestStartDate;
-    private LocalDateTime backtestEndDate;
+    private Instant backtestStartDate;
+    private Instant backtestEndDate;
 
 }

@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 import org.ta4j.core.Bar;
 import org.ta4j.core.BarSeries;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Service
 public class MFIService extends IndicatorService{
@@ -25,7 +27,7 @@ public class MFIService extends IndicatorService{
 
     public BaseIndicatorResponse calculateWithSeries(MFIEntry entry, BarSeries series) {
         String symbol = entry.getSymbol().toUpperCase();
-        LocalDateTime date = entry.getDate();
+        Instant date = entry.getDate();
         int period = entry.getPeriod();
         int upperLimit = entry.getUpperLimit();
         int lowerLimit = entry.getLowerLimit();
@@ -75,7 +77,7 @@ public class MFIService extends IndicatorService{
         result.setSymbol(symbol);
         result.setIndicator("MFI");
         result.getValues().put("mfiValue", mfiValue);
-        result.setDate(series.getBar(targetIndex).getEndTime().toLocalDateTime());
+        result.setDate(series.getBar(targetIndex).getEndTime());
 
         generateAdvancedSignalAndScore(result, mfiValue, lowerLimit, upperLimit);
         int barsSinceSignal = calculateBarsSinceSignal(series, targetIndex, period, lowerLimit, upperLimit);

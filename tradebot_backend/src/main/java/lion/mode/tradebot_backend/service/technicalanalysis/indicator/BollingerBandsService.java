@@ -7,7 +7,7 @@ import lion.mode.tradebot_backend.repository.StockDataRepository;
 
 import org.springframework.stereotype.Service;
 import org.ta4j.core.*;
-import org.ta4j.core.indicators.SMAIndicator;
+import org.ta4j.core.indicators.averages.SMAIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsLowerIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsMiddleIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandsUpperIndicator;
@@ -33,7 +33,7 @@ public class BollingerBandsService extends IndicatorService {
         String symbol = entry.getSymbol().toUpperCase();
         double nbDev = entry.getNumberOfDeviations();
         int period = entry.getPeriod();
-        LocalDateTime date = entry.getDate();
+        Instant date = entry.getDate();
         String source = entry.getSource();
         double squeezeConfidence = entry.getSqueezeConfidence();
                 
@@ -68,7 +68,7 @@ public class BollingerBandsService extends IndicatorService {
 
         BaseIndicatorResponse result = new BaseIndicatorResponse();
         result.setSymbol(symbol);
-        result.setDate(series.getBar(targetIndex).getEndTime().toLocalDateTime());
+        result.setDate(series.getBar(targetIndex).getEndTime());
         result.setIndicator("Bollinger Bands");
         result.getValues().put("%B", percentB);
         result.getValues().put("lowerBand", lower);

@@ -3,6 +3,7 @@ package lion.mode.tradebot_backend.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +13,7 @@ public class BaseIndicatorResponse {
 
     private String symbol;
     private String indicator;
-    private LocalDateTime date;
+    private Instant date;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String status;

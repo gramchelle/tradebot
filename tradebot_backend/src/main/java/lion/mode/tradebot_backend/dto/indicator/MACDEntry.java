@@ -4,7 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+
+import jakarta.persistence.criteria.CriteriaBuilder.In;
 
 @Data
 @AllArgsConstructor
@@ -12,7 +15,7 @@ import java.time.LocalDateTime;
 public class MACDEntry {
 
     private String symbol;
-    private LocalDateTime date;
+    private Instant date;
     private int shortPeriod;
     private int longPeriod;
     private int signalPeriod;

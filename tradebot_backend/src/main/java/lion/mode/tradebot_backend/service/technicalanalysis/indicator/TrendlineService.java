@@ -7,7 +7,7 @@ import lion.mode.tradebot_backend.repository.StockDataRepository;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Service
 public class TrendlineService extends IndicatorService {
@@ -25,7 +25,7 @@ public class TrendlineService extends IndicatorService {
         String symbol = entry.getSymbol().toUpperCase();
         int period = entry.getPeriod();
         int lookback = entry.getLookback();
-        LocalDateTime date = entry.getDate();
+        Instant date = entry.getDate();
         int touchAmount = entry.getSupportResistanceTouchAmount();
 
         int targetIndex = seriesAmountValidator(symbol, series, date);
@@ -38,7 +38,7 @@ public class TrendlineService extends IndicatorService {
         BaseIndicatorResponse result = new BaseIndicatorResponse();
         result.setSymbol(symbol);
         result.setIndicator("Trendline");
-        result.setDate(series.getBar(targetIndex).getEndTime().toLocalDateTime());
+        result.setDate(series.getBar(targetIndex).getEndTime());
         result.getValues().put("currentPrice", currentPrice);
         result.getValues().put("swingHigh", swingHigh);
         result.getValues().put("swingLow", swingLow);

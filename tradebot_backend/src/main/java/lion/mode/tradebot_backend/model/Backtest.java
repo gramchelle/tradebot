@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lion.mode.tradebot_backend.utils.BacktestParameterHelper;
 import lombok.Data;
+
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 import java.util.Map;
@@ -49,8 +51,8 @@ public class Backtest {
     private double sharpeRatio;
     private double sortinoRatio;
 
-    private LocalDateTime backtestStartDate;
-    private LocalDateTime backtestEndDate;
+    private Instant backtestStartDate;
+    private Instant backtestEndDate;
 
     @Column(name = "indicator_parameters", columnDefinition = "TEXT")
     @JsonIgnore

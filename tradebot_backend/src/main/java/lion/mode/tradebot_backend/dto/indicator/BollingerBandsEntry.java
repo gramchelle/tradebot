@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Data
@@ -13,7 +14,7 @@ public class BollingerBandsEntry {
 
     private String symbol;
     private int period;
-    private LocalDateTime date;
+    private Instant date;
     private double numberOfDeviations;
     private String source;
     private double squeezeConfidence;

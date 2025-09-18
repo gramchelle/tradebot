@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @RestController
@@ -29,7 +30,7 @@ public class BacktestController {
     public ResponseEntity<BaseBacktestResponse> runRsiBacktest(
             @RequestParam String symbol,
             @RequestParam(defaultValue = "14") int period,
-            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "#{T(java.time.Instant).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant date,
             @RequestParam(defaultValue = "250") int lookback,
             @RequestParam(defaultValue = "2") int horizon,
             @RequestParam(defaultValue = "0.02") double calculationConfidence,
@@ -50,7 +51,7 @@ public class BacktestController {
             @RequestParam(defaultValue = "12") int shortPeriod,
             @RequestParam(defaultValue = "26") int longPeriod,
             @RequestParam(defaultValue = "9") int signalPeriod,
-            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "#{T(java.time.Instant).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant date,
             @RequestParam(defaultValue = "250") int lookback,
             @RequestParam(defaultValue = "2") int horizon,
             @RequestParam(defaultValue = "5") int histogramTrendPeriod,
@@ -69,7 +70,7 @@ public class BacktestController {
             @RequestParam String symbol,
             @RequestParam(defaultValue = "9") int shortPeriod,
             @RequestParam(defaultValue = "26") int longPeriod,
-            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "#{T(java.time.Instant).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant date,
             @RequestParam(defaultValue = "250") int lookback,
             @RequestParam(defaultValue = "2") int horizon,
             @RequestParam(defaultValue = "EMA") String maType,
@@ -88,7 +89,7 @@ public class BacktestController {
     public ResponseEntity<BaseBacktestResponse> calculateBollingerBands(
             @RequestParam String symbol,
             @RequestParam(defaultValue = "20") int period,
-            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "#{T(java.time.Instant).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant date,
             @RequestParam(defaultValue = "250") int lookback,
             @RequestParam(defaultValue = "2") int horizon,
             @RequestParam(defaultValue = "2.0") double numberOfDeviations,
@@ -106,7 +107,7 @@ public class BacktestController {
     public ResponseEntity<BaseBacktestResponse> calculateMFI(
             @RequestParam String symbol,
             @RequestParam(defaultValue = "14") int period,
-            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "#{T(java.time.Instant).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant date,
             @RequestParam(defaultValue = "250") int lookback,
             @RequestParam(defaultValue = "2") int horizon,
             @RequestParam(defaultValue = "20") int lowerLimit,
@@ -123,7 +124,7 @@ public class BacktestController {
     public ResponseEntity<BaseBacktestResponse> calculateDMI(
             @RequestParam String symbol,
             @RequestParam(defaultValue = "14") int period,
-            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "#{T(java.time.Instant).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant date,
             @RequestParam(defaultValue = "250") int lookback,
             @RequestParam(defaultValue = "2") int horizon,
             @RequestParam(defaultValue = "25") double strongTrendThreshold,

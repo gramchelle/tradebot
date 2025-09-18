@@ -1,6 +1,8 @@
 package lion.mode.tradebot_backend.service.technicalanalysis.indicator;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
@@ -11,8 +13,8 @@ import lion.mode.tradebot_backend.repository.StockDataRepository;
 
 import org.ta4j.core.Indicator;
 import org.ta4j.core.indicators.CachedIndicator;
-import org.ta4j.core.indicators.EMAIndicator;
-import org.ta4j.core.indicators.SMAIndicator;
+import org.ta4j.core.indicators.averages.EMAIndicator;
+import org.ta4j.core.indicators.averages.SMAIndicator;
 import org.ta4j.core.num.Num;
 
 @Service
@@ -31,7 +33,7 @@ public class MACrossoverService extends IndicatorService{
         String symbol = entry.getSymbol().toUpperCase();
         int shortPeriod = entry.getShortPeriod();
         int longPeriod = entry.getLongPeriod();
-        LocalDateTime date = entry.getDate();
+        Instant date = entry.getDate();
         int lookback = entry.getLookback();
         String source = entry.getSource();
         String maType = entry.getMaType(); // SMA or EMA
@@ -89,8 +91,8 @@ public class MACrossoverService extends IndicatorService{
 
         BaseIndicatorResponse result = new BaseIndicatorResponse();
         result.setSymbol(symbol);
-        result.setDate(series.getBar(targetIndex).getEndTime().toLocalDateTime());
-        result.setIndicator(maType.toUpperCase() + " MA Crossover");
+        result.setDate(series.getBar(targetIndex).getEndTime());
+        result.setIndicator(maType.toUpperCase() + " Crossover");
         result.getValues().put("shortPeriod", (double) shortPeriod);
         result.getValues().put("longPeriod", (double) longPeriod);
         result.getValues().put("shortMaValue", shortMA);

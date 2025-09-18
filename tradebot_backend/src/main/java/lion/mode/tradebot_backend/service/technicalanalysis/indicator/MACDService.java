@@ -8,12 +8,14 @@ import lion.mode.tradebot_backend.repository.StockDataRepository;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.Indicator;
-import org.ta4j.core.indicators.EMAIndicator;
+import org.ta4j.core.indicators.averages.EMAIndicator;
 import org.ta4j.core.indicators.MACDIndicator;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.num.Num;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,7 +48,7 @@ public class MACDService extends IndicatorService {
         int shortPeriod = macdEntry.getShortPeriod();
         int longPeriod = macdEntry.getLongPeriod();
         int signalPeriod = macdEntry.getSignalPeriod();
-        LocalDateTime date = macdEntry.getDate();
+        Instant date = macdEntry.getDate();
         int histogramTrendPeriod = macdEntry.getHistogramTrendPeriod();
         double histogramConfidence = macdEntry.getHistogramConfidence();
         String priceType = macdEntry.getSource();
@@ -75,7 +77,7 @@ public class MACDService extends IndicatorService {
         BaseIndicatorResponse result = new BaseIndicatorResponse();
         result.setSymbol(symbol);
         result.setIndicator("MACD");
-        result.setDate(series.getBar(targetIndex).getEndTime().toLocalDateTime());
+        result.setDate(series.getBar(targetIndex).getEndTime());
         result.getValues().put("macdValue", macdValue);
         result.getValues().put("signalValue", signalValue);
         result.getValues().put("histogramValue", histogramValue);
@@ -166,7 +168,7 @@ public class MACDService extends IndicatorService {
         return -1;
     }
 
-    private double detectHistogramSlope(BarSeries series, MACDIndicator macd, EMAIndicator signal, int trendPeriod, double confidence, LocalDateTime date) {      
+    private double detectHistogramSlope(BarSeries series, MACDIndicator macd, EMAIndicator signal, int trendPeriod, double confidence, Instant date) {      
         int calculationIndex = seriesAmountValidator(series.getName(), series, date);
         
         if (calculationIndex < trendPeriod) {
