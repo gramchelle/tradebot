@@ -8,7 +8,6 @@ import org.ta4j.core.BarSeries;
 import lion.mode.tradebot_backend.dto.BaseIndicatorResponse;
 import lion.mode.tradebot_backend.dto.indicator.MACrossoverEntry;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
-import lion.mode.tradebot_backend.service.technicalanalysis.IndicatorService;
 
 import org.ta4j.core.Indicator;
 import org.ta4j.core.indicators.CachedIndicator;
@@ -24,12 +23,12 @@ public class MACrossoverService extends IndicatorService{
     }
 
     public BaseIndicatorResponse calculate(MACrossoverEntry entry) {
-        BarSeries series = loadSeries(entry.getSymbol());
+        BarSeries series = loadSeries(entry.getSymbol().toUpperCase());
         return calculateMACrossWithSeries(entry, series);
     }
 
     public BaseIndicatorResponse calculateMACrossWithSeries(MACrossoverEntry entry, BarSeries series){
-        String symbol = entry.getSymbol();
+        String symbol = entry.getSymbol().toUpperCase();
         int shortPeriod = entry.getShortPeriod();
         int longPeriod = entry.getLongPeriod();
         LocalDateTime date = entry.getDate();

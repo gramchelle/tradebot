@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/technical-analysis")
 @RequiredArgsConstructor
-@Tag(name = "Technical Analysis Indicators", description = "TA Indicator Endpoints")
+@Tag(name = "Technical Analysis Indicators")
 public class IndicatorsController {
 
     private final RSIService rsiService;

@@ -3,7 +3,6 @@ package lion.mode.tradebot_backend.service.technicalanalysis.indicator;
 import lion.mode.tradebot_backend.dto.BaseIndicatorResponse;
 import lion.mode.tradebot_backend.dto.indicator.TrendlineEntry;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
-import lion.mode.tradebot_backend.service.technicalanalysis.IndicatorService;
 
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
@@ -18,12 +17,12 @@ public class TrendlineService extends IndicatorService {
     }
 
     public BaseIndicatorResponse calculate(TrendlineEntry entry) {
-        BarSeries series = loadSeries(entry.getSymbol());
+        BarSeries series = loadSeries(entry.getSymbol().toUpperCase());
         return calculateWithSeries(entry, series);
     }
 
     public BaseIndicatorResponse calculateWithSeries(TrendlineEntry entry, BarSeries series) {
-        String symbol = entry.getSymbol();
+        String symbol = entry.getSymbol().toUpperCase();
         int period = entry.getPeriod();
         int lookback = entry.getLookback();
         LocalDateTime date = entry.getDate();

@@ -39,7 +39,7 @@ public class BacktestService{
 //    private final TrendlineService trendlineService;
 
 
-    public Backtest rsiHistoricalBacktest(RSIEntry rsiEntry, int lookback, int horizon, double calculationConfidence){
+    public Backtest rsiHistoricalBacktest(RSIEntry rsiEntry, int backtestLookback, int lookbackPeriod, double calculationConfidence){
         // extract / defaults from entry
         String symbol = rsiEntry.getSymbol();
         LocalDateTime targetDate = rsiEntry.getDate() != null ? rsiEntry.getDate() : LocalDateTime.now();
@@ -55,7 +55,7 @@ public class BacktestService{
 
         Indicator<Num> prices = sourceSelector(priceType, series);
 
-        // accumulators - init vars
+        // accumulators
         int trials = 0;
         int successCount = 0;
         int failCount = 0;
@@ -68,27 +68,27 @@ public class BacktestService{
         LocalDateTime firstTestDate = null;
         LocalDateTime lastTestDate = null;
 
-        for (int i = lookback; i > 0; i -= horizon) {
+        for (int i = backtestLookback; i > 0; i -= lookbackPeriod) {
             int index = targetIndex - i;
             if (index < 0) break;
 
             LocalDateTime dateAtIndex = series.getBar(index).getEndTime().toLocalDateTime();
 
             // build a per-iteration RSIEntry (reuse base entry values but override date)
-            RSIEntry entry = new RSIEntry();
-            entry.setSymbol(symbol);
-            entry.setDate(dateAtIndex);
-            entry.setPeriod(period);
-            entry.setLowerLimit(lowerLimit);
-            entry.setUpperLimit(upperLimit);
-            entry.setSource(priceType);
+            RSIEntry iterEntry = new RSIEntry();
+            iterEntry.setSymbol(symbol);
+            iterEntry.setDate(dateAtIndex);
+            iterEntry.setPeriod(period);
+            iterEntry.setLowerLimit(lowerLimit);
+            iterEntry.setUpperLimit(upperLimit);
+            iterEntry.setSource(priceType);
 
             // predicted response at index (uses your RSIService implementation)
-            BaseIndicatorResponse r1 = rsiService.calculateWithSeries(entry, series);
+            BaseIndicatorResponse r1 = rsiService.calculateWithSeries(iterEntry, series);
             double predictedScore = r1.getScore(); // your service's score (granular)
             double price = prices.getValue(index).doubleValue();
 
-            int index2 = index + horizon;
+            int index2 = index + lookbackPeriod;
             if (index2 >= series.getBarCount()) break;
 
             LocalDateTime dateAtIndex2 = series.getBar(index2).getEndTime().toLocalDateTime();
@@ -190,8 +190,8 @@ public class BacktestService{
         backtest.setTotalTrials(trials);
         backtest.setSuccessfulPredictions(successCount);
         backtest.setFailedPredictions(failCount);
-        backtest.setLookback(lookback);
-        backtest.setLookbackPeriod(horizon);
+        backtest.setLookback(backtestLookback);
+        backtest.setLookbackPeriod(lookbackPeriod);
         backtest.setCalculationConfidence(calculationConfidence);
         backtest.setPriceType(priceType);
 

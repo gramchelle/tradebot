@@ -4,7 +4,6 @@ import lion.mode.tradebot_backend.dto.BaseIndicatorResponse;
 import lion.mode.tradebot_backend.dto.indicator.RSIEntry;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
-import lion.mode.tradebot_backend.service.technicalanalysis.IndicatorService;
 
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
@@ -29,7 +28,7 @@ public class RSIService extends IndicatorService {
                 throw new IllegalArgumentException("Symbol cannot be null or empty");
             }
 
-            BarSeries series = loadSeries(rsiEntry.getSymbol());
+            BarSeries series = loadSeries(rsiEntry.getSymbol().toUpperCase());
             return calculateWithSeries(rsiEntry, series);
 
         } catch (NotEnoughDataException e) {
@@ -48,7 +47,7 @@ public class RSIService extends IndicatorService {
             throw new IllegalArgumentException("Lower limit must be less than upper limit");
 
         // RSIEntry Dto Fields
-        String symbol = rsiEntry.getSymbol();
+        String symbol = rsiEntry.getSymbol().toUpperCase();
         LocalDateTime date = rsiEntry.getDate();
         String source = rsiEntry.getSource();
         int period = rsiEntry.getPeriod();

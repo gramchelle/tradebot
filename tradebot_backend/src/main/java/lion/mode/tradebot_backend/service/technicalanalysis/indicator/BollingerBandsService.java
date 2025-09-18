@@ -4,7 +4,6 @@ import lion.mode.tradebot_backend.dto.BaseIndicatorResponse;
 import lion.mode.tradebot_backend.dto.indicator.BollingerBandsEntry;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
-import lion.mode.tradebot_backend.service.technicalanalysis.IndicatorService;
 
 import org.springframework.stereotype.Service;
 import org.ta4j.core.*;
@@ -26,12 +25,12 @@ public class BollingerBandsService extends IndicatorService {
     }
 
     public BaseIndicatorResponse calculate(BollingerBandsEntry entry){
-        BarSeries series = loadSeries(entry.getSymbol());
+        BarSeries series = loadSeries(entry.getSymbol().toUpperCase());
         return calculateWithSeries(entry, series);
     }
 
     public BaseIndicatorResponse calculateWithSeries(BollingerBandsEntry entry, BarSeries series){
-        String symbol = entry.getSymbol();
+        String symbol = entry.getSymbol().toUpperCase();
         double nbDev = entry.getNumberOfDeviations();
         int period = entry.getPeriod();
         LocalDateTime date = entry.getDate();

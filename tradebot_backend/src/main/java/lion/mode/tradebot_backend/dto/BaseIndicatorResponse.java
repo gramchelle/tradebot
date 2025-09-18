@@ -13,8 +13,10 @@ public class BaseIndicatorResponse {
     private String symbol;
     private String indicator;
     private LocalDateTime date;
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String status;
+    
     private String signal;
     private double score;
     private int barsSinceSignal = -1;

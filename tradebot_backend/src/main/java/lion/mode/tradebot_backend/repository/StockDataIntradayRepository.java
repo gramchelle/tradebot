@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-public interface StockDataIntradayRepository extends JpaRepository<lion.mode.tradebot_backend.model.StockDataIntraday, Long> {
+public interface StockDataIntradayRepository extends JpaRepository<StockDataIntraday, Long> {
     List<StockDataIntraday> findBySymbolOrderByTimestampAsc(String symbol);
 
     boolean existsBySymbolAndTimestamp(String symbol, LocalDateTime timestamp);

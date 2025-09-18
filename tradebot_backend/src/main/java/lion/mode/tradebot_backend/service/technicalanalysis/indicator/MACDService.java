@@ -4,7 +4,6 @@ import lion.mode.tradebot_backend.dto.BaseIndicatorResponse;
 import lion.mode.tradebot_backend.dto.indicator.MACDEntry;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
-import lion.mode.tradebot_backend.service.technicalanalysis.IndicatorService;
 
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
@@ -27,23 +26,23 @@ public class MACDService extends IndicatorService {
 
     public BaseIndicatorResponse calculate(MACDEntry entry) {
         try {
-            if (entry.getSymbol() == null || entry.getSymbol().trim().isEmpty()) {
+            if (entry.getSymbol().toUpperCase() == null || entry.getSymbol().toUpperCase().trim().isEmpty()) {
                 throw new IllegalArgumentException("Symbol cannot be null or empty");
             }
 
-            BarSeries series = loadSeries(entry.getSymbol());
+            BarSeries series = loadSeries(entry.getSymbol().toUpperCase());
             return calculateWithSeries(entry, series);
 
         } catch (NotEnoughDataException e) {
-            throw new NotEnoughDataException("Not enough data to calculate MACD for symbol: " + entry.getSymbol() + ". " + e.getMessage());
+            throw new NotEnoughDataException("Not enough data to calculate MACD for symbol: " + entry.getSymbol().toUpperCase() + ". " + e.getMessage());
 
         } catch (Exception e) {
-            throw new RuntimeException("Error calculating MACD for symbol: " + entry.getSymbol() + ". " + e.getMessage(), e);
+            throw new RuntimeException("Error calculating MACD for symbol: " + entry.getSymbol().toUpperCase() + ". " + e.getMessage(), e);
         }
     }
 
     public BaseIndicatorResponse calculateWithSeries(MACDEntry macdEntry, BarSeries series) {
-        String symbol = macdEntry.getSymbol();
+        String symbol = macdEntry.getSymbol().toUpperCase();
         int shortPeriod = macdEntry.getShortPeriod();
         int longPeriod = macdEntry.getLongPeriod();
         int signalPeriod = macdEntry.getSignalPeriod();
@@ -131,21 +130,11 @@ public class MACDService extends IndicatorService {
             result.setScore(-2.0/3.0);
         } else {
             if (macd > signal) {
-                if (histogramIncreasing) {
-                    result.setSignal("Weak Buy");
-                    result.setScore(1.0/3.0);
-                } else {
-                    result.setSignal("Hold - Bullish");
-                    result.setScore(0.0);
-                }
+                result.setSignal("Weak Buy");
+                result.setScore(1.0/3.0);
             } else {
-                if (histogramDecreasing) {
-                    result.setSignal("Weak Sell");
-                    result.setScore(-1.0/3.0);
-                } else {
-                    result.setSignal("Hold - Bearish");
-                    result.setScore(0.0);
-                }
+                result.setSignal("Weak Sell");
+                result.setScore(-1.0/3.0);
             }
         }
     }
@@ -177,9 +166,7 @@ public class MACDService extends IndicatorService {
         return -1;
     }
 
-    private double detectHistogramSlope(BarSeries series, MACDIndicator macd, EMAIndicator signal, int trendPeriod, double confidence, LocalDateTime date) {
-        int targetIndex = series.getEndIndex();
-        
+    private double detectHistogramSlope(BarSeries series, MACDIndicator macd, EMAIndicator signal, int trendPeriod, double confidence, LocalDateTime date) {      
         int calculationIndex = seriesAmountValidator(series.getName(), series, date);
         
         if (calculationIndex < trendPeriod) {

@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TrendlineEntry implements IndicatorDto{
+public class TrendlineEntry{
 
     private String symbol;
     private int period;
