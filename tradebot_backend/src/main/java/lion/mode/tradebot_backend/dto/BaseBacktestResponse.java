@@ -13,19 +13,17 @@ public class BaseBacktestResponse {
     private String indicator;
     private String signal;
     private double score;
-    private LocalDateTime date;
     private String timeInterval = "1d";
     
     private int lookback;
     private int horizon;
-    private double calculationConfidence;
     private String priceType;
 
-    private LocalDateTime backtestStartDate;
-    private LocalDateTime backtestEndDate;
+    private double stopLossPercentage;
+    private double takeProfitPercentage;
 
     // başarı metrikleri
-    private double accuracy; // Başarı oranı (successCount/totalTrials)
+    private double accuracy;
     private int totalTrades;
     private double winRate;
     private double totalProfit;
@@ -42,7 +40,7 @@ public class BaseBacktestResponse {
     private double barsSinceLastTrade;
     private String supportOrResistance = "none";
 
-    // Risk & Sharpe/Sortino
+    // Risk
     private double sharpeRatio;  // Risk ayarlı getiri
     private double sortinoRatio; // Negatif oynaklık ile risk ayarlı getiri
 
@@ -50,5 +48,8 @@ public class BaseBacktestResponse {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Map<String, Double> detailedMetrics;
+
+    private LocalDateTime backtestStartDate;
+    private LocalDateTime backtestEndDate;
 
 }

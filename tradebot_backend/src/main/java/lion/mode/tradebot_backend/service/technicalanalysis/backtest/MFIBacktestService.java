@@ -1,41 +1,44 @@
 package lion.mode.tradebot_backend.service.technicalanalysis.backtest;
 
-import lion.mode.tradebot_backend.dto.BaseBacktestResponse;
-import lion.mode.tradebot_backend.dto.BaseIndicatorResponse;
-import lion.mode.tradebot_backend.dto.indicator.RSIEntry;
-import lion.mode.tradebot_backend.dto.indicator.TrendlineEntry;
-import lion.mode.tradebot_backend.model.Backtest;
-import lion.mode.tradebot_backend.repository.BacktestRepository;
-import lion.mode.tradebot_backend.repository.StockDataRepository;
-import lion.mode.tradebot_backend.service.technicalanalysis.indicator.RSIService;
-import lion.mode.tradebot_backend.service.technicalanalysis.indicator.TrendlineService;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.num.Num;
 
-import java.time.LocalDateTime;
-import java.util.*;
+import lion.mode.tradebot_backend.dto.BaseBacktestResponse;
+import lion.mode.tradebot_backend.dto.BaseIndicatorResponse;
+import lion.mode.tradebot_backend.dto.indicator.MFIEntry;
+import lion.mode.tradebot_backend.dto.indicator.RSIEntry;
+import lion.mode.tradebot_backend.dto.indicator.TrendlineEntry;
+import lion.mode.tradebot_backend.model.Backtest;
+import lion.mode.tradebot_backend.repository.BacktestRepository;
+import lion.mode.tradebot_backend.repository.StockDataRepository;
+import lion.mode.tradebot_backend.service.technicalanalysis.indicator.MFIService;
+import lion.mode.tradebot_backend.service.technicalanalysis.indicator.TrendlineService;
 
 @Service
-public class RSIBacktestService extends AbstractBacktestService {
+public class MFIBacktestService extends AbstractBacktestService {
 
-    private final RSIService service;
-    private final TrendlineService trendlineService;
+    private MFIService service;
+    private TrendlineService trendlineService;
 
-    public RSIBacktestService(StockDataRepository repository, BacktestRepository backtestRepository, RSIService service, TrendlineService trendlineService) {
+    public MFIBacktestService(StockDataRepository repository, BacktestRepository backtestRepository, MFIService mfiService, TrendlineService trendlineService) {
         super(repository, backtestRepository);
-        this.service = service;
+        this.service = mfiService;
         this.trendlineService = trendlineService;
     }
 
-    public BaseBacktestResponse runBacktest(RSIEntry entry, int lookback, int horizon, String timeInterval, double takeProfit, double stopLoss, int tradeAmount) {
+    public BaseBacktestResponse runBacktest(MFIEntry entry, int lookback, int horizon, String timeInterval, double takeProfit, double stopLoss, int tradeAmount) {
         String symbol = entry.getSymbol().toUpperCase();
         LocalDateTime date = entry.getDate();
         int period = entry.getPeriod();
         int upperLimit = entry.getUpperLimit();
         int lowerLimit = entry.getLowerLimit();
-        String source = entry.getSource();
 
         BarSeries series = loadSeries(symbol);
         int targetIndex = seriesAmountValidator(symbol, series, date);
@@ -72,7 +75,7 @@ public class RSIBacktestService extends AbstractBacktestService {
         // build response object
         BaseBacktestResponse response = new BaseBacktestResponse();
         response.setSymbol(symbol);
-        response.setIndicator("RSI");
+        response.setIndicator("MFI");
         response.setTimeInterval(timeInterval);
         response.setStopLossPercentage(stopLoss);
         response.setTakeProfitPercentage(takeProfit);
@@ -86,21 +89,20 @@ public class RSIBacktestService extends AbstractBacktestService {
             if (i >= series.getBarCount()) break;
             
             // Create RSI entry for this specific date/index
-            RSIEntry currentEntry = new RSIEntry();
+            MFIEntry currentEntry = new MFIEntry();
             currentEntry.setSymbol(symbol);
             currentEntry.setDate(series.getBar(i).getEndTime().toLocalDateTime());
             currentEntry.setPeriod(period);
             currentEntry.setUpperLimit(upperLimit);
             currentEntry.setLowerLimit(lowerLimit);
-            currentEntry.setSource(source);
             
-            BaseIndicatorResponse rsiResponse = service.calculateWithSeries(currentEntry, series);
-            if (rsiResponse == null || rsiResponse.getSignal() == null) continue;
-            
-            if (rsiResponse.getValues() != null && rsiResponse.getValues().containsKey("rsiValue")) latestRsiValue = rsiResponse.getValues().get("rsiValue");
+            BaseIndicatorResponse mfiResponse = service.calculateWithSeries(currentEntry, series);
+            if (mfiResponse == null || mfiResponse.getSignal() == null) continue;
+
+            if (mfiResponse.getValues() != null && mfiResponse.getValues().containsKey("mfiValue")) latestRsiValue = mfiResponse.getValues().get("mfiValue");
             
             // Update bars since last signal
-            if (rsiResponse.getBarsSinceSignal() != -1) barsSinceLastSignal = rsiResponse.getBarsSinceSignal();
+            if (mfiResponse.getBarsSinceSignal() != -1) barsSinceLastSignal = mfiResponse.getBarsSinceSignal();
             
             if (!currentSignal.equalsIgnoreCase("Hold") && i + horizon < series.getBarCount()) {
                 Num currentPrice = series.getBar(i).getClosePrice();
@@ -119,7 +121,7 @@ public class RSIBacktestService extends AbstractBacktestService {
                 }
             }
 
-            String signal = convertToSimpleSignal(rsiResponse.getSignal());
+            String signal = convertToSimpleSignal(mfiResponse.getSignal());
             lastSignal = signal;
             double currentPrice = series.getBar(i).getClosePrice().doubleValue();
             
@@ -229,7 +231,7 @@ public class RSIBacktestService extends AbstractBacktestService {
         response.setAverageTradeDuration(avgTradeDuration);
         response.setLookback(lookback);
         response.setHorizon(horizon);
-        response.setPriceType(source);
+        response.setPriceType("close");
         response.setBacktestStartDate(series.getBar(startIndex).getEndTime().toLocalDateTime());
         response.setBacktestEndDate(series.getBar(targetIndex).getEndTime().toLocalDateTime());
         
@@ -254,12 +256,12 @@ public class RSIBacktestService extends AbstractBacktestService {
         return response;
     }
 
-    public boolean saveIndicatorBacktest(RSIEntry entry, int lookback, int horizon, String timeInterval, double takeProfit, double stopLoss, int tradeAmount) {
+    public boolean saveIndicatorBacktest(MFIEntry entry, int lookback, int horizon, String timeInterval, double takeProfit, double stopLoss, int tradeAmount) {
         BaseBacktestResponse response = runBacktest(entry, lookback, horizon, timeInterval, takeProfit, stopLoss, tradeAmount);
         try{
             Backtest backtest = new Backtest();
             backtest.setSymbol(response.getSymbol());
-            backtest.setIndicator("RSI");
+            backtest.setIndicator("MFI");
             backtest.setSignal(response.getSignal());
             backtest.setScore(response.getScore());
             backtest.setTimeInterval(response.getTimeInterval());
@@ -290,5 +292,5 @@ public class RSIBacktestService extends AbstractBacktestService {
         }
         return true;
     }
-    
+
 }

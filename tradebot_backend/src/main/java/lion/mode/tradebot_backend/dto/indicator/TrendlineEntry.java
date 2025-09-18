@@ -16,5 +16,6 @@ public class TrendlineEntry{
     private LocalDateTime date;
     private int lookback;
     private double slopeConfidence;
+    private int supportResistanceTouchAmount;
 
 }

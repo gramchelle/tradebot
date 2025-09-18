@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 @Entity
-@Table(name = "backtests")
+@Table(name = "backtest")
 @Data
 public class Backtest {
 
@@ -21,33 +21,40 @@ public class Backtest {
     private String indicator;
     private String signal;
     private double score;
+    private String timeInterval = "1d";
 
-    @Column(name = "date")
-    private LocalDateTime date;
+    private double stopLossPercentage;
+    private double takeProfitPercentage;
 
-    @Column(name = "confidence_score")
-    private double confidenceScore;
+    private double accuracy;
+    private int totalTrades;
+    private double winRate;
+    private double totalProfit;
+    private double percentageReturn;
+    private double maxDrawdown;
+    private double volatility;
 
-    private int totalTrials;
-    private int successfulPredictions;
-    private int failedPredictions;
-
-    private int lookback;
-    private int lookbackPeriod;
-    private double calculationConfidence;
-    private String priceType;
-
-    @Column(name = "indicator_parameters", columnDefinition = "TEXT")
-    @JsonIgnore
-    private String indicatorParametersJson;
+    private double avgWin;
+    private double avgLoss;
+    private double largestWin;
+    private double largestLoss;
+    private double averageTradeDuration;
+    private double barsSinceLastTrade;
+    private String supportOrResistance = "none";
 
     private double averagePriceMovement;
     private double maxPriceMovement;
     private double minPriceMovement;
-    private double volatility;
+
+    private double sharpeRatio;
+    private double sortinoRatio;
 
     private LocalDateTime backtestStartDate;
     private LocalDateTime backtestEndDate;
+
+    @Column(name = "indicator_parameters", columnDefinition = "TEXT")
+    @JsonIgnore
+    private String indicatorParametersJson;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

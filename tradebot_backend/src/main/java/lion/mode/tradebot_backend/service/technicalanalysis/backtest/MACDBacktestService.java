@@ -1,40 +1,45 @@
 package lion.mode.tradebot_backend.service.technicalanalysis.backtest;
 
-import lion.mode.tradebot_backend.dto.BaseBacktestResponse;
-import lion.mode.tradebot_backend.dto.BaseIndicatorResponse;
-import lion.mode.tradebot_backend.dto.indicator.RSIEntry;
-import lion.mode.tradebot_backend.dto.indicator.TrendlineEntry;
-import lion.mode.tradebot_backend.model.Backtest;
-import lion.mode.tradebot_backend.repository.BacktestRepository;
-import lion.mode.tradebot_backend.repository.StockDataRepository;
-import lion.mode.tradebot_backend.service.technicalanalysis.indicator.RSIService;
-import lion.mode.tradebot_backend.service.technicalanalysis.indicator.TrendlineService;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.num.Num;
 
-import java.time.LocalDateTime;
-import java.util.*;
+import lion.mode.tradebot_backend.dto.BaseBacktestResponse;
+import lion.mode.tradebot_backend.dto.BaseIndicatorResponse;
+import lion.mode.tradebot_backend.dto.indicator.MACDEntry;
+import lion.mode.tradebot_backend.dto.indicator.TrendlineEntry;
+import lion.mode.tradebot_backend.model.Backtest;
+import lion.mode.tradebot_backend.repository.BacktestRepository;
+import lion.mode.tradebot_backend.repository.StockDataRepository;
+import lion.mode.tradebot_backend.service.technicalanalysis.indicator.MACDService;
+import lion.mode.tradebot_backend.service.technicalanalysis.indicator.TrendlineService;
 
 @Service
-public class RSIBacktestService extends AbstractBacktestService {
+public class MACDBacktestService extends AbstractBacktestService{
 
-    private final RSIService service;
+    private final MACDService service;
     private final TrendlineService trendlineService;
 
-    public RSIBacktestService(StockDataRepository repository, BacktestRepository backtestRepository, RSIService service, TrendlineService trendlineService) {
+    public MACDBacktestService(StockDataRepository repository, BacktestRepository backtestRepository, MACDService service, TrendlineService trendlineService) {
         super(repository, backtestRepository);
         this.service = service;
         this.trendlineService = trendlineService;
     }
 
-    public BaseBacktestResponse runBacktest(RSIEntry entry, int lookback, int horizon, String timeInterval, double takeProfit, double stopLoss, int tradeAmount) {
+    public BaseBacktestResponse runBacktest(MACDEntry entry, int lookback, int horizon, String timeInterval, double takeProfit, double stopLoss, int tradeAmount) {
         String symbol = entry.getSymbol().toUpperCase();
         LocalDateTime date = entry.getDate();
-        int period = entry.getPeriod();
-        int upperLimit = entry.getUpperLimit();
-        int lowerLimit = entry.getLowerLimit();
+        int shortPeriod = entry.getShortPeriod();
+        int longPeriod = entry.getLongPeriod();
+        int signalPeriod = entry.getSignalPeriod();
+        int histogramTrendPeriod = entry.getHistogramTrendPeriod();
+        double histogramConfidence = entry.getHistogramConfidence();
         String source = entry.getSource();
 
         BarSeries series = loadSeries(symbol);
@@ -72,35 +77,36 @@ public class RSIBacktestService extends AbstractBacktestService {
         // build response object
         BaseBacktestResponse response = new BaseBacktestResponse();
         response.setSymbol(symbol);
-        response.setIndicator("RSI");
+        response.setIndicator("MACD");
         response.setTimeInterval(timeInterval);
         response.setStopLossPercentage(stopLoss);
         response.setTakeProfitPercentage(takeProfit);
         
         int truePositives = 0, trueNegatives = 0, falsePositives = 0, falseNegatives = 0;
         double signalThreshold = 0.02; // price movement threshold
-        
-        int startIndex = Math.max(period + 1, targetIndex - lookback);
-        
+
+        int startIndex = Math.max(shortPeriod + 1, targetIndex - lookback);
+
         for (int i = startIndex; i <= targetIndex; i += horizon) {
             if (i >= series.getBarCount()) break;
             
-            // Create RSI entry for this specific date/index
-            RSIEntry currentEntry = new RSIEntry();
+            // Create MACDEntry entry for this specific date/index
+
+            MACDEntry currentEntry = new MACDEntry();
             currentEntry.setSymbol(symbol);
             currentEntry.setDate(series.getBar(i).getEndTime().toLocalDateTime());
-            currentEntry.setPeriod(period);
-            currentEntry.setUpperLimit(upperLimit);
-            currentEntry.setLowerLimit(lowerLimit);
+            currentEntry.setShortPeriod(shortPeriod);
+            currentEntry.setLongPeriod(longPeriod);
+            currentEntry.setSignalPeriod(signalPeriod);
+            currentEntry.setHistogramTrendPeriod(histogramTrendPeriod);
+            currentEntry.setHistogramConfidence(histogramConfidence);
             currentEntry.setSource(source);
             
-            BaseIndicatorResponse rsiResponse = service.calculateWithSeries(currentEntry, series);
-            if (rsiResponse == null || rsiResponse.getSignal() == null) continue;
-            
-            if (rsiResponse.getValues() != null && rsiResponse.getValues().containsKey("rsiValue")) latestRsiValue = rsiResponse.getValues().get("rsiValue");
-            
+            BaseIndicatorResponse macdResponse = service.calculateWithSeries(currentEntry, series);
+            if (macdResponse == null || macdResponse.getSignal() == null) continue;
+                        
             // Update bars since last signal
-            if (rsiResponse.getBarsSinceSignal() != -1) barsSinceLastSignal = rsiResponse.getBarsSinceSignal();
+            if (macdResponse.getBarsSinceSignal() != -1) barsSinceLastSignal = macdResponse.getBarsSinceSignal();
             
             if (!currentSignal.equalsIgnoreCase("Hold") && i + horizon < series.getBarCount()) {
                 Num currentPrice = series.getBar(i).getClosePrice();
@@ -119,7 +125,7 @@ public class RSIBacktestService extends AbstractBacktestService {
                 }
             }
 
-            String signal = convertToSimpleSignal(rsiResponse.getSignal());
+            String signal = convertToSimpleSignal(macdResponse.getSignal());
             lastSignal = signal;
             double currentPrice = series.getBar(i).getClosePrice().doubleValue();
             
@@ -234,10 +240,11 @@ public class RSIBacktestService extends AbstractBacktestService {
         response.setBacktestEndDate(series.getBar(targetIndex).getEndTime().toLocalDateTime());
         
         Map<String, Object> parameters = new HashMap<>();
-        parameters.put("period", period);
-        parameters.put("upperLimit", upperLimit);
-        parameters.put("lowerLimit", lowerLimit);
-        parameters.put("rsiValue", latestRsiValue);
+        parameters.put("shortPeriod", shortPeriod);
+        parameters.put("longPeriod", longPeriod);
+        parameters.put("signalPeriod", signalPeriod);
+        parameters.put("histogramTrendPeriod", histogramTrendPeriod);
+        parameters.put("histogramConfidence", histogramConfidence);
         response.setIndicatorParameters(parameters);
 
         Map<String, Double> detailedMetrics = new HashMap<>();
@@ -254,12 +261,12 @@ public class RSIBacktestService extends AbstractBacktestService {
         return response;
     }
 
-    public boolean saveIndicatorBacktest(RSIEntry entry, int lookback, int horizon, String timeInterval, double takeProfit, double stopLoss, int tradeAmount) {
+    public boolean saveIndicatorBacktest(MACDEntry entry, int lookback, int horizon, String timeInterval, double takeProfit, double stopLoss, int tradeAmount) {
         BaseBacktestResponse response = runBacktest(entry, lookback, horizon, timeInterval, takeProfit, stopLoss, tradeAmount);
         try{
             Backtest backtest = new Backtest();
             backtest.setSymbol(response.getSymbol());
-            backtest.setIndicator("RSI");
+            backtest.setIndicator("MACD");
             backtest.setSignal(response.getSignal());
             backtest.setScore(response.getScore());
             backtest.setTimeInterval(response.getTimeInterval());

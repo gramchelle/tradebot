@@ -1,22 +1,23 @@
 package lion.mode.tradebot_backend.controller;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lion.mode.tradebot_backend.dto.*;
-import lion.mode.tradebot_backend.dto.indicator.*;
-import lion.mode.tradebot_backend.service.technicalanalysis.backtest.*;
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDateTime;
+
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lion.mode.tradebot_backend.dto.*;
+import lion.mode.tradebot_backend.dto.indicator.*;
+import lion.mode.tradebot_backend.service.technicalanalysis.backtest.*;
+import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/technical-analysis/backtests")
+@RequestMapping("/technical-analysis/backtest-logs")
+@Tag(name = "Technical Analysis Backtest Logs")
 @RequiredArgsConstructor
-@Tag(name = "Technical Analysis Backtests")
-public class BacktestController {
+public class BacktestLogController {
 
     private final RSIBacktestService rsiBacktestService;
     private final MACDBacktestService macdBacktestService;
@@ -25,8 +26,8 @@ public class BacktestController {
     private final DMIBacktestService dmiBacktestService;
     private final MFIBacktestService mfiBacktestService;
 
-    @GetMapping("/rsi")
-    public ResponseEntity<BaseBacktestResponse> runRsiBacktest(
+    @PostMapping("/saveRsiParams")
+    public ResponseEntity<String> saveRsiBacktestParams(
             @RequestParam String symbol,
             @RequestParam(defaultValue = "14") int period,
             @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
@@ -41,11 +42,13 @@ public class BacktestController {
             @RequestParam(defaultValue = "0.3") double takeProfitThreshold,
             @RequestParam(defaultValue = "0.1") double stopLossThreshold) {
         RSIEntry entry = new RSIEntry(symbol, date, period, upperLimit, lowerLimit, source);
-        return new ResponseEntity<>(rsiBacktestService.runBacktest(entry, lookback, horizon, interval, takeProfitThreshold, stopLossThreshold, tradingAmount), HttpStatus.OK);
+        boolean isSaved = rsiBacktestService.saveIndicatorBacktest(entry, lookback, horizon, interval, takeProfitThreshold, stopLossThreshold, tradingAmount);
+        if (isSaved) return new ResponseEntity<>("RSI backtest parameters saved successfully.", HttpStatus.OK);
+        else return new ResponseEntity<>("Failed to save RSI backtest parameters.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @GetMapping("/macd")
-    public ResponseEntity<BaseBacktestResponse> calculateMACD(
+    @PostMapping("/saveMacdParams")
+    public ResponseEntity<String> calculateMACD(
             @RequestParam String symbol,
             @RequestParam(defaultValue = "12") int shortPeriod,
             @RequestParam(defaultValue = "26") int longPeriod,
@@ -61,11 +64,13 @@ public class BacktestController {
             @RequestParam(defaultValue = "0.3") double takeProfitThreshold,
             @RequestParam(defaultValue = "0.1") double stopLossThreshold) {
         MACDEntry entry = new MACDEntry(symbol, date, shortPeriod, longPeriod, signalPeriod, histogramTrendPeriod, histogramConfidence, source);
-        return new ResponseEntity<>(macdBacktestService.runBacktest(entry, lookback, horizon, interval, takeProfitThreshold, stopLossThreshold, tradingAmount), HttpStatus.OK);
+        boolean isSaved = macdBacktestService.saveIndicatorBacktest(entry, lookback, horizon, interval, takeProfitThreshold, stopLossThreshold, tradingAmount);
+        if (isSaved) return new ResponseEntity<>("MACD backtest parameters saved successfully.", HttpStatus.OK);
+        else return new ResponseEntity<>("Failed to save MACD backtest parameters.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @GetMapping("/ma-crossover")
-    public ResponseEntity<BaseBacktestResponse> calculateEmaCrossover(
+    @PostMapping("/saveMaCrossoverParams")
+    public ResponseEntity<String> calculateEmaCrossover(
             @RequestParam String symbol,
             @RequestParam(defaultValue = "9") int shortPeriod,
             @RequestParam(defaultValue = "26") int longPeriod,
@@ -79,13 +84,15 @@ public class BacktestController {
             @RequestParam(defaultValue = "1d") String interval,
             @RequestParam(defaultValue = "1") int tradingAmount,
             @RequestParam(defaultValue = "0.3") double takeProfitThreshold,
-            @RequestParam(defaultValue = "0.1") double stopLossThreshold){
+            @RequestParam(defaultValue = "0.1") double stopLossThreshold) {
         MACrossoverEntry entry = new MACrossoverEntry(symbol, date, maCrossoverLookback, shortPeriod, longPeriod, source, maType, relativeThreshold);
-        return new ResponseEntity<>(macrossoverBacktestService.runBacktest(entry, lookback, horizon, interval, takeProfitThreshold, stopLossThreshold, tradingAmount), HttpStatus.OK);
+        boolean isSaved = macrossoverBacktestService.saveIndicatorBacktest(entry, lookback, horizon, interval, takeProfitThreshold, stopLossThreshold, tradingAmount);
+        if (isSaved) return new ResponseEntity<>("MA Crossover backtest parameters saved successfully.", HttpStatus.OK);
+        else return new ResponseEntity<>("Failed to save MA Crossover backtest parameters.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @GetMapping("/bollinger-bands")
-    public ResponseEntity<BaseBacktestResponse> calculateBollingerBands(
+    @PostMapping("/saveBollingerBandsParams")
+    public ResponseEntity<String> saveBollingerBandsBacktestParams(
             @RequestParam String symbol,
             @RequestParam(defaultValue = "20") int period,
             @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
@@ -98,12 +105,35 @@ public class BacktestController {
             @RequestParam(defaultValue = "1") int tradingAmount,
             @RequestParam(defaultValue = "0.3") double takeProfitThreshold,
             @RequestParam(defaultValue = "0.1") double stopLossThreshold) {
+
         BollingerBandsEntry entry = new BollingerBandsEntry(symbol, period, date, numberOfDeviations, source, squeezeConfidence);
-        return new ResponseEntity<>(bollingerBacktestService.runBacktest(entry, lookback, horizon, interval, takeProfitThreshold, stopLossThreshold, tradingAmount), HttpStatus.OK);
+        boolean isSaved = bollingerBacktestService.saveIndicatorBacktest(entry, lookback, horizon, interval, takeProfitThreshold, stopLossThreshold, tradingAmount);
+        if (isSaved) return new ResponseEntity<>("Bollinger Bands backtest parameters saved successfully.", HttpStatus.OK);
+        else return new ResponseEntity<>("Failed to save Bollinger Bands backtest parameters.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    @GetMapping("/mfi")
-    public ResponseEntity<BaseBacktestResponse> calculateMFI(
+    @PostMapping("/saveDmiParams")
+    public ResponseEntity<String> saveDmiBacktestParams(
+            @RequestParam String symbol,
+            @RequestParam(defaultValue = "14") int period,
+            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+            @RequestParam(defaultValue = "250") int lookback,
+            @RequestParam(defaultValue = "2") int horizon,
+            @RequestParam(defaultValue = "25") double strongTrendThreshold,
+            @RequestParam(defaultValue = "20") double moderateTrendThreshold,
+            @RequestParam(defaultValue = "3.0") double diDiff,
+            @RequestParam(defaultValue = "1d") String interval,
+            @RequestParam(defaultValue = "1") int tradingAmount,
+            @RequestParam(defaultValue = "0.3") double takeProfitThreshold,
+            @RequestParam(defaultValue = "0.1") double stopLossThreshold) {
+        DMIEntry entry = new DMIEntry(symbol, period, date, strongTrendThreshold, moderateTrendThreshold, diDiff);
+        boolean isSaved = dmiBacktestService.saveIndicatorBacktest(entry, lookback, horizon, interval, takeProfitThreshold, stopLossThreshold, tradingAmount);
+        if (isSaved) return new ResponseEntity<>("DMI backtest parameters saved successfully.", HttpStatus.OK);
+        else return new ResponseEntity<>("Failed to save DMI backtest parameters.", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @PostMapping("/saveMfiParams")
+    public ResponseEntity<String> saveMfiBacktestParams(
             @RequestParam String symbol,
             @RequestParam(defaultValue = "14") int period,
             @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
@@ -116,25 +146,8 @@ public class BacktestController {
             @RequestParam(defaultValue = "0.3") double takeProfitThreshold,
             @RequestParam(defaultValue = "0.1") double stopLossThreshold) {
         MFIEntry entry = new MFIEntry(symbol, date, period, upperLimit, lowerLimit);
-        return new ResponseEntity<>(mfiBacktestService.runBacktest(entry, lookback, horizon, interval, takeProfitThreshold, stopLossThreshold, tradingAmount), HttpStatus.OK);
+        boolean isSaved = mfiBacktestService.saveIndicatorBacktest(entry, lookback, horizon, interval, takeProfitThreshold, stopLossThreshold, tradingAmount);
+        if (isSaved) return new ResponseEntity<>("MFI backtest parameters saved successfully.", HttpStatus.OK);
+        else return new ResponseEntity<>("Failed to save MFI backtest parameters.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
-    @GetMapping("/dmi")
-    public ResponseEntity<BaseBacktestResponse> calculateDMI(
-            @RequestParam String symbol,
-            @RequestParam(defaultValue = "14") int period,
-            @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
-            @RequestParam(defaultValue = "250") int lookback,
-            @RequestParam(defaultValue = "2") int horizon,
-            @RequestParam(defaultValue = "25") double strongTrendThreshold,
-            @RequestParam(defaultValue = "20") double moderateTrendThreshold,
-            @RequestParam(defaultValue = "3.0") double diDiff,
-            @RequestParam(defaultValue = "1d") String interval,
-            @RequestParam(defaultValue = "1") int tradingAmount,
-            @RequestParam(defaultValue = "0.3") double takeProfitThreshold,
-            @RequestParam(defaultValue = "0.1") double stopLossThreshold){
-        DMIEntry entry = new DMIEntry(symbol, period, date, strongTrendThreshold, moderateTrendThreshold, diDiff);
-        return new ResponseEntity<>(dmiBacktestService.runBacktest(entry, lookback, horizon, interval, takeProfitThreshold, stopLossThreshold, tradingAmount), HttpStatus.OK);
-    }
-
 }

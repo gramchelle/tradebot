@@ -24,10 +24,10 @@ public class MACrossoverService extends IndicatorService{
 
     public BaseIndicatorResponse calculate(MACrossoverEntry entry) {
         BarSeries series = loadSeries(entry.getSymbol().toUpperCase());
-        return calculateMACrossWithSeries(entry, series);
+        return calculateWithSeries(entry, series);
     }
 
-    public BaseIndicatorResponse calculateMACrossWithSeries(MACrossoverEntry entry, BarSeries series){
+    public BaseIndicatorResponse calculateWithSeries(MACrossoverEntry entry, BarSeries series){
         String symbol = entry.getSymbol().toUpperCase();
         int shortPeriod = entry.getShortPeriod();
         int longPeriod = entry.getLongPeriod();

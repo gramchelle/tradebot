@@ -17,16 +17,20 @@ import org.ta4j.core.indicators.helpers.OpenPriceIndicator;
 import org.ta4j.core.num.DecimalNum;
 import org.ta4j.core.num.Num;
 
+import lion.mode.tradebot_backend.dto.BaseBacktestResponse;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
 import lion.mode.tradebot_backend.model.StockDataDaily;
+import lion.mode.tradebot_backend.repository.BacktestRepository;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 
-public class AbstractBacktestService {
+abstract class AbstractBacktestService {
 
     protected final StockDataRepository repository;
+    protected final BacktestRepository backtestRepository;
 
-    protected AbstractBacktestService(StockDataRepository repository) {
+    protected AbstractBacktestService(StockDataRepository repository, BacktestRepository backtestRepository) {
         this.repository = repository;
+        this.backtestRepository = backtestRepository;
     }
 
     // TODO: Make this method generic to support different timeframes
@@ -131,14 +135,6 @@ public class AbstractBacktestService {
         return 2 * (precision * recall) / (precision + recall);
     }
 
-    /**
-     * Evaluates if the actual price movement matches the predicted signal
-     * @param signal The trading signal ("BUY", "SELL", "HOLD")
-     * @param currentPrice Current bar's close price
-     * @param futurePrice Future bar's close price (after horizon periods)
-     * @param threshold Minimum percentage change to consider significant (e.g., 0.02 for 2%)
-     * @return "TP", "TN", "FP", "FN", or "NEUTRAL"
-     */
     protected String evaluateSignalOutcome(String signal, Num currentPrice, Num futurePrice, double threshold) {
         if (currentPrice == null || futurePrice == null) return "NEUTRAL";
         
@@ -165,14 +161,57 @@ public class AbstractBacktestService {
         }
     }
 
-    /**
-     * Converts RSI value to trading signal based on thresholds
-     */
-    protected String getRSISignal(double rsiValue, int upperLimit, int lowerLimit) {
-        if (rsiValue > upperLimit) return "SELL";  // Overbought
-        if (rsiValue < lowerLimit) return "BUY";   // Oversold
-        return "HOLD";                              // Neutral zone
+    protected String convertToSimpleSignal(String signal) {
+        if (signal.toUpperCase() == null) return "HOLD";
+        
+        switch (signal.toUpperCase()) {
+            case "STRONG BUY":
+            case "BUY":
+            case "WEAK BUY":
+                return "Buy";
+            case "STRONG SELL":
+            case "SELL":
+            case "WEAK SELL":
+                return "Sell";
+            default:
+                return "Hold";
+        }
+    }
+    
+    protected double calculateVolatility(List<Double> returns) {
+        if (returns.size() < 2) return 0.0;
+        
+        double mean = returns.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+        double variance = returns.stream()
+            .mapToDouble(r -> Math.pow(r - mean, 2))
+            .average().orElse(0.0);
+        
+        return Math.sqrt(variance);
     }
 
+    protected double calculateSharpeRatio(List<Double> returns, double riskFreeRate) {
+        if (returns.isEmpty()) return 0.0;
+        
+        double avgReturn = returns.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+        double volatility = calculateVolatility(returns);
+        
+        return volatility > 0 ? (avgReturn - riskFreeRate/252) / volatility : 0.0; // Daily risk-free rate
+    }
+    
+    // Calculate Sortino ratio (downside deviation only)
+    protected double calculateSortinoRatio(List<Double> returns, double riskFreeRate) {
+        if (returns.isEmpty()) return 0.0;
+        
+        double avgReturn = returns.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+        double dailyRiskFree = riskFreeRate / 252;
+        
+        double downsideVariance = returns.stream()
+            .mapToDouble(r -> r < dailyRiskFree ? Math.pow(r - dailyRiskFree, 2) : 0.0)
+            .average().orElse(0.0);
+        
+        double downsideDeviation = Math.sqrt(downsideVariance);
+        
+        return downsideDeviation > 0 ? (avgReturn - dailyRiskFree) / downsideDeviation : 0.0;
+    }
 
 }

@@ -26,6 +26,7 @@ public class TrendlineService extends IndicatorService {
         int period = entry.getPeriod();
         int lookback = entry.getLookback();
         LocalDateTime date = entry.getDate();
+        int touchAmount = entry.getSupportResistanceTouchAmount();
 
         int targetIndex = seriesAmountValidator(symbol, series, date);
 
@@ -72,7 +73,7 @@ public class TrendlineService extends IndicatorService {
             result.setScore(0.0);
         }
 
-        String supportResistance = checkSupportResistance(series, targetIndex, lookback, swingHigh, swingLow);
+        String supportResistance = checkSupportResistance(series, targetIndex, lookback, swingHigh, swingLow, touchAmount);
         result.setStatus(supportResistance);
         
         int barsSinceSignal = calculateBarsSinceSignal(series, targetIndex, lookback, swingHigh, swingLow);
@@ -81,7 +82,7 @@ public class TrendlineService extends IndicatorService {
         return result;
     }
 
-    private String checkSupportResistance(BarSeries series, int targetIndex, int lookback, double swingHigh, double swingLow) {
+    private String checkSupportResistance(BarSeries series, int targetIndex, int lookback, double swingHigh, double swingLow, int touchAmount) {
         double tolerance = 0.02;
         int highTouches = 0;
         int lowTouches = 0;
@@ -99,12 +100,12 @@ public class TrendlineService extends IndicatorService {
                 lowTouches++;
             }
         }
-        
-        if (highTouches >= 2) {
-            return "RESISTANCE LEVEL DETECTED at " + swingHigh;
+
+        if (highTouches >= touchAmount) {
+            return "Resistance detected at " + swingHigh;
         }
-        if (lowTouches >= 2) {
-            return "SUPPORT LEVEL DETECTED at " + swingLow;
+        if (lowTouches >= touchAmount) {
+            return "Support level detected at " + swingLow;
         }
         return "No significant support/resistance levels detected.";
     }

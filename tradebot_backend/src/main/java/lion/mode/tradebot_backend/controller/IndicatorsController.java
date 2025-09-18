@@ -52,7 +52,7 @@ public class IndicatorsController {
         return new ResponseEntity<>(macdService.calculate(entry), HttpStatus.OK);
     }
 
-     @GetMapping("/ma-crossover")
+    @GetMapping("/ma-crossover")
      public ResponseEntity<BaseIndicatorResponse> calculateEmaCrossover(
              @RequestParam String symbol,
              @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
@@ -84,8 +84,9 @@ public class IndicatorsController {
             @RequestParam(defaultValue = "14") int period,
             @RequestParam(defaultValue = "30") int lookback,
             @RequestParam(defaultValue = "#{T(java.time.LocalDateTime).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
-            @RequestParam(defaultValue = "0.05") double slopeConfidence){
-        TrendlineEntry entry = new TrendlineEntry(symbol, period, date, lookback, slopeConfidence);
+            @RequestParam(defaultValue = "0.05") double slopeConfidence,
+            @RequestParam(defaultValue = "3") int supportResistanceTouchAmount){
+        TrendlineEntry entry = new TrendlineEntry(symbol, period, date, lookback, slopeConfidence, supportResistanceTouchAmount);
         return new ResponseEntity<>(trendlineService.calculate(entry), HttpStatus.OK);
     }
 
@@ -111,6 +112,4 @@ public class IndicatorsController {
         DMIEntry entry = new DMIEntry(symbol, period, date, strongTrendThreshold, moderateTrendThreshold, diDiff);
         return new ResponseEntity<>(dmiService.calculate(entry), HttpStatus.OK);
     }
-
-
 }
