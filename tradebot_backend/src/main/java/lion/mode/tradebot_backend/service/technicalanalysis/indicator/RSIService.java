@@ -61,8 +61,7 @@ public class RSIService extends IndicatorService {
 
         // Check for bars
         if (series.getBarCount() < period + 1) {
-            result.getErrors().put("INSUFFICIENT_DATA", "Not enough data to calculate RSI");
-            return result;
+            throw new NotEnoughDataException("INSUFFICIENT DATA FOR " + symbol);
         }
 
         int targetIndex = seriesAmountValidator(symbol, series, date);
