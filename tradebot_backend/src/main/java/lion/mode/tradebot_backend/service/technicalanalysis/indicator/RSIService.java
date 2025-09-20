@@ -1,8 +1,9 @@
 package lion.mode.tradebot_backend.service.technicalanalysis.indicator;
 
-import lion.mode.tradebot_backend.dto.BaseIndicatorResponse;
-import lion.mode.tradebot_backend.dto.indicator.RSIEntry;
+import lion.mode.tradebot_backend.dto.base_responses.BaseIndicatorResponse;
+import lion.mode.tradebot_backend.dto.indicator_entry.RSIEntry;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
+import lion.mode.tradebot_backend.repository.BacktestRepository;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 
 import org.springframework.stereotype.Service;
@@ -18,8 +19,8 @@ import java.util.List;
 @Service
 public class RSIService extends IndicatorService {
 
-    public RSIService(StockDataRepository repository) {
-        super(repository);
+    public RSIService(StockDataRepository repository, BacktestRepository backtestRepository) {
+        super(repository, backtestRepository);
     }
 
     public BaseIndicatorResponse calculate(RSIEntry rsiEntry) {

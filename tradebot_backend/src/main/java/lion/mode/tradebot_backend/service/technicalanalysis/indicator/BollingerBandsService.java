@@ -1,8 +1,9 @@
 package lion.mode.tradebot_backend.service.technicalanalysis.indicator;
 
-import lion.mode.tradebot_backend.dto.BaseIndicatorResponse;
-import lion.mode.tradebot_backend.dto.indicator.BollingerBandsEntry;
+import lion.mode.tradebot_backend.dto.base_responses.BaseIndicatorResponse;
+import lion.mode.tradebot_backend.dto.indicator_entry.BollingerBandsEntry;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
+import lion.mode.tradebot_backend.repository.BacktestRepository;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 
 import org.springframework.stereotype.Service;
@@ -20,8 +21,8 @@ import java.time.*;
 @Service
 public class BollingerBandsService extends IndicatorService {
 
-    public BollingerBandsService(StockDataRepository repository) {
-        super(repository);
+    public BollingerBandsService(StockDataRepository repository, BacktestRepository backtestRepository) {
+        super(repository, backtestRepository);
     }
 
     public BaseIndicatorResponse calculate(BollingerBandsEntry entry){

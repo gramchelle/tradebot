@@ -1,8 +1,9 @@
 package lion.mode.tradebot_backend.service.technicalanalysis.indicator;
 
-import lion.mode.tradebot_backend.dto.BaseIndicatorResponse;
-import lion.mode.tradebot_backend.dto.indicator.MACDEntry;
+import lion.mode.tradebot_backend.dto.base_responses.BaseIndicatorResponse;
+import lion.mode.tradebot_backend.dto.indicator_entry.MACDEntry;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
+import lion.mode.tradebot_backend.repository.BacktestRepository;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 
 import org.springframework.stereotype.Service;
@@ -14,16 +15,14 @@ import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.num.Num;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class MACDService extends IndicatorService {
 
-    public MACDService(StockDataRepository repository) {
-        super(repository);
+    public MACDService(StockDataRepository repository, BacktestRepository backtestRepository) {
+        super(repository, backtestRepository);
     }
 
     public BaseIndicatorResponse calculate(MACDEntry entry) {

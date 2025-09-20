@@ -1,13 +1,10 @@
-package lion.mode.tradebot_backend.dto.indicator;
+package lion.mode.tradebot_backend.dto.indicator_entry;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-
-import jakarta.persistence.criteria.CriteriaBuilder.In;
 
 @Data
 @AllArgsConstructor

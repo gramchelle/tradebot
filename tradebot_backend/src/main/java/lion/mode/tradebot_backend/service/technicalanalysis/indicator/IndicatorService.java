@@ -38,13 +38,8 @@ public abstract class IndicatorService {
 
 
         for (StockDataDaily data : dataList) {
-            // 1. LocalDateTime al
             LocalDateTime localEndTime = data.getTimestamp();
-
-            // 2. Zone ekleyip ZonedDateTime oluştur
             ZonedDateTime zonedEndTime = localEndTime.atZone(ZoneId.systemDefault());
-
-            // 3. Instant alın
             Instant endTimeInstant = zonedEndTime.toInstant();
 
             if (series.getBarCount() > 0) {
@@ -56,7 +51,7 @@ public abstract class IndicatorService {
 
             Bar bar = new BaseBar(
                     Duration.ofDays(1),
-                    endTimeInstant, // ✅ Instant
+                    endTimeInstant,
                     DecimalNum.valueOf(data.getOpen()),
                     DecimalNum.valueOf(data.getHigh()),
                     DecimalNum.valueOf(data.getLow()),
@@ -103,29 +98,6 @@ public abstract class IndicatorService {
         }
     }
 
-    protected Long calculatePositionSize(Long tradingCapital, Num entryPrice, int lookbackPeriod) {
-        // Using 1% of trading capital for each trade as an example
-        Num riskPerTrade = DecimalNum.valueOf(tradingCapital).multipliedBy(DecimalNum.valueOf(0.01));
-        return riskPerTrade.dividedBy(entryPrice).longValue();
-    }
-
-    protected Long calculateStopLossPrice(Num entryPrice, int atrPeriod, double atrMultiplier) {
-        // Example: Using ATR for stop-loss calculation
-        // This is a placeholder implementation; actual ATR calculation should be done using an ATR indicator
-        Num atrValue = entryPrice.multipliedBy(DecimalNum.valueOf(0.02)); // Assuming ATR is 2% of entry price
-        return entryPrice.minus(atrValue.multipliedBy(DecimalNum.valueOf(atrMultiplier))).longValue();
-    }
-
-    protected Long calculateTakeProfitPrice(Num entryPrice, double rewardRiskRatio, Long stopLossPrice) {
-        Num riskAmount = entryPrice.minus(DecimalNum.valueOf(stopLossPrice));
-        return entryPrice.plus(riskAmount.multipliedBy(DecimalNum.valueOf(rewardRiskRatio))).longValue();
-    }
-
-    protected Double calculateAccuracy(int successfulTrades, int totalTrades) {
-        if (totalTrades == 0) return 0.0;
-        return (double) successfulTrades / totalTrades;
-    }
-
     protected Double calculatePrecision(int truePositives, int falsePositives) { // hit rate
         if (truePositives + falsePositives == 0) return 0.0;
         return (double) truePositives / (truePositives + falsePositives);
@@ -150,17 +122,17 @@ public abstract class IndicatorService {
 
         switch (signal.toUpperCase()) {
             case "BUY":
-                if (priceWentUp) return "TP";      // Predicted up, actually went up
-                if (priceWentDown) return "FP";    // Predicted up, actually went down
-                return "NEUTRAL";                   // Price didn't move significantly
+                if (priceWentUp) return "TP";
+                if (priceWentDown) return "FP";
+                return "NEUTRAL";
 
             case "SELL":
-                if (priceWentDown) return "TN";    // Predicted down, actually went down
-                if (priceWentUp) return "FN";      // Predicted down, actually went up
-                return "NEUTRAL";                   // Price didn't move significantly
+                if (priceWentDown) return "TN";
+                if (priceWentUp) return "FN";
+                return "NEUTRAL";
 
             case "HOLD":
-                return "NEUTRAL";                   // Hold signals are neutral
+                return "NEUTRAL";
 
             default:
                 return "NEUTRAL";

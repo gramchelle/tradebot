@@ -1,7 +1,8 @@
 package lion.mode.tradebot_backend.service.technicalanalysis.indicator;
 
-import lion.mode.tradebot_backend.dto.BaseIndicatorResponse;
-import lion.mode.tradebot_backend.dto.indicator.TrendlineEntry;
+import lion.mode.tradebot_backend.dto.base_responses.BaseIndicatorResponse;
+import lion.mode.tradebot_backend.dto.indicator_entry.TrendlineEntry;
+import lion.mode.tradebot_backend.repository.BacktestRepository;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 
 import org.springframework.stereotype.Service;
@@ -12,8 +13,8 @@ import java.time.Instant;
 @Service
 public class TrendlineService extends IndicatorService {
 
-    public TrendlineService(StockDataRepository repository) {
-        super(repository);
+    public TrendlineService(StockDataRepository repository, BacktestRepository  backtestRepository) {
+        super(repository, backtestRepository);
     }
 
     public BaseIndicatorResponse calculate(TrendlineEntry entry) {

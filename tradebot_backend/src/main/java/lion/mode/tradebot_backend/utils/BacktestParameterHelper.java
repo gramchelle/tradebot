@@ -8,7 +8,6 @@ import java.util.Map;
 
 public class BacktestParameterHelper {
 
-    // Convert parameters map to JSON string for database storage
     public static String parametersToJson(Map<String, Object> parameters) {
         try {
             ObjectMapper mapper = new ObjectMapper();
@@ -18,7 +17,6 @@ public class BacktestParameterHelper {
         }
     }
 
-    // Convert JSON string back to parameters map
     public static Map<String, Object> parametersFromJson(String json) {
         try {
             ObjectMapper mapper = new ObjectMapper();
@@ -29,7 +27,6 @@ public class BacktestParameterHelper {
         }
     }
 
-    // Get specific parameter with type safety
     public static <T> T getParameter(Map<String, Object> parameters,
                                      String key, Class<T> type, T defaultValue) {
         Object value = parameters.get(key);
@@ -39,7 +36,6 @@ public class BacktestParameterHelper {
         return defaultValue;
     }
 
-    // Validate required parameters for different indicators
     public static boolean validateParameters(String indicator, Map<String, Object> parameters) {
         switch (indicator.toUpperCase()) {
             case "RSI":
@@ -65,7 +61,7 @@ public class BacktestParameterHelper {
                         parameters.containsKey("dPeriod");
 
             default:
-                return true; // Allow unknown indicators
+                return true;
         }
     }
 }

@@ -1,7 +1,6 @@
-package lion.mode.tradebot_backend.controller;
+package lion.mode.tradebot_backend.controller.technicalanalysis;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -9,8 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lion.mode.tradebot_backend.dto.*;
-import lion.mode.tradebot_backend.dto.indicator.*;
+import lion.mode.tradebot_backend.dto.indicator_entry.*;
 import lion.mode.tradebot_backend.service.technicalanalysis.backtest.*;
 import lombok.RequiredArgsConstructor;
 
@@ -108,7 +106,7 @@ public class BacktestLogController {
             @RequestParam(defaultValue = "0.1") double stopLossThreshold) {
 
         BollingerBandsEntry entry = new BollingerBandsEntry(symbol, period, date, numberOfDeviations, source, squeezeConfidence);
-        boolean isSaved = bollingerBacktestService.saveIndicatorBacktest(entry, lookback, horizon, interval, takeProfitThreshold, stopLossThreshold, tradingAmount);
+        boolean isSaved = bollingerBacktestService.saveBollingerBandsIndicatorBacktestResults(entry, lookback, horizon, interval, takeProfitThreshold, stopLossThreshold, tradingAmount);
         if (isSaved) return new ResponseEntity<>("Bollinger Bands backtest parameters saved successfully.", HttpStatus.OK);
         else return new ResponseEntity<>("Failed to save Bollinger Bands backtest parameters.", HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -128,7 +126,7 @@ public class BacktestLogController {
             @RequestParam(defaultValue = "0.3") double takeProfitThreshold,
             @RequestParam(defaultValue = "0.1") double stopLossThreshold) {
         DMIEntry entry = new DMIEntry(symbol, period, date, strongTrendThreshold, moderateTrendThreshold, diDiff);
-        boolean isSaved = dmiBacktestService.saveIndicatorBacktest(entry, lookback, horizon, interval, takeProfitThreshold, stopLossThreshold, tradingAmount);
+        boolean isSaved = dmiBacktestService.saveDmiIndicatorBacktest(entry, lookback, "DMI", horizon, interval, takeProfitThreshold, stopLossThreshold, tradingAmount);
         if (isSaved) return new ResponseEntity<>("DMI backtest parameters saved successfully.", HttpStatus.OK);
         else return new ResponseEntity<>("Failed to save DMI backtest parameters.", HttpStatus.INTERNAL_SERVER_ERROR);
     }

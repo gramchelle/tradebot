@@ -6,15 +6,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import lion.mode.tradebot_backend.service.technicalanalysis.IndicatorService;
+import lion.mode.tradebot_backend.service.technicalanalysis.indicator.IndicatorService;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.num.Num;
 
 import lion.mode.tradebot_backend.dto.base_responses.BaseBacktestResponse;
 import lion.mode.tradebot_backend.dto.base_responses.BaseIndicatorResponse;
-import lion.mode.tradebot_backend.dto.indicator.BollingerBandsEntry;
-import lion.mode.tradebot_backend.dto.indicator.TrendlineEntry;
+import lion.mode.tradebot_backend.dto.indicator_entry.BollingerBandsEntry;
+import lion.mode.tradebot_backend.dto.indicator_entry.TrendlineEntry;
 import lion.mode.tradebot_backend.model.Backtest;
 import lion.mode.tradebot_backend.repository.BacktestRepository;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
@@ -22,20 +22,20 @@ import lion.mode.tradebot_backend.service.technicalanalysis.indicator.BollingerB
 import lion.mode.tradebot_backend.service.technicalanalysis.indicator.TrendlineService;
 
 @Service
-public class BollingerBandsBacktestService extends IndicatorService {
+public class BollingerBandsBacktestService extends AbstractBacktestService {
 
-    private final BollingerBandsService service;
+    private final BollingerBandsService bollingerBandsService;
     private final TrendlineService trendlineService;
 
-    public BollingerBandsBacktestService(StockDataRepository repository, BacktestRepository backtestRepository,
-                                        BollingerBandsService service, TrendlineService trendlineService) {
+    // Bollinger Bands
+
+    public BollingerBandsBacktestService(StockDataRepository repository, BacktestRepository backtestRepository, BollingerBandsService service, TrendlineService trendlineService) {
         super(repository, backtestRepository);
-        this.service = service;
+        this.bollingerBandsService = service;
         this.trendlineService = trendlineService;
     }
 
-    public BaseBacktestResponse runBacktest(BollingerBandsEntry entry, int lookback, int horizon, String timeInterval,
-                                            double takeProfit, double stopLoss, int tradeAmount) {
+    public BaseBacktestResponse runBollingerBandsBacktest(BollingerBandsEntry entry, int lookback, int horizon, String timeInterval, double takeProfit, double stopLoss, int tradeAmount) {
 
         String symbol = entry.getSymbol().toUpperCase();
         int period = entry.getPeriod();
@@ -96,7 +96,7 @@ public class BollingerBandsBacktestService extends IndicatorService {
             currentEntry.setSqueezeConfidence(squeezeConfidence);
             currentEntry.setSource(source);
 
-            BaseIndicatorResponse bbResponse = service.calculateWithSeries(currentEntry, series);
+            BaseIndicatorResponse bbResponse = bollingerBandsService.calculateWithSeries(currentEntry, series);
             if (bbResponse == null || bbResponse.getSignal() == null) continue;
 
             if (bbResponse.getBarsSinceSignal() != -1) barsSinceLastSignal = bbResponse.getBarsSinceSignal();
@@ -240,9 +240,8 @@ public class BollingerBandsBacktestService extends IndicatorService {
         return response;
     }
 
-    public boolean saveIndicatorBacktest(BollingerBandsEntry entry, int lookback, int horizon, String timeInterval,
-                                         double takeProfit, double stopLoss, int tradeAmount) {
-        BaseBacktestResponse response = runBacktest(entry, lookback, horizon, timeInterval, takeProfit, stopLoss, tradeAmount);
+    public boolean saveBollingerBandsIndicatorBacktestResults(BollingerBandsEntry entry, int lookback, int horizon, String timeInterval, double takeProfit, double stopLoss, int tradeAmount) {
+        BaseBacktestResponse response = runBollingerBandsBacktest(entry, lookback, horizon, timeInterval, takeProfit, stopLoss, tradeAmount);
         try {
             Backtest backtest = new Backtest();
             backtest.setSymbol(response.getSymbol());
@@ -277,4 +276,9 @@ public class BollingerBandsBacktestService extends IndicatorService {
         }
         return true;
     }
+
+    // DMI
+
+
+
 }

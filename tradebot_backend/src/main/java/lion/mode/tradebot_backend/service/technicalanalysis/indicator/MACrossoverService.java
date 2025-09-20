@@ -1,14 +1,13 @@
 package lion.mode.tradebot_backend.service.technicalanalysis.indicator;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 
+import lion.mode.tradebot_backend.repository.BacktestRepository;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
 
-import lion.mode.tradebot_backend.dto.BaseIndicatorResponse;
-import lion.mode.tradebot_backend.dto.indicator.MACrossoverEntry;
+import lion.mode.tradebot_backend.dto.base_responses.BaseIndicatorResponse;
+import lion.mode.tradebot_backend.dto.indicator_entry.MACrossoverEntry;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 
 import org.ta4j.core.Indicator;
@@ -18,10 +17,10 @@ import org.ta4j.core.indicators.averages.SMAIndicator;
 import org.ta4j.core.num.Num;
 
 @Service
-public class MACrossoverService extends IndicatorService{
+public class MACrossoverService extends IndicatorService {
 
-    public MACrossoverService(StockDataRepository repository) {
-        super(repository);
+    public MACrossoverService(StockDataRepository repository, BacktestRepository backtestRepository) {
+        super(repository, backtestRepository);
     }
 
     public BaseIndicatorResponse calculate(MACrossoverEntry entry) {

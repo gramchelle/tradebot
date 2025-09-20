@@ -6,7 +6,6 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "stock_data_intraday")
 @Data
 public class StockDataIntraday {
 

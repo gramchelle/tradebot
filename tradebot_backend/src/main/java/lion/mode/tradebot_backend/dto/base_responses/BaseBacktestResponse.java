@@ -1,9 +1,8 @@
-package lion.mode.tradebot_backend.dto;
+package lion.mode.tradebot_backend.dto.base_responses;
 
 import lombok.Data;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;

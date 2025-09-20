@@ -1,8 +1,9 @@
 package lion.mode.tradebot_backend.service.technicalanalysis.indicator;
 
-import lion.mode.tradebot_backend.dto.BaseIndicatorResponse;
-import lion.mode.tradebot_backend.dto.indicator.MFIEntry;
+import lion.mode.tradebot_backend.dto.base_responses.BaseIndicatorResponse;
+import lion.mode.tradebot_backend.dto.indicator_entry.MFIEntry;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
+import lion.mode.tradebot_backend.repository.BacktestRepository;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
 
 import org.springframework.stereotype.Service;
@@ -10,14 +11,12 @@ import org.ta4j.core.Bar;
 import org.ta4j.core.BarSeries;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 
 @Service
-public class MFIService extends IndicatorService{
+public class MFIService extends IndicatorService {
 
-    public MFIService(StockDataRepository repository) {
-        super(repository);
+    public MFIService(StockDataRepository repository,  BacktestRepository backtestRepository) {
+        super(repository, backtestRepository);
     }
 
     public BaseIndicatorResponse calculate(MFIEntry entry) {

@@ -1,5 +1,6 @@
-package lion.mode.tradebot_backend.dto;
+package lion.mode.tradebot_backend.dto.base_responses;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,37 +8,38 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TESTStrategyBacktestDto {
+public class N_StrategyBacktestDto {
 
     private String symbol;
     private String strategyName;
+    private int lookbackPeriod;
 
-    // Performans / Kar
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private String currentSignal;
+
     private double totalProfit;
     private double grossReturn;
     private double averageProfit;
     private double returnOverMaxDrawdown;
     private double rewardRiskRatio;
 
-    // Risk / Drawdown
     private double maximumDrawdown;
     private double averageDrawdown;
-    private double ulcerIndex;
 
-    // İşlem Bazlı
     private int numberOfTrades;
     private int numberOfPositions;
     private double averageHoldingPeriod;
     private double totalHoldingPeriod;
 
-    // Başarı Oranları
     private double winningPositionsRatio;
     private double losingPositionsRatio;
     private double winningTradesRatio;
 
-    // Özelleşmiş / Benchmark
     private double buyAndHoldReturn;
     private double versusBuyAndHold;
     private double cashFlow;
     private double profitLoss;
+
+    private double sharpeRatio;
+    private double sortinoRatio;
 }

@@ -6,15 +6,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import lion.mode.tradebot_backend.service.technicalanalysis.IndicatorService;
+import lion.mode.tradebot_backend.service.technicalanalysis.indicator.IndicatorService;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.num.Num;
 
 import lion.mode.tradebot_backend.dto.base_responses.BaseBacktestResponse;
 import lion.mode.tradebot_backend.dto.base_responses.BaseIndicatorResponse;
-import lion.mode.tradebot_backend.dto.indicator.DMIEntry;
-import lion.mode.tradebot_backend.dto.indicator.TrendlineEntry;
+import lion.mode.tradebot_backend.dto.indicator_entry.DMIEntry;
+import lion.mode.tradebot_backend.dto.indicator_entry.TrendlineEntry;
 import lion.mode.tradebot_backend.model.Backtest;
 import lion.mode.tradebot_backend.repository.BacktestRepository;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
@@ -22,20 +22,19 @@ import lion.mode.tradebot_backend.service.technicalanalysis.indicator.DMIService
 import lion.mode.tradebot_backend.service.technicalanalysis.indicator.TrendlineService;
 
 @Service
-public class DMIBacktestService extends IndicatorService {
+public class DMIBacktestService extends AbstractBacktestService {
 
-    private final DMIService service;
+    private final DMIService dmiService;
     private final TrendlineService trendlineService;
 
     public DMIBacktestService(StockDataRepository repository, BacktestRepository backtestRepository,
                               DMIService service, TrendlineService trendlineService) {
         super(repository, backtestRepository);
-        this.service = service;
+        this.dmiService = service;
         this.trendlineService = trendlineService;
     }
 
-    public BaseBacktestResponse runBacktest(DMIEntry entry, int lookback, int horizon, String timeInterval,
-                                            double takeProfit, double stopLoss, int tradeAmount) {
+    public BaseBacktestResponse runDmiBacktest(DMIEntry entry, int lookback, int horizon, String timeInterval, double takeProfit, double stopLoss, int tradeAmount) {
 
         String symbol = entry.getSymbol().toUpperCase();
         int period = entry.getPeriod();
@@ -96,7 +95,7 @@ public class DMIBacktestService extends IndicatorService {
             currentEntry.setModerateTrendThreshold(moderateTrendThreshold);
             currentEntry.setSignificantDiDiff(significantDiDiff);
 
-            BaseIndicatorResponse dmiResponse = service.calculateWithSeries(currentEntry, series);
+            BaseIndicatorResponse dmiResponse = dmiService.calculateWithSeries(currentEntry, series);
             if (dmiResponse == null || dmiResponse.getSignal() == null) continue;
 
             if (dmiResponse.getBarsSinceSignal() != -1) barsSinceLastSignal = dmiResponse.getBarsSinceSignal();
@@ -241,13 +240,12 @@ public class DMIBacktestService extends IndicatorService {
         return response;
     }
 
-    public boolean saveIndicatorBacktest(DMIEntry entry, int lookback, int horizon, String timeInterval,
-                                          double takeProfit, double stopLoss, int tradeAmount) {
-        BaseBacktestResponse response = runBacktest(entry, lookback, horizon, timeInterval, takeProfit, stopLoss, tradeAmount);
+    public boolean saveDmiIndicatorBacktest(DMIEntry entry, int lookback, String indicatorName, int horizon, String timeInterval, double takeProfit, double stopLoss, int tradeAmount) {
+        BaseBacktestResponse response = runDmiBacktest(entry, lookback, horizon, timeInterval, takeProfit, stopLoss, tradeAmount);
         try {
             Backtest backtest = new Backtest();
             backtest.setSymbol(response.getSymbol());
-            backtest.setIndicator("DMI");
+            backtest.setIndicator(indicatorName);
             backtest.setSignal(response.getSignal());
             backtest.setScore(response.getScore());
             backtest.setTimeInterval(response.getTimeInterval());

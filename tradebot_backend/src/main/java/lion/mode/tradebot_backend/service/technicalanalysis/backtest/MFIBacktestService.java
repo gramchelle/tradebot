@@ -6,15 +6,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import lion.mode.tradebot_backend.service.technicalanalysis.IndicatorService;
+import lion.mode.tradebot_backend.service.technicalanalysis.indicator.IndicatorService;
+import org.apache.commons.math3.analysis.function.Abs;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.num.Num;
 
 import lion.mode.tradebot_backend.dto.base_responses.BaseBacktestResponse;
 import lion.mode.tradebot_backend.dto.base_responses.BaseIndicatorResponse;
-import lion.mode.tradebot_backend.dto.indicator.MFIEntry;
-import lion.mode.tradebot_backend.dto.indicator.TrendlineEntry;
+import lion.mode.tradebot_backend.dto.indicator_entry.MFIEntry;
+import lion.mode.tradebot_backend.dto.indicator_entry.TrendlineEntry;
 import lion.mode.tradebot_backend.model.Backtest;
 import lion.mode.tradebot_backend.repository.BacktestRepository;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
@@ -22,7 +23,7 @@ import lion.mode.tradebot_backend.service.technicalanalysis.indicator.MFIService
 import lion.mode.tradebot_backend.service.technicalanalysis.indicator.TrendlineService;
 
 @Service
-public class MFIBacktestService extends IndicatorService {
+public class MFIBacktestService extends AbstractBacktestService {
 
     private final MFIService service;
     private final TrendlineService trendlineService;

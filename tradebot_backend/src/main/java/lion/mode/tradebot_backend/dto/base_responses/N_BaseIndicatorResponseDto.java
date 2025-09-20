@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.dto;
+package lion.mode.tradebot_backend.dto.base_responses;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -12,15 +12,11 @@ import java.util.Map;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class NEW_BaseIndicatorResponseDto {
+public class N_BaseIndicatorResponseDto {
 
     private String symbol;
     private String indicator;
     private Instant date;
-
-//    private String signal;
-//    private double score;
-//    private int barsSinceSignal = -1;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Map<String, Double> values = new HashMap<>();
