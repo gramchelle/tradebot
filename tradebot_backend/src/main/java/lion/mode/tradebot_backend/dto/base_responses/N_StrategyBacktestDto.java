@@ -16,6 +16,9 @@ public class N_StrategyBacktestDto {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String currentSignal;
+    private double score;
+    private double lastDecisionValue;
+    private String lastDecisionValueDescriptor;
 
     private double totalProfit;
     private double grossReturn;

@@ -1,8 +1,10 @@
-package lion.mode.tradebot_backend.service.technicalanalysis.N_technicalanalysis;
+package lion.mode.tradebot_backend.service.N_technicalanalysis;
 
 import org.ta4j.core.*;
 import org.ta4j.core.indicators.MACDIndicator;
 import org.ta4j.core.indicators.RSIIndicator;
+import org.ta4j.core.indicators.RecentSwingHighIndicator;
+import org.ta4j.core.indicators.RecentSwingLowIndicator;
 import org.ta4j.core.indicators.adx.ADXIndicator;
 import org.ta4j.core.indicators.adx.MinusDIIndicator;
 import org.ta4j.core.indicators.adx.PlusDIIndicator;
@@ -10,6 +12,8 @@ import org.ta4j.core.indicators.averages.EMAIndicator;
 import org.ta4j.core.indicators.averages.SMAIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandFacade;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
+import org.ta4j.core.indicators.trend.DownTrendIndicator;
+import org.ta4j.core.indicators.trend.UpTrendIndicator;
 import org.ta4j.core.indicators.volume.MoneyFlowIndexIndicator;
 import org.ta4j.core.num.Num;
 import org.ta4j.core.rules.CrossedDownIndicatorRule;
@@ -149,5 +153,41 @@ public class RuleGeneratorFactory {
 
         return new BaseStrategy("Bollinger Bands Strategy", entryRule, exitRule);
     }
+
+    public static Strategy buildTrendlineBreakoutStrategy(BarSeries series, Indicator<Num> prices, Map<String, Object> params) {
+        RecentSwingHighIndicator swingHighIndicator = new RecentSwingHighIndicator(series, 7);
+        RecentSwingLowIndicator  swingLowIndicator  = new RecentSwingLowIndicator(series, 7);
+
+        Rule entryRule = new OverIndicatorRule(swingHighIndicator, prices);
+        Rule exitRule  = new UnderIndicatorRule(swingLowIndicator, prices);
+
+        return new BaseStrategy("Trendline Breakout Strategy", entryRule, exitRule);
+    }
+
+    ///  Build basic SMA Crossover Strategy
+    public static Strategy simpleSmaStrategy(BarSeries series, Indicator<Num> prices, Map<String, Object> params) {
+        int period = ((Number) params.getOrDefault("period", MA_CROSSOVER_DEFAULT_SHORT_PERIOD)).intValue();
+
+        SMAIndicator sma = new SMAIndicator(prices, period);
+
+        Rule entryRule = new CrossedUpIndicatorRule(sma, prices);
+        Rule exitRule  = new CrossedDownIndicatorRule(sma, prices);
+
+        return new BaseStrategy("SMA Strategy", entryRule, exitRule);
+    }
+
+    public static Strategy simpleEmaStrategy(BarSeries series, Indicator<Num> prices, Map<String, Object> params) {
+        int period = ((Number) params.getOrDefault("period", MA_CROSSOVER_DEFAULT_SHORT_PERIOD)).intValue();
+
+        EMAIndicator ema = new EMAIndicator(prices, period);
+
+        Rule entryRule = new CrossedUpIndicatorRule(ema, prices);
+        Rule exitRule  = new CrossedDownIndicatorRule(ema, prices);
+
+        return new BaseStrategy("EMA Strategy", entryRule, exitRule);
+    }
+
+    // Custom strategies
+    // TODO: Add more custom strategies as needed
 
 }

@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.service.technicalanalysis.N_technicalanalysis;
+package lion.mode.tradebot_backend.service.N_technicalanalysis;
 
 import lion.mode.tradebot_backend.dto.base_responses.N_BaseIndicatorResponseDto;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;

@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.service.technicalanalysis.N_technicalanalysis;
+package lion.mode.tradebot_backend.service.N_technicalanalysis;
 
 import lion.mode.tradebot_backend.dto.base_responses.N_StrategyBacktestDto;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
@@ -28,6 +28,13 @@ import java.util.Map;
 public class N_StrategyService {
 
     private final StockDataRepository repository;
+
+    // TODO: Save strategy templates to DB -> user can select from saved strategies
+    // TODO: Add custom strategy backtest endpoints
+    // TODO: Add grid search for optimal params
+    // TODO: Add walk-forward optimization
+    // TODO: Add Monte Carlo simulations
+    // TODO: Add caching for loaded series
 
     /// ----------------- Indicator-based Strategy Backtest Methods -----------------
 
@@ -141,6 +148,24 @@ public class N_StrategyService {
         return calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
     }
 
+    public N_StrategyBacktestDto runTrendlineBreakoutStrategyBacktest(String symbol, String source, int lookback){
+        symbol = symbol.toUpperCase();
+        BarSeries fullSeries = loadSeries(symbol);
+
+        BarSeries series = (lookback > 0) ? sliceSeriesByLookback(fullSeries, lookback) : fullSeries;
+
+        Indicator<Num> prices = sourceSelector(source, series);
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("lookback", lookback);
+
+        Strategy strategy = RuleGeneratorFactory.buildTrendlineBreakoutStrategy(series, prices, params);
+        BarSeriesManager seriesManager =  new BarSeriesManager(series);
+        TradingRecord tradingRecord = seriesManager.run(strategy);
+
+        return calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
+    }
+
     public N_StrategyBacktestDto runEmaCrossoverStrategyBacktest(String symbol, String source, int shortPeriod, int longPeriod, int lookback){
         symbol = symbol.toUpperCase();
         BarSeries fullSeries = loadSeries(symbol);
@@ -183,15 +208,143 @@ public class N_StrategyService {
         return calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
     }
 
+    public N_StrategyBacktestDto runSimpleSmaStrategyBacktest(String symbol, String source, int period, int lookback){
+        symbol = symbol.toUpperCase();
+        BarSeries fullSeries = loadSeries(symbol);
+
+        BarSeries series = (lookback > 0) ? sliceSeriesByLookback(fullSeries, lookback) : fullSeries;
+
+        if (series.getBarCount() < period + 1) throw new NotEnoughDataException("Not enough bars to calculate RSI for period " + period);
+
+        Indicator<Num> prices = sourceSelector(source, series);
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("period", period);
+
+        Strategy strategy = RuleGeneratorFactory.simpleSmaStrategy(series, prices, params);
+        BarSeriesManager seriesManager =  new BarSeriesManager(series);
+        TradingRecord tradingRecord = seriesManager.run(strategy);
+
+        return calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
+    }
+
+    public N_StrategyBacktestDto runSimpleEmaStrategyBacktest(String symbol, String source, int period, int lookback){
+        symbol = symbol.toUpperCase();
+        BarSeries fullSeries = loadSeries(symbol);
+
+        BarSeries series = (lookback > 0) ? sliceSeriesByLookback(fullSeries, lookback) : fullSeries;
+
+        if (series.getBarCount() < period + 1) throw new NotEnoughDataException("Not enough bars to calculate RSI for period " + period);
+
+        Indicator<Num> prices = sourceSelector(source, series);
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("period", period);
+
+        Strategy strategy = RuleGeneratorFactory.simpleEmaStrategy(series, prices, params);
+        BarSeriesManager seriesManager =  new BarSeriesManager(series);
+        TradingRecord tradingRecord = seriesManager.run(strategy);
+
+        return calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
+    }
+
+    /// ----------------- Custom Combined Strategies -----------------
+
+    public N_StrategyBacktestDto runRsiMacdStrategyBacktest(String symbol, String source, int rsiPeriod, int rsiUpper, int rsiLower, int macdShort, int macdLong, int macdSignal, int lookback) {
+        symbol = symbol.toUpperCase();
+        BarSeries fullSeries = loadSeries(symbol);
+        BarSeries series = (lookback > 0) ? sliceSeriesByLookback(fullSeries, lookback) : fullSeries;
+
+        Indicator<Num> prices = sourceSelector(source, series);
+
+        Map<String, Object> rsiParams = new HashMap<>();
+        rsiParams.put("period", rsiPeriod);
+        rsiParams.put("upperLimit", rsiUpper);
+        rsiParams.put("lowerLimit", rsiLower);
+        Strategy rsi = RuleGeneratorFactory.buildRsiStrategy(series, prices, rsiParams);
+
+        Map<String, Object> macdParams = new HashMap<>();
+        macdParams.put("period", macdShort);
+        macdParams.put("upperLimit", macdLong);
+        macdParams.put("lowerLimit", macdSignal);
+        Strategy macd = RuleGeneratorFactory.buildMacdStrategy(series, prices, macdParams);
+
+        Rule entry = rsi.getEntryRule().and(macd.getEntryRule());
+        Rule exit = rsi.getExitRule().or(macd.getExitRule());
+
+        Strategy combined = new BaseStrategy("RSI + MACD Strategy", entry, exit);
+        BarSeriesManager manager = new BarSeriesManager(series);
+        TradingRecord record = manager.run(combined);
+
+        return calculatePerformanceMetrics(symbol, combined, series, record, lookback);
+    }
+
+    public N_StrategyBacktestDto runRsiBollingerStrategyBacktest(String symbol, String source, int rsiPeriod, int rsiUpper, int rsiLower, int bbPeriod, double stdDev, String maType, int lookback) {
+        symbol = symbol.toUpperCase();
+        BarSeries fullSeries = loadSeries(symbol);
+        BarSeries series = (lookback > 0) ? sliceSeriesByLookback(fullSeries, lookback) : fullSeries;
+
+        Indicator<Num> prices = sourceSelector(source, series);
+
+        Map<String, Object> rsiParams = new HashMap<>();
+        rsiParams.put("period", rsiPeriod);
+        rsiParams.put("upperLimit", rsiUpper);
+        rsiParams.put("lowerLimit", rsiLower);
+        Strategy rsi = RuleGeneratorFactory.buildRsiStrategy(series, prices, rsiParams);
+
+        Map<String, Object> bbParams = new HashMap<>();
+        bbParams.put("period", bbPeriod);
+        bbParams.put("stdDev", stdDev);
+        bbParams.put("maType", maType);
+        Strategy bb = RuleGeneratorFactory.buildBollingerBandsStrategy(series, prices, bbParams);
+
+        Rule entry = rsi.getEntryRule().and(bb.getEntryRule());
+        Rule exit = rsi.getExitRule().or(bb.getExitRule());
+
+        Strategy combined = new BaseStrategy("RSI + Bollinger Strategy", entry, exit);
+        BarSeriesManager manager = new BarSeriesManager(series);
+        TradingRecord record = manager.run(combined);
+
+        return calculatePerformanceMetrics(symbol, combined, series, record, lookback);
+    }
+
+    public N_StrategyBacktestDto runDmiEmaStrategyBacktest(String symbol, String source, int dmiPeriod, int adxThreshold, int emaShort, int emaLong, int lookback) {
+        symbol = symbol.toUpperCase();
+        BarSeries fullSeries = loadSeries(symbol);
+        BarSeries series = (lookback > 0) ? sliceSeriesByLookback(fullSeries, lookback) : fullSeries;
+
+        Indicator<Num> prices = sourceSelector(source, series);
+
+        Map<String, Object> dmiParams = new HashMap<>();
+        dmiParams.put("period", dmiPeriod);
+        dmiParams.put("adxThreshold", adxThreshold);
+        Strategy dmi = RuleGeneratorFactory.buildDmiStrategy(series, prices, dmiParams);
+
+        Map<String, Object> emaParams = new HashMap<>();
+        emaParams.put("period", emaShort);
+        emaParams.put("upperLimit", emaLong);
+        Strategy ema = RuleGeneratorFactory.buildEMACrossoverStrategy(series, prices, emaParams);
+
+        Rule entry = dmi.getEntryRule().and(ema.getEntryRule());
+        Rule exit = dmi.getExitRule().or(ema.getExitRule());
+
+        Strategy combined = new BaseStrategy("DMI + EMA Strategy", entry, exit);
+        BarSeriesManager manager = new BarSeriesManager(series);
+        TradingRecord record = manager.run(combined);
+
+        return calculatePerformanceMetrics(symbol, combined, series, record, lookback);
+    }
+
     /// ----------------- Performance Metrics DTO Builder -----------------
 
     public N_StrategyBacktestDto calculatePerformanceMetrics(String symbol, Strategy strategy, BarSeries series, TradingRecord tradingRecord, int lookback) {
-
+        String signal = signalGenerator(strategy, series.getEndIndex());
         N_StrategyBacktestDto dto = new N_StrategyBacktestDto();
         dto.setSymbol(symbol != null ? symbol : "unknown");
         dto.setStrategyName(strategy != null ? strategy.getName() : "unknown");
         dto.setLookbackPeriod(lookback);
-        dto.setCurrentSignal(signalGenerator(strategy, series.getEndIndex()));
+        dto.setCurrentSignal(signal);
+        dto.setScore(scoreGenerator(signal));
 
         if (series == null || tradingRecord == null) return dto;
 
@@ -453,6 +606,9 @@ public class N_StrategyService {
         double sortino = downsideStd > 0 ? (mean / downsideStd) * ANNUAL_FACTOR : 0.0;
         dto.setSortinoRatio(sortino);
 
+        dto.setLastDecisionValue(lastDecisionValueGenerator(dto.getScore(), dto.getWinningPositionsRatio())); //TODO: Metric can be generic
+        dto.setLastDecisionValueDescriptor(lastDecisionValueDescriptor(dto.getLastDecisionValue()));
+
         return dto;
     }
 
@@ -543,6 +699,31 @@ public class N_StrategyService {
             return "SELL";
         }
         return "NEUTRAL";
+    }
+
+    private double scoreGenerator(String signal){
+        switch (signal) {
+            case "BUY":
+                return 1.0;
+            case "SELL":
+                return -1.0;
+            default:
+                return 0.0;
+        }
+    }
+
+    double lastDecisionValueGenerator(double score, double metric){
+        double normalizedMetric = Math.tanh(metric); // -1 ile 1 arasında sınırlar
+        System.out.println("Metric Value: " + metric + " Normalized Metric Value: " + normalizedMetric);
+        return score * normalizedMetric;
+    }
+
+    String lastDecisionValueDescriptor(double value){
+        if (value > 0.2) return "STRONG_BUY";
+        else if (value > 0.05) return "BUY";
+        else if (value > -0.05 && value < 0.05) return "HOLD";
+        else if (value < -0.05) return "SELL";
+        else return "WRONG_SIGNAL";
     }
 
     private BarSeries loadSeries(String symbol) {

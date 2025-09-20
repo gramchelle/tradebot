@@ -2,7 +2,7 @@ package lion.mode.tradebot_backend.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lion.mode.tradebot_backend.dto.base_responses.N_BaseIndicatorResponseDto;
-import lion.mode.tradebot_backend.service.technicalanalysis.N_technicalanalysis.N_IndicatorService;
+import lion.mode.tradebot_backend.service.N_technicalanalysis.N_IndicatorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
