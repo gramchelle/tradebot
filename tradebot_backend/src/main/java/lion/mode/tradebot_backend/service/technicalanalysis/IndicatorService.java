@@ -1,9 +1,9 @@
-package lion.mode.tradebot_backend.service.technicalanalysis.backtest;
+package lion.mode.tradebot_backend.service.technicalanalysis.indicator;
 
-import java.time.*;
-import java.util.List;
-
-import org.springframework.cglib.core.Local;
+import lion.mode.tradebot_backend.exception.NotEnoughDataException;
+import lion.mode.tradebot_backend.model.StockDataDaily;
+import lion.mode.tradebot_backend.repository.BacktestRepository;
+import lion.mode.tradebot_backend.repository.StockDataRepository;
 import org.ta4j.core.*;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.indicators.helpers.HighPriceIndicator;
@@ -12,18 +12,15 @@ import org.ta4j.core.indicators.helpers.OpenPriceIndicator;
 import org.ta4j.core.num.DecimalNum;
 import org.ta4j.core.num.Num;
 
-import lion.mode.tradebot_backend.dto.BaseBacktestResponse;
-import lion.mode.tradebot_backend.exception.NotEnoughDataException;
-import lion.mode.tradebot_backend.model.StockDataDaily;
-import lion.mode.tradebot_backend.repository.BacktestRepository;
-import lion.mode.tradebot_backend.repository.StockDataRepository;
+import java.time.*;
+import java.util.List;
 
-abstract class AbstractBacktestService {
+public abstract class IndicatorService {
 
     protected final StockDataRepository repository;
     protected final BacktestRepository backtestRepository;
 
-    protected AbstractBacktestService(StockDataRepository repository, BacktestRepository backtestRepository) {
+    protected IndicatorService(StockDataRepository repository, BacktestRepository backtestRepository) {
         this.repository = repository;
         this.backtestRepository = backtestRepository;
     }

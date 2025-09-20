@@ -1,12 +1,13 @@
 package lion.mode.tradebot_backend.service.technicalanalysis.backtest;
 
-import lion.mode.tradebot_backend.dto.BaseBacktestResponse;
-import lion.mode.tradebot_backend.dto.BaseIndicatorResponse;
+import lion.mode.tradebot_backend.dto.base_responses.BaseBacktestResponse;
+import lion.mode.tradebot_backend.dto.base_responses.BaseIndicatorResponse;
 import lion.mode.tradebot_backend.dto.indicator.RSIEntry;
 import lion.mode.tradebot_backend.dto.indicator.TrendlineEntry;
 import lion.mode.tradebot_backend.model.Backtest;
 import lion.mode.tradebot_backend.repository.BacktestRepository;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
+import lion.mode.tradebot_backend.service.technicalanalysis.IndicatorService;
 import lion.mode.tradebot_backend.service.technicalanalysis.indicator.RSIService;
 import lion.mode.tradebot_backend.service.technicalanalysis.indicator.TrendlineService;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,7 @@ import java.time.Instant;
 import java.util.*;
 
 @Service
-public class RSIBacktestService extends AbstractBacktestService {
+public class RSIBacktestService extends IndicatorService {
 
     private final RSIService service;
     private final TrendlineService trendlineService;

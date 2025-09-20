@@ -6,12 +6,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lion.mode.tradebot_backend.service.technicalanalysis.IndicatorService;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.BarSeries;
 import org.ta4j.core.num.Num;
 
-import lion.mode.tradebot_backend.dto.BaseBacktestResponse;
-import lion.mode.tradebot_backend.dto.BaseIndicatorResponse;
+import lion.mode.tradebot_backend.dto.base_responses.BaseBacktestResponse;
+import lion.mode.tradebot_backend.dto.base_responses.BaseIndicatorResponse;
 import lion.mode.tradebot_backend.dto.indicator.BollingerBandsEntry;
 import lion.mode.tradebot_backend.dto.indicator.TrendlineEntry;
 import lion.mode.tradebot_backend.model.Backtest;
@@ -21,7 +22,7 @@ import lion.mode.tradebot_backend.service.technicalanalysis.indicator.BollingerB
 import lion.mode.tradebot_backend.service.technicalanalysis.indicator.TrendlineService;
 
 @Service
-public class BollingerBandsBacktestService extends AbstractBacktestService {
+public class BollingerBandsBacktestService extends IndicatorService {
 
     private final BollingerBandsService service;
     private final TrendlineService trendlineService;
