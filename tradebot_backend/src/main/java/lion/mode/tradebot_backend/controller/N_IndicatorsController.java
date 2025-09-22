@@ -16,8 +16,8 @@ import java.time.Instant;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/test")
-@Tag(name = "TESTING")
+@RequestMapping("/indicator")
+@Tag(name = "Indicators", description = "Endpoints for calculating technical indicators")
 public class N_IndicatorsController {
 
     private final N_IndicatorService indicatorsService;

@@ -128,39 +128,4 @@ public class N_StrategyBacktestController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-    // TODO: Implement saving and running custom strategies
-    @PostMapping("/save-strategy")
-    public ResponseEntity<String> saveCustomStrategy(
-            @RequestParam String name,
-            @RequestParam String configJson,
-            @RequestParam String entryRules,
-            @RequestParam String exitRules
-    ){
-        try{
-            //strategyService.saveCustomStrategy(name, configJson, entryRules, exitRules);
-            return new ResponseEntity<>("Strategy saved successfully", HttpStatus.OK);
-        }catch (Exception e){
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    //TODO: Implement running custom strategies
-    @GetMapping("/run-custom")
-    public ResponseEntity<N_StrategyBacktestDto> runCustomStrategy(
-            @RequestParam String symbol,
-            @RequestParam String configJson,
-            @RequestParam String entryRules,
-            @RequestParam String exitRules,
-            @RequestParam(defaultValue = "252") int lookback,
-            @RequestParam(defaultValue = "close") String source
-    ){
-        try{
-            //N_StrategyBacktestDto result = strategyService.runCustomStrategyBacktest(symbol, configJson, entryRules, exitRules, source, lookback);
-            //return new ResponseEntity<>(result, HttpStatus.OK);
-            return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
-        }catch (Exception e){
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 }

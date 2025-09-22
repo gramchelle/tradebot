@@ -38,16 +38,16 @@ public class DecisionMatrixService {
         strategies.put("SMA_Crossover", () -> strategyService.runSmaCrossoverStrategyBacktest(symbol, source, 20, 50, lookback));
 
         // Moving average strategies with different periods
-        strategies.put("SMA10", () -> strategyService.runSimpleSmaStrategyBacktest(symbol, source, 10, lookback));
-        strategies.put("SMA20", () -> strategyService.runSimpleSmaStrategyBacktest(symbol, source, 20, lookback));
+        // strategies.put("SMA10", () -> strategyService.runSimpleSmaStrategyBacktest(symbol, source, 10, lookback));
+        // strategies.put("SMA20", () -> strategyService.runSimpleSmaStrategyBacktest(symbol, source, 20, lookback));
         strategies.put("SMA50", () -> strategyService.runSimpleSmaStrategyBacktest(symbol, source, 50, lookback));
-        strategies.put("SMA100", () -> strategyService.runSimpleSmaStrategyBacktest(symbol, source, 100, lookback));
-        strategies.put("SMA200", () -> strategyService.runSimpleSmaStrategyBacktest(symbol, source, 200, lookback));
-        strategies.put("EMA10", () -> strategyService.runSimpleEmaStrategyBacktest(symbol, source, 10, lookback));
-        strategies.put("EMA20", () -> strategyService.runSimpleEmaStrategyBacktest(symbol, source, 20, lookback));
+        // strategies.put("SMA100", () -> strategyService.runSimpleSmaStrategyBacktest(symbol, source, 100, lookback));
+        if (lookback >= 200) strategies.put("SMA200", () -> strategyService.runSimpleSmaStrategyBacktest(symbol, source, 200, lookback));
+        // strategies.put("EMA10", () -> strategyService.runSimpleEmaStrategyBacktest(symbol, source, 10, lookback));
+        // strategies.put("EMA20", () -> strategyService.runSimpleEmaStrategyBacktest(symbol, source, 20, lookback));
         strategies.put("EMA50", () -> strategyService.runSimpleEmaStrategyBacktest(symbol, source, 50, lookback));
-        strategies.put("EMA100", () -> strategyService.runSimpleEmaStrategyBacktest(symbol, source, 100, lookback));
-        strategies.put("EMA200", () -> strategyService.runSimpleEmaStrategyBacktest(symbol, source, 200, lookback));
+        // strategies.put("EMA100", () -> strategyService.runSimpleEmaStrategyBacktest(symbol, source, 100, lookback));
+        if (lookback >= 200) strategies.put("EMA200", () -> strategyService.runSimpleEmaStrategyBacktest(symbol, source, 200, lookback));
 
         for (Map.Entry<String, Supplier<N_StrategyBacktestDto>> entry : strategies.entrySet()) {
             N_StrategyBacktestDto result = entry.getValue().get();
@@ -57,11 +57,11 @@ public class DecisionMatrixService {
 
             decisionMatrixDto.getSignal().put(entry.getKey(), signalData);
         }
-        // Calculate overall decision
+
         double totalScore = 0.0;
         for (List<Object> signalData : decisionMatrixDto.getSignal().values()) {
             String signal = (String) signalData.get(0);
-            double metric = (double) signalData.get(1); // Winning trades ratio
+            double metric = (double) signalData.get(1);
 
             double score;
             switch (signal) {
@@ -81,7 +81,7 @@ public class DecisionMatrixService {
                     score = -1.0;
                     break;
                 default:
-                    score = 0.0; // Neutral for unrecognized signals
+                    score = 0.0;
             }
             totalScore += strategyService.lastDecisionValueGenerator(score, metric);
         }

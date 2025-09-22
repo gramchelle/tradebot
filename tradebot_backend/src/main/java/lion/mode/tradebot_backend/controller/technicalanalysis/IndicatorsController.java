@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 
-@RestController
-@RequestMapping("/technical-analysis")
+//@RestController
+//@RequestMapping("/technical-analysis")
 @RequiredArgsConstructor
-@Tag(name = "Technical Analysis Indicators")
+//@Tag(name = "Technical Analysis Indicators")
 public class IndicatorsController {
 
     private final RSIService rsiService;

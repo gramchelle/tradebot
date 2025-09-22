@@ -5,9 +5,12 @@ import lion.mode.tradebot_backend.service.N_technicalanalysis.DecisionMatrixServ
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
-@RequestMapping("/api/decision-matrix")
+@RequestMapping("/decision-matrix")
 @RequiredArgsConstructor
+@Tag(name = "Decision Matrix", description = "Endpoints for retrieving decision matrix data")
 public class DecisionMatrixController {
 
     private final DecisionMatrixService decisionMatrixService;

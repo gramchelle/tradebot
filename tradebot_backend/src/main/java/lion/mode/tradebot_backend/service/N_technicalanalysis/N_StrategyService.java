@@ -17,6 +17,11 @@ import org.ta4j.core.indicators.helpers.LowPriceIndicator;
 import org.ta4j.core.indicators.helpers.OpenPriceIndicator;
 import org.ta4j.core.num.DecimalNum;
 import org.ta4j.core.num.Num;
+import org.ta4j.core.reports.PerformanceReport;
+import org.ta4j.core.reports.PositionStatsReport;
+import org.ta4j.core.reports.TradingStatement;
+import org.ta4j.core.reports.TradingStatementGenerator;
+
 import java.time.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,6 +33,8 @@ import java.util.Map;
 public class N_StrategyService {
 
     private final StockDataRepository repository;
+    private TradingStatementGenerator generator = new TradingStatementGenerator();
+
 
     // TODO: Save strategy templates to DB -> user can select from saved strategies
     // TODO: Add custom strategy backtest endpoints
@@ -60,14 +67,13 @@ public class N_StrategyService {
         return calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
     }
 
-
     public N_StrategyBacktestDto runBollingerBandsStrategyBacktest(String symbol, String source, int period, int stdDevMultiplier, String basisMaType, int lookback){
         symbol = symbol.toUpperCase();
         BarSeries fullSeries = loadSeries(symbol);
 
         BarSeries series = (lookback > 0) ? sliceSeriesByLookback(fullSeries, lookback) : fullSeries;
 
-        if (series.getBarCount() < period + 1) throw new NotEnoughDataException("Not enough bars to calculate RSI for period " + period);
+        if (series.getBarCount() < period + 1) throw new NotEnoughDataException("Not enough bars to calculate Bollinger Bands for period " + period);
 
         Indicator<Num> prices = sourceSelector(source, series);
 
@@ -89,7 +95,7 @@ public class N_StrategyService {
 
         BarSeries series = (lookback > 0) ? sliceSeriesByLookback(fullSeries, lookback) : fullSeries;
 
-        if (series.getBarCount() < longPeriod + 1) throw new NotEnoughDataException("Not enough bars to calculate RSI for period " + longPeriod);
+        if (series.getBarCount() < longPeriod + 1) throw new NotEnoughDataException("Not enough bars to calculate MACD for period " + longPeriod);
 
         Indicator<Num> prices = sourceSelector(source, series);
 
@@ -111,7 +117,7 @@ public class N_StrategyService {
 
         BarSeries series = (lookback > 0) ? sliceSeriesByLookback(fullSeries, lookback) : fullSeries;
 
-        if (series.getBarCount() < period + 1) throw new NotEnoughDataException("Not enough bars to calculate RSI for period " + period);
+        if (series.getBarCount() < period + 1) throw new NotEnoughDataException("Not enough bars to calculate DMI for period " + period);
 
         Indicator<Num> prices = sourceSelector(source, series);
 
@@ -132,7 +138,7 @@ public class N_StrategyService {
 
         BarSeries series = (lookback > 0) ? sliceSeriesByLookback(fullSeries, lookback) : fullSeries;
 
-        if (series.getBarCount() < period + 1) throw new NotEnoughDataException("Not enough bars to calculate RSI for period " + period);
+        if (series.getBarCount() < period + 1) throw new NotEnoughDataException("Not enough bars to calculate MFI for period " + period);
 
         Indicator<Num> prices = sourceSelector(source, series);
 
@@ -172,7 +178,7 @@ public class N_StrategyService {
 
         BarSeries series = (lookback > 0) ? sliceSeriesByLookback(fullSeries, lookback) : fullSeries;
 
-        if (series.getBarCount() < longPeriod + 1) throw new NotEnoughDataException("Not enough bars to calculate RSI for period " + longPeriod);
+        if (series.getBarCount() < longPeriod + 1) throw new NotEnoughDataException("Not enough bars to calculate EMA Crossover for period " + longPeriod);
 
         Indicator<Num> prices = sourceSelector(source, series);
 
@@ -193,7 +199,7 @@ public class N_StrategyService {
 
         BarSeries series = (lookback > 0) ? sliceSeriesByLookback(fullSeries, lookback) : fullSeries;
 
-        if (series.getBarCount() < longPeriod + 1) throw new NotEnoughDataException("Not enough bars to calculate RSI for period " + longPeriod);
+        if (series.getBarCount() < longPeriod + 1) throw new NotEnoughDataException("Not enough bars to calculate SMA Crossover for period " + longPeriod);
 
         Indicator<Num> prices = sourceSelector(source, series);
 
@@ -214,7 +220,7 @@ public class N_StrategyService {
 
         BarSeries series = (lookback > 0) ? sliceSeriesByLookback(fullSeries, lookback) : fullSeries;
 
-        if (series.getBarCount() < period + 1) throw new NotEnoughDataException("Not enough bars to calculate RSI for period " + period);
+        if (series.getBarCount() < period + 1) throw new NotEnoughDataException("Not enough bars to calculate SMA for period " + period);
 
         Indicator<Num> prices = sourceSelector(source, series);
 
@@ -234,7 +240,7 @@ public class N_StrategyService {
 
         BarSeries series = (lookback > 0) ? sliceSeriesByLookback(fullSeries, lookback) : fullSeries;
 
-        if (series.getBarCount() < period + 1) throw new NotEnoughDataException("Not enough bars to calculate RSI for period " + period);
+        if (series.getBarCount() < period + 1) throw new NotEnoughDataException("Not enough bars to calculate EMA for period " + period);
 
         Indicator<Num> prices = sourceSelector(source, series);
 
@@ -606,7 +612,18 @@ public class N_StrategyService {
         double sortino = downsideStd > 0 ? (mean / downsideStd) * ANNUAL_FACTOR : 0.0;
         dto.setSortinoRatio(sortino);
 
-        dto.setLastDecisionValue(lastDecisionValueGenerator(dto.getScore(), dto.getWinningPositionsRatio())); //TODO: Metric can be generic
+        TradingStatement tradingStatement = generator.generate(strategy, tradingRecord, series);
+
+        dto.setTotalLoss(tradingStatement.getPerformanceReport().getTotalLoss().doubleValue());
+        dto.setTotalProfit(tradingStatement.getPerformanceReport().getTotalProfit().doubleValue());
+        dto.setTotalProfitLossRatio(tradingStatement.getPerformanceReport().getTotalProfitLoss().doubleValue());
+        dto.setTotalProfitLossRatioPercent(tradingStatement.getPerformanceReport().getTotalProfitLossPercentage().doubleValue());
+
+        dto.setBreakEvenCount(tradingStatement.getPositionStatsReport().getBreakEvenCount().doubleValue());
+        dto.setLossCount(tradingStatement.getPositionStatsReport().getLossCount().doubleValue());
+        dto.setProfitCount(tradingStatement.getPositionStatsReport().getProfitCount().doubleValue());
+
+        dto.setLastDecisionValue(lastDecisionValueGenerator(dto.getScore(), tradingStatement.getPerformanceReport().getTotalProfitLossPercentage().doubleValue())); //TODO: Metric can be generic
         dto.setLastDecisionValueDescriptor(lastDecisionValueDescriptor(dto.getLastDecisionValue()));
 
         return dto;
@@ -714,7 +731,8 @@ public class N_StrategyService {
 
     double lastDecisionValueGenerator(double score, double metric){
         double normalizedMetric = Math.tanh(metric); // -1 ile 1 arasında sınırlar
-        System.out.println("Metric Value: " + metric + " Normalized Metric Value: " + normalizedMetric);
+        //double normalizedMetric = metric / 100; 
+        //System.out.println("Metric Value: " + Math.round(metric) / 100.0 + "\t Normalized Metric Value: " + Math.round(normalizedMetric));
         return score * normalizedMetric;
     }
 

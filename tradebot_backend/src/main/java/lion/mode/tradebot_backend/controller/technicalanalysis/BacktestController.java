@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 
-@RestController
-@RequestMapping("/technical-analysis/backtests")
+//@RestController
+//@RequestMapping("/technical-analysis/backtests")
 @RequiredArgsConstructor
-@Tag(name = "Technical Analysis Backtests")
+//@Tag(name = "Technical Analysis Backtests")
 public class BacktestController {
 
     private final RSIBacktestService rsiBacktestService;

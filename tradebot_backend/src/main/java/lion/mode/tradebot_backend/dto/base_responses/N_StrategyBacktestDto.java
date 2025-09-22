@@ -21,11 +21,17 @@ public class N_StrategyBacktestDto {
     private String lastDecisionValueDescriptor;
 
     private double totalProfit;
+    private double totalLoss;
+    private double totalProfitLossRatio;
+    private double totalProfitLossRatioPercent;
     private double grossReturn;
     private double averageProfit;
+    private double breakEvenCount;
+    private double lossCount;
+    private double profitCount;
+
     private double returnOverMaxDrawdown;
     private double rewardRiskRatio;
-
     private double maximumDrawdown;
     private double averageDrawdown;
 

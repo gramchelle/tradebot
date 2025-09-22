@@ -12,9 +12,9 @@ import lion.mode.tradebot_backend.dto.indicator_entry.*;
 import lion.mode.tradebot_backend.service.technicalanalysis.backtest.*;
 import lombok.RequiredArgsConstructor;
 
-@RestController
-@RequestMapping("/technical-analysis/backtest-logs")
-@Tag(name = "Technical Analysis Backtest Logs")
+//@RestController
+//@RequestMapping("/technical-analysis/backtest-logs")
+//@Tag(name = "Technical Analysis Backtest Logs")
 @RequiredArgsConstructor
 public class BacktestLogController {
 
