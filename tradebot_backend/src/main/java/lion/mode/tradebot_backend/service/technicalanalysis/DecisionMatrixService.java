@@ -1,30 +1,23 @@
-package lion.mode.tradebot_backend.service.N_technicalanalysis;
+package lion.mode.tradebot_backend.service.technicalanalysis;
 
 import lion.mode.tradebot_backend.dto.base_responses.N_DecisionMatrixDto;
-import lion.mode.tradebot_backend.dto.base_responses.N_StrategyBacktestDto;
 import lombok.RequiredArgsConstructor;
-import ta4jexamples.strategies.MovingMomentumStrategy;
 
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Supplier;
 
 @Service
 @RequiredArgsConstructor
 public class DecisionMatrixService {
 
-    private final N_StrategyService strategyService;
+    private final StrategyService strategyService;
 
     public N_DecisionMatrixDto getDecisionMatrix(String symbol, String source, int lookback) {
         N_DecisionMatrixDto decisionMatrixDto = new N_DecisionMatrixDto();
         decisionMatrixDto.setSymbol(symbol);
         decisionMatrixDto.setDate(Instant.now());
-
+/*
         Map<String, Supplier<N_StrategyBacktestDto>> strategies = new HashMap<>();
         strategies.put("RSI", () -> strategyService.runRsiStrategyBacktest(symbol, source, 14, 70, 30, lookback));
         strategies.put("MACD", () -> strategyService.runMacdStrategyBacktest(symbol, source, 12, 26, 9, lookback));
@@ -98,7 +91,7 @@ public class DecisionMatrixService {
                 (int) decisionMatrixDto.getSignal().values().stream().filter(s -> "SELL".equals(s.get(0))).count());
 
         decisionMatrixDto.setSignalCounts(decisionMatrixDto.getSignalCounts());
-
+*/
         return decisionMatrixDto;
     }
 

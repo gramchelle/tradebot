@@ -1,7 +1,7 @@
 package lion.mode.tradebot_backend.controller;
 
 import lion.mode.tradebot_backend.dto.base_responses.N_DecisionMatrixDto;
-import lion.mode.tradebot_backend.service.N_technicalanalysis.DecisionMatrixService;
+import lion.mode.tradebot_backend.service.technicalanalysis.DecisionMatrixService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

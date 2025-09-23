@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.service.N_technicalanalysis;
+package lion.mode.tradebot_backend.service.technicalanalysis;
 
 import org.ta4j.core.*;
 import org.ta4j.core.indicators.MACDIndicator;
@@ -12,13 +12,15 @@ import org.ta4j.core.indicators.averages.EMAIndicator;
 import org.ta4j.core.indicators.averages.SMAIndicator;
 import org.ta4j.core.indicators.bollinger.BollingerBandFacade;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
-import org.ta4j.core.indicators.trend.DownTrendIndicator;
-import org.ta4j.core.indicators.trend.UpTrendIndicator;
 import org.ta4j.core.indicators.volume.MoneyFlowIndexIndicator;
+import org.ta4j.core.num.DecimalNum;
 import org.ta4j.core.num.Num;
 import org.ta4j.core.rules.CrossedDownIndicatorRule;
 import org.ta4j.core.rules.CrossedUpIndicatorRule;
 import org.ta4j.core.rules.OverIndicatorRule;
+import org.ta4j.core.rules.StopGainRule;
+import org.ta4j.core.rules.StopLossRule;
+import org.ta4j.core.rules.TrailingStopLossRule;
 import org.ta4j.core.rules.UnderIndicatorRule;
 
 import java.util.Map;
@@ -45,42 +47,59 @@ public class RuleGeneratorFactory {
     private static final double DEFAULT_STD_DEV_MULTIPLIER = 2.0;
     private static final String DEFAULT_BASIS_MA_TYPE = "SMA";
 
-    /*
-     * Basic Indicator-only strategies
-     */
+    private static final int DEFAULT_SURROUNDING_BARS = 5;
 
-    ///  RSI-only
+    public static final double DEFAULT_STOP_LOSS = 1.0;
+    public static final double DEFAULT_TAKE_PROFIT = 2.0;
+
+    /* Basic Indicator-only strategies */
+
     public static Strategy buildRsiStrategy(BarSeries series, Indicator<Num> prices, Map<String, Object> params) {
         int period = (int) params.getOrDefault("period", DEFAULT_PERIOD);
         int upperLimit = (int) params.getOrDefault("upperLimit", RSI_DEFAULT_UPPER);
         int lowerLimit = (int) params.getOrDefault("lowerLimit", RSI_DEFAULT_LOWER);
+        double stopLoss = (double) params.getOrDefault("stopLoss", DEFAULT_STOP_LOSS);
+        double takeProfit = (double) params.getOrDefault("takeProfit", DEFAULT_TAKE_PROFIT);
 
         RSIIndicator rsi = new RSIIndicator(prices, period);
 
         Rule entryRule = new UnderIndicatorRule(rsi, lowerLimit);
         Rule exitRule  = new OverIndicatorRule(rsi, upperLimit);
 
-        return new BaseStrategy("RSI Strategy", entryRule, exitRule);
+        exitRule = applyOptionalExitRules(series, exitRule, stopLoss, takeProfit);
+
+        BaseStrategy strategy = new BaseStrategy("RSI-Only Strategy", entryRule, exitRule);
+
+        strategy.setUnstableBars(period);
+
+        return strategy;
     }
 
-    ///  MFI-Only
     public static Strategy buildMfiStrategy(BarSeries series, Indicator<Num> prices, Map<String, Object> params) {
         int period = (int) params.getOrDefault("period", DEFAULT_PERIOD);
         int upperLimit = (int) params.getOrDefault("upperLimit", MFI_DEFAULT_UPPER);
         int lowerLimit = (int) params.getOrDefault("lowerLimit", MFI_DEFAULT_LOWER);
+        double stopLoss = (double) params.getOrDefault("stopLoss", DEFAULT_STOP_LOSS);
+        double takeProfit = (double) params.getOrDefault("takeProfit", DEFAULT_TAKE_PROFIT);
 
         MoneyFlowIndexIndicator mfi = new MoneyFlowIndexIndicator(series, period);
 
         Rule entryRule = new UnderIndicatorRule(mfi, lowerLimit);
         Rule exitRule  = new OverIndicatorRule(mfi, upperLimit);
 
-        return new BaseStrategy("MFI Strategy", entryRule, exitRule);
+        exitRule = applyOptionalExitRules(series, exitRule, stopLoss, takeProfit);
+
+        BaseStrategy strategy = new BaseStrategy("MFI-Only Strategy", entryRule, exitRule);
+        strategy.setUnstableBars(period);
+
+        return strategy;
     }
 
-    ///  Build basic SMA Crossover Strategy
     public static Strategy buildSMACrossoverStrategy(BarSeries series, Indicator<Num> prices, Map<String, Object> params) {
         int shortPeriod = ((Number) params.getOrDefault("period", MA_CROSSOVER_DEFAULT_SHORT_PERIOD)).intValue();
         int longPeriod = ((Number) params.getOrDefault("upperLimit", MA_CROSSOVER_DEFAULT_LONG_PERIOD)).intValue();
+        double stopLoss = ((Number) params.getOrDefault("stopLoss", DEFAULT_STOP_LOSS)).doubleValue();
+        double takeProfit = ((Number) params.getOrDefault("takeProfit", DEFAULT_TAKE_PROFIT)).doubleValue();
 
         SMAIndicator shortSma = new SMAIndicator(prices, shortPeriod);
         SMAIndicator longSma = new SMAIndicator(prices, longPeriod);
@@ -88,13 +107,19 @@ public class RuleGeneratorFactory {
         Rule entryRule = new CrossedUpIndicatorRule(shortSma, longSma);
         Rule exitRule  = new CrossedDownIndicatorRule(shortSma, longSma);
 
-        return new BaseStrategy("SMA Strategy", entryRule, exitRule);
+        exitRule = applyOptionalExitRules(series, exitRule, stopLoss, takeProfit);
+
+        BaseStrategy strategy = new BaseStrategy("SMA Crossover Strategy", entryRule, exitRule);
+        strategy.setUnstableBars(longPeriod);
+
+        return strategy;
     }
 
-    ///  Build basic EMA Crossover Strategy
     public static Strategy buildEMACrossoverStrategy(BarSeries series, Indicator<Num> prices, Map<String, Object> params) {
         int shortPeriod = ((Number) params.getOrDefault("period", MA_CROSSOVER_DEFAULT_SHORT_PERIOD)).intValue();
         int longPeriod = ((Number) params.getOrDefault("upperLimit", MA_CROSSOVER_DEFAULT_LONG_PERIOD)).intValue();
+        double stopLoss = ((Number) params.getOrDefault("stopLoss", DEFAULT_STOP_LOSS)).doubleValue();
+        double takeProfit = ((Number) params.getOrDefault("takeProfit", DEFAULT_TAKE_PROFIT)).doubleValue();
 
         EMAIndicator shortEma = new EMAIndicator(prices, shortPeriod);
         EMAIndicator longEma = new EMAIndicator(prices, longPeriod);
@@ -102,27 +127,39 @@ public class RuleGeneratorFactory {
         Rule entryRule = new CrossedUpIndicatorRule(shortEma, longEma);
         Rule exitRule  = new CrossedDownIndicatorRule(shortEma, longEma);
 
-        return new BaseStrategy("EMA Strategy", entryRule, exitRule);
+        exitRule = applyOptionalExitRules(series, exitRule, stopLoss, takeProfit);
+
+        BaseStrategy strategy = new BaseStrategy("EMA Crossover Strategy", entryRule, exitRule);
+        strategy.setUnstableBars(longPeriod);
+
+        return strategy;
     }
 
-    ///  Build basic MACD Strategy
     public static Strategy buildMacdStrategy(BarSeries series, Indicator<Num> prices, Map<String, Object> params) {
         int shortPeriod = ((Number) params.getOrDefault("period", MACD_DEFAULT_SHORT_PERIOD)).intValue();
         int longPeriod = ((Number) params.getOrDefault("upperLimit", MACD_DEFAULT_LONG_PERIOD)).intValue();
         int signalPeriod = ((Number) params.getOrDefault("lowerLimit", MACD_DEFAULT_SIGNAL_PERIOD)).intValue();
+        double stopLoss = ((Number) params.getOrDefault("stopLoss", DEFAULT_STOP_LOSS)).doubleValue();
+        double takeProfit = ((Number) params.getOrDefault("takeProfit", DEFAULT_TAKE_PROFIT)).doubleValue();
 
         MACDIndicator macdIndicator = new MACDIndicator(prices, shortPeriod, longPeriod);
 
         Rule entryRule = new CrossedUpIndicatorRule(macdIndicator, macdIndicator.getSignalLine(signalPeriod));
         Rule exitRule  = new CrossedDownIndicatorRule(macdIndicator, macdIndicator.getSignalLine(signalPeriod));
 
-        return new BaseStrategy("MACD Strategy", entryRule, exitRule);
+        exitRule = applyOptionalExitRules(series, exitRule, stopLoss, takeProfit);
+
+        BaseStrategy strategy = new BaseStrategy("MACD-Only Strategy", entryRule, exitRule);
+        strategy.setUnstableBars(longPeriod);
+
+        return strategy;
     }
 
-    /// DMI-only
     public static Strategy buildDmiStrategy(BarSeries series, Indicator<Num> prices, Map<String, Object> params) {
         int period = ((Number) params.getOrDefault("period", DEFAULT_PERIOD)).intValue();
         int adxThreshold = ((Number) params.getOrDefault("adxThreshold", DEFAULT_ADX_THRESHOLD)).intValue();
+        double stopLoss = ((Number) params.getOrDefault("stopLoss", DEFAULT_STOP_LOSS)).doubleValue();
+        double takeProfit = ((Number) params.getOrDefault("takeProfit", DEFAULT_TAKE_PROFIT)).doubleValue();
 
         PlusDIIndicator plusDi = new PlusDIIndicator(series, period);
         MinusDIIndicator minusDi = new MinusDIIndicator(series, period);
@@ -134,14 +171,20 @@ public class RuleGeneratorFactory {
         Rule exitRule  = new CrossedDownIndicatorRule(plusDi, minusDi)
                 .and(new UnderIndicatorRule(adx, adxThreshold));
 
-        return new BaseStrategy("DMI Strategy", entryRule, exitRule);
+        exitRule = applyOptionalExitRules(series, exitRule, stopLoss, takeProfit);
+
+        BaseStrategy strategy = new BaseStrategy("DMI-Only Strategy", entryRule, exitRule);
+        strategy.setUnstableBars(period);
+
+        return strategy;
     }
 
-    ///  Build basic Bollinger Bands Strategy
     public static Strategy buildBollingerBandsStrategy(BarSeries series, Indicator<Num> prices, Map<String, Object> params) {
         int period = ((Number) params.getOrDefault("period", BB_DEFAULT_PERIOD)).intValue();
         double stdDev = ((Number) params.getOrDefault("stdDev", DEFAULT_STD_DEV_MULTIPLIER)).doubleValue();
         String maType = params.getOrDefault("maType", DEFAULT_BASIS_MA_TYPE).toString();
+        double stopLoss = (double) params.getOrDefault("stopLoss", DEFAULT_STOP_LOSS);
+        double takeProfit = (double) params.getOrDefault("takeProfit", DEFAULT_TAKE_PROFIT);
 
         ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
         Indicator<Num> ma = maType.equalsIgnoreCase("EMA") ? new EMAIndicator(closePrice, period) : new SMAIndicator(closePrice, period);
@@ -151,43 +194,86 @@ public class RuleGeneratorFactory {
         Rule entryRule = new UnderIndicatorRule(prices, bollinger.lower());
         Rule exitRule  = new OverIndicatorRule(prices, bollinger.upper());
 
-        return new BaseStrategy("Bollinger Bands Strategy", entryRule, exitRule);
+        BaseStrategy strategy = new BaseStrategy("Bollinger Bands-Only Strategy", entryRule, exitRule);
+        strategy.setUnstableBars(period);
+
+        return strategy;
     }
 
     public static Strategy buildTrendlineBreakoutStrategy(BarSeries series, Indicator<Num> prices, Map<String, Object> params) {
-        RecentSwingHighIndicator swingHighIndicator = new RecentSwingHighIndicator(series, 7);
-        RecentSwingLowIndicator  swingLowIndicator  = new RecentSwingLowIndicator(series, 7);
+        int surroundingBars = ((Number) params.getOrDefault("surroundingBars", DEFAULT_SURROUNDING_BARS)).intValue();
+        double stopLoss = (double) params.getOrDefault("stopLoss", DEFAULT_STOP_LOSS);
+        double takeProfit = (double) params.getOrDefault("takeProfit", DEFAULT_TAKE_PROFIT);
+
+        RecentSwingHighIndicator swingHighIndicator = new RecentSwingHighIndicator(series, surroundingBars);
+        RecentSwingLowIndicator  swingLowIndicator  = new RecentSwingLowIndicator(series, surroundingBars);
 
         Rule entryRule = new OverIndicatorRule(swingHighIndicator, prices);
         Rule exitRule  = new UnderIndicatorRule(swingLowIndicator, prices);
 
-        return new BaseStrategy("Trendline Breakout Strategy", entryRule, exitRule);
+        exitRule = applyOptionalExitRules(series, exitRule, stopLoss, takeProfit);
+
+        BaseStrategy strategy = new BaseStrategy("Trendline Breakout Strategy", entryRule, exitRule);
+        strategy.setUnstableBars(surroundingBars);
+
+        return strategy;
     }
 
-    ///  Build basic SMA Crossover Strategy
     public static Strategy simpleSmaStrategy(BarSeries series, Indicator<Num> prices, Map<String, Object> params) {
         int period = ((Number) params.getOrDefault("period", MA_CROSSOVER_DEFAULT_SHORT_PERIOD)).intValue();
+        double stopLoss = ((Number) params.getOrDefault("stopLoss", DEFAULT_STOP_LOSS)).doubleValue();
+        double takeProfit = ((Number) params.getOrDefault("takeProfit", DEFAULT_TAKE_PROFIT)).doubleValue();   
 
         SMAIndicator sma = new SMAIndicator(prices, period);
 
         Rule entryRule = new CrossedUpIndicatorRule(sma, prices);
         Rule exitRule  = new CrossedDownIndicatorRule(sma, prices);
 
-        return new BaseStrategy("SMA Strategy", entryRule, exitRule);
+        exitRule = applyOptionalExitRules(series, exitRule, stopLoss, takeProfit);
+
+        BaseStrategy strategy = new BaseStrategy("SMA-Based Strategy", entryRule, exitRule);
+        strategy.setUnstableBars(period);
+
+        return strategy;
     }
 
     public static Strategy simpleEmaStrategy(BarSeries series, Indicator<Num> prices, Map<String, Object> params) {
         int period = ((Number) params.getOrDefault("period", MA_CROSSOVER_DEFAULT_SHORT_PERIOD)).intValue();
+        double stopLoss = ((Number) params.getOrDefault("stopLoss", DEFAULT_STOP_LOSS)).doubleValue();
+        double takeProfit = ((Number) params.getOrDefault("takeProfit", DEFAULT_TAKE_PROFIT)).doubleValue();
 
         EMAIndicator ema = new EMAIndicator(prices, period);
 
         Rule entryRule = new CrossedUpIndicatorRule(ema, prices);
         Rule exitRule  = new CrossedDownIndicatorRule(ema, prices);
 
-        return new BaseStrategy("EMA Strategy", entryRule, exitRule);
+        exitRule = applyOptionalExitRules(series, exitRule, stopLoss, takeProfit);
+
+        BaseStrategy strategy = new BaseStrategy("EMA-Based Strategy", entryRule, exitRule);
+        strategy.setUnstableBars(period);
+
+        return strategy;
     }
 
     // Custom strategies
-    // TODO: Add more custom strategies as needed
 
+
+    // Helper 
+
+    private static Rule applyOptionalExitRules(BarSeries series, Rule exitRule, double stopLoss, double takeProfit) {
+        ClosePriceIndicator closePrice = new ClosePriceIndicator(series);
+
+        if (stopLoss > 0) {
+            StopLossRule slRule = new StopLossRule(closePrice, DecimalNum.valueOf(stopLoss));
+            TrailingStopLossRule tslRule = new TrailingStopLossRule(closePrice, DecimalNum.valueOf(stopLoss));
+            exitRule = exitRule.or(slRule).or(tslRule);
+        }
+
+        if (takeProfit > 0) {
+            StopGainRule tpRule = new StopGainRule(closePrice, DecimalNum.valueOf(takeProfit));
+            exitRule = exitRule.or(tpRule);
+        }
+
+        return exitRule;
+    }
 }

@@ -2,7 +2,7 @@ package lion.mode.tradebot_backend.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lion.mode.tradebot_backend.dto.base_responses.N_BaseIndicatorResponseDto;
-import lion.mode.tradebot_backend.service.N_technicalanalysis.N_IndicatorService;
+import lion.mode.tradebot_backend.service.technicalanalysis.IndicatorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -18,9 +18,9 @@ import java.time.Instant;
 @RequiredArgsConstructor
 @RequestMapping("/indicator")
 @Tag(name = "Indicators", description = "Endpoints for calculating technical indicators")
-public class N_IndicatorsController {
+public class IndicatorsController {
 
-    private final N_IndicatorService indicatorsService;
+    private final IndicatorService indicatorsService;
 
     @GetMapping("/rsi")
     public ResponseEntity<N_BaseIndicatorResponseDto> getRsi(
