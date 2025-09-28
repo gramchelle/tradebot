@@ -1,26 +1,36 @@
 package lion.mode.tradebot_backend.controller;
 
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lion.mode.tradebot_backend.dto.base_responses.N_BacktestReport;
-import lion.mode.tradebot_backend.service.N_technicalanalysis.WalkForwardOptimization;
+import lion.mode.tradebot_backend.dto.technicalanalysis.request.WalkForwardRequestDto;
+import lion.mode.tradebot_backend.dto.technicalanalysis.request.WalkForwardRequestDto.IndicatorParam;
+import lion.mode.tradebot_backend.model.WalkForwardReport;
+import lion.mode.tradebot_backend.service.technicalanalysis.WalkForwardOptimizationService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/walkforward")
 @RequiredArgsConstructor
-@Tag(name = "WalkForwardController", description = "Endpoints for walk-forward optimization")
+@Tag(name = "WalkForwardController", description = "Endpoints for Walk-Forward Optimization")
 public class WalkForwardController {
 
-    private final WalkForwardOptimization walkForwardService;
+    private final WalkForwardOptimizationService walkForwardService;
 
-    @GetMapping("/custom-confluence")
-    public ResponseEntity<N_BacktestReport> runRsiWalkforwardOptimization(@RequestParam String symbol) {
-        return ResponseEntity.ok(walkForwardService.runCustomConfluenceStrategy(symbol));
+    @PostMapping("/detailed-run")
+    public ResponseEntity<List<WalkForwardReport>> runDetailedWalkforward(@RequestBody WalkForwardRequestDto dto) {
+        List<WalkForwardReport> reports = walkForwardService.runDetailedWalkForwardAnalysis(dto);
+        return ResponseEntity.ok(reports);
     }
+
+    @PostMapping("/run")
+    public ResponseEntity<WalkForwardReport> runWalkforward(@RequestBody WalkForwardRequestDto dto) {
+        WalkForwardReport report = walkForwardService.runWalkForwardAnalysis(dto);
+        return ResponseEntity.ok(report);
+    }
+    
 }

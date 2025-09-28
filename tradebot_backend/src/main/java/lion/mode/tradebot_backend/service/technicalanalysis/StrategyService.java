@@ -1,6 +1,8 @@
 package lion.mode.tradebot_backend.service.technicalanalysis;
 
-import lion.mode.tradebot_backend.dto.base_responses.N_StrategyBacktestDto;
+import lion.mode.tradebot_backend.dto.technicalanalysis.request.CustomStrategyInputDto;
+import lion.mode.tradebot_backend.dto.technicalanalysis.request.WalkForwardRequestDto.IndicatorParam;
+import lion.mode.tradebot_backend.dto.technicalanalysis.response.StrategyBacktestDto;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
 import lion.mode.tradebot_backend.model.Backtest;
 import lion.mode.tradebot_backend.model.StockDataDaily;
@@ -39,15 +41,9 @@ public class StrategyService {
     private TradingStatementGenerator generator = new TradingStatementGenerator();
     private Gson gson = new Gson();
 
-    // TODO: Save strategy templates to DB -> user can select from saved strategies
-    // TODO: Add custom strategy backtest endpoints
-    // TODO: Add walk-forward optimization
-    // TODO: Add Monte Carlo simulations
-    // TODO: Add caching for loaded series
-
     /// ----------------- Indicator-based Strategy Backtest Methods -----------------
 
-    public N_StrategyBacktestDto runRsiStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int period, int upperLimit, int lowerLimit, int lookback){
+    public StrategyBacktestDto runRsiStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int period, int upperLimit, int lowerLimit, int isTrailingStopLoss, int lookback){
         symbol = symbol.toUpperCase();
         if (stockDataRepository.findTopBySymbolOrderByTimestampDesc(symbol).isEmpty()) throw new NotEnoughDataException("No data found for symbol: " + symbol);
 
@@ -60,11 +56,12 @@ public class StrategyService {
         Indicator<Num> prices = sourceSelector(source, series);
 
         Map<String, Object> params = new HashMap<>();
-        params.put("period", period);
-        params.put("upperLimit", upperLimit);
-        params.put("lowerLimit", lowerLimit);
+        params.put("rsiPeriod", period);
+        params.put("rsiUpperLimit", upperLimit);
+        params.put("rsiLowerLimit", lowerLimit);
         params.put("stopLoss", stopLoss);
         params.put("takeProfit", takeProfit);
+        params.put("trailingStopLoss", isTrailingStopLoss);
         params.put("lookback", lookback);
 
         String gsonString = gson.toJson(params);
@@ -73,7 +70,7 @@ public class StrategyService {
         BarSeriesManager seriesManager =  new BarSeriesManager(series);
         TradingRecord tradingRecord = seriesManager.run(strategy);
 
-        N_StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
+        StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
         backtestDto.setParametersJson(gsonString);
 
         try {
@@ -85,7 +82,7 @@ public class StrategyService {
         return backtestDto;
     }
 
-    public N_StrategyBacktestDto runBollingerBandsStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int period, int stdDevMultiplier, String basisMaType, int lookback){
+    public StrategyBacktestDto runBollingerBandsStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int period, int stdDevMultiplier, String basisMaType, int isTrailingStopLoss, int lookback){
         symbol = symbol.toUpperCase();
         if (stockDataRepository.findTopBySymbolOrderByTimestampDesc(symbol).isEmpty()) throw new NotEnoughDataException("No data found for symbol: " + symbol);
 
@@ -98,18 +95,19 @@ public class StrategyService {
         Indicator<Num> prices = sourceSelector(source, series);
 
         Map<String, Object> params = new HashMap<>();
-        params.put("period", period);
-        params.put("stdDevMultiplier", stdDevMultiplier);
-        params.put("basisMaType", basisMaType);
+        params.put("bollingerPeriod", period);
+        params.put("bollingerStdDev", stdDevMultiplier);
+        params.put("bollingerMaType", basisMaType);
         params.put("stopLoss", stopLoss);
         params.put("takeProfit", takeProfit);
+        params.put("trailingStopLoss", isTrailingStopLoss);
         params.put("lookback", lookback);
 
         Strategy strategy = RuleGeneratorFactory.buildBollingerBandsStrategy(series, prices, params);
         BarSeriesManager seriesManager =  new BarSeriesManager(series);
         TradingRecord tradingRecord = seriesManager.run(strategy);
 
-        N_StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
+        StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
         String gsonString = gson.toJson(params);
         backtestDto.setParametersJson(gsonString);
 
@@ -122,7 +120,7 @@ public class StrategyService {
         return backtestDto;
     }
 
-    public N_StrategyBacktestDto runMacdStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int shortPeriod, int longPeriod, int signalPeriod, int lookback){
+    public StrategyBacktestDto runMacdStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int shortPeriod, int longPeriod, int signalPeriod, int isTrailingStopLoss, int lookback){
         symbol = symbol.toUpperCase();
         if (stockDataRepository.findTopBySymbolOrderByTimestampDesc(symbol).isEmpty()) throw new NotEnoughDataException("No data found for symbol: " + symbol);
         BarSeries fullSeries = loadSeries(symbol);
@@ -134,11 +132,12 @@ public class StrategyService {
         Indicator<Num> prices = sourceSelector(source, series);
 
         Map<String, Object> params = new HashMap<>();
-        params.put("shortPeriod", shortPeriod);
-        params.put("longPeriod", longPeriod);
-        params.put("signalPeriod", signalPeriod);
+        params.put("macdShortPeriod", shortPeriod);
+        params.put("macdLongPeriod", longPeriod);
+        params.put("macdSignalPeriod", signalPeriod);
         params.put("stopLoss", stopLoss);
         params.put("takeProfit", takeProfit);
+        params.put("trailingStopLoss", isTrailingStopLoss);
         params.put("lookback", lookback);
 
         String gsonString = gson.toJson(params);
@@ -147,7 +146,7 @@ public class StrategyService {
         BarSeriesManager seriesManager =  new BarSeriesManager(series);
         TradingRecord tradingRecord = seriesManager.run(strategy);
 
-        N_StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
+        StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
         backtestDto.setParametersJson(gsonString);
 
         try {
@@ -159,7 +158,7 @@ public class StrategyService {
         return backtestDto;
     }
 
-    public N_StrategyBacktestDto runDmiStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int period, int adxThreshold, int lookback){
+    public StrategyBacktestDto runDmiStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int period, int adxThreshold, int isTrailingStopLoss, int lookback){
         symbol = symbol.toUpperCase();
         if (stockDataRepository.findTopBySymbolOrderByTimestampDesc(symbol).isEmpty()) throw new NotEnoughDataException("No data found for symbol: " + symbol);
         BarSeries fullSeries = loadSeries(symbol);
@@ -171,10 +170,11 @@ public class StrategyService {
         Indicator<Num> prices = sourceSelector(source, series);
 
         Map<String, Object> params = new HashMap<>();
-        params.put("period", period);
-        params.put("adxThreshold", adxThreshold);
+        params.put("dmiPeriod", period);
+        params.put("dmiAdxThreshold", adxThreshold);
         params.put("stopLoss", stopLoss);
         params.put("takeProfit", takeProfit);
+        params.put("trailingStopLoss", isTrailingStopLoss);
         params.put("lookback", lookback);
 
         String gsonString = gson.toJson(params);
@@ -183,7 +183,7 @@ public class StrategyService {
         BarSeriesManager seriesManager =  new BarSeriesManager(series);
         TradingRecord tradingRecord = seriesManager.run(strategy);
 
-        N_StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
+        StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
         backtestDto.setParametersJson(gsonString);
 
         try {
@@ -195,7 +195,7 @@ public class StrategyService {
         return backtestDto;
     }
 
-    public N_StrategyBacktestDto runMfiStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int period, int upperLimit, int lowerLimit, int lookback){
+    public StrategyBacktestDto runMfiStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int period, int upperLimit, int lowerLimit, int isTrailingStopLoss, int lookback){
         symbol = symbol.toUpperCase();
         if (stockDataRepository.findTopBySymbolOrderByTimestampDesc(symbol).isEmpty()) throw new NotEnoughDataException("No data found for symbol: " + symbol);
 
@@ -208,11 +208,12 @@ public class StrategyService {
         Indicator<Num> prices = sourceSelector(source, series);
 
         Map<String, Object> params = new HashMap<>();
-        params.put("period", period);
-        params.put("upperLimit", upperLimit);
-        params.put("lowerLimit", lowerLimit);
+        params.put("mfiPeriod", period);
+        params.put("mfiUpperLimit", upperLimit);
+        params.put("mfiLowerLimit", lowerLimit);
         params.put("stopLoss", stopLoss);
         params.put("takeProfit", takeProfit);
+        params.put("trailingStopLoss", isTrailingStopLoss);
         params.put("lookback", lookback);
 
         String gsonString = gson.toJson(params);
@@ -221,7 +222,7 @@ public class StrategyService {
         BarSeriesManager seriesManager =  new BarSeriesManager(series);
         TradingRecord tradingRecord = seriesManager.run(strategy);
 
-        N_StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
+        StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
         backtestDto.setParametersJson(gsonString);
 
         try {
@@ -233,7 +234,7 @@ public class StrategyService {
         return backtestDto;
     }
 
-    public N_StrategyBacktestDto runTrendlineBreakoutStrategyBacktest(String symbol, String source, int surroundingBars, double stopLoss, double takeProfit, int lookback){
+    public StrategyBacktestDto runTrendlineBreakoutStrategyBacktest(String symbol, String source, int surroundingBars, double stopLoss, double takeProfit, int isTrailingStopLoss, int lookback){
         symbol = symbol.toUpperCase();
         if (stockDataRepository.findTopBySymbolOrderByTimestampDesc(symbol).isEmpty()) throw new NotEnoughDataException("No data found for symbol: " + symbol);
         BarSeries fullSeries = loadSeries(symbol);
@@ -243,9 +244,10 @@ public class StrategyService {
         Indicator<Num> prices = sourceSelector(source, series);
 
         Map<String, Object> params = new HashMap<>();
-        params.put("surroundingBars", surroundingBars);
+        params.put("trendlineSurroundingBars", surroundingBars);
         params.put("stopLoss", stopLoss);
         params.put("takeProfit", takeProfit);
+        params.put("trailingStopLoss", isTrailingStopLoss);
         params.put("lookback", lookback);
 
         String gsonString = gson.toJson(params);
@@ -254,7 +256,7 @@ public class StrategyService {
         BarSeriesManager seriesManager =  new BarSeriesManager(series);
         TradingRecord tradingRecord = seriesManager.run(strategy);
 
-        N_StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
+        StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
         backtestDto.setParametersJson(gsonString);
 
         try {
@@ -266,7 +268,7 @@ public class StrategyService {
         return backtestDto;
     }
 
-    public N_StrategyBacktestDto runEmaCrossoverStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int shortPeriod, int longPeriod, int lookback){
+    public StrategyBacktestDto runEmaCrossoverStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int shortPeriod, int longPeriod, int isTrailingStopLoss, int lookback){
         symbol = symbol.toUpperCase();
         if (stockDataRepository.findTopBySymbolOrderByTimestampDesc(symbol).isEmpty()) throw new NotEnoughDataException("No data found for symbol: " + symbol);
         BarSeries fullSeries = loadSeries(symbol);
@@ -278,10 +280,11 @@ public class StrategyService {
         Indicator<Num> prices = sourceSelector(source, series);
 
         Map<String, Object> params = new HashMap<>();
-        params.put("shortPeriod", shortPeriod);
-        params.put("longPeriod", longPeriod);
+        params.put("emaCrossoverShortPeriod", shortPeriod);
+        params.put("emaCrossoverLongPeriod", longPeriod);
         params.put("stopLoss", stopLoss);
         params.put("takeProfit", takeProfit);
+        params.put("trailingStopLoss", isTrailingStopLoss);
         params.put("lookback", lookback);
 
         String gsonString = gson.toJson(params);
@@ -290,7 +293,7 @@ public class StrategyService {
         BarSeriesManager seriesManager =  new BarSeriesManager(series);
         TradingRecord tradingRecord = seriesManager.run(strategy);
 
-        N_StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
+        StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
         backtestDto.setParametersJson(gsonString);
 
         try {
@@ -302,7 +305,7 @@ public class StrategyService {
         return backtestDto;
    }
 
-    public N_StrategyBacktestDto runSmaCrossoverStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int shortPeriod, int longPeriod, int lookback){
+    public StrategyBacktestDto runSmaCrossoverStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int shortPeriod, int longPeriod, int isTrailingStopLoss, int lookback){
         symbol = symbol.toUpperCase();
         if (stockDataRepository.findTopBySymbolOrderByTimestampDesc(symbol).isEmpty()) throw new NotEnoughDataException("No data found for symbol: " + symbol);
         BarSeries fullSeries = loadSeries(symbol);
@@ -314,17 +317,18 @@ public class StrategyService {
         Indicator<Num> prices = sourceSelector(source, series);
 
         Map<String, Object> params = new HashMap<>();
-        params.put("shortPeriod", shortPeriod);
-        params.put("longPeriod", longPeriod);
+        params.put("smaCrossoverShortPeriod", shortPeriod);
+        params.put("smaCrossoverLongPeriod", longPeriod);
         params.put("stopLoss", stopLoss);
         params.put("takeProfit", takeProfit);
+        params.put("trailingStopLoss", isTrailingStopLoss);
         params.put("lookback", lookback);
 
         Strategy strategy = RuleGeneratorFactory.buildSMACrossoverStrategy(series, prices, params);
         BarSeriesManager seriesManager =  new BarSeriesManager(series);
         TradingRecord tradingRecord = seriesManager.run(strategy);
 
-        N_StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
+        StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
         String gsonString = gson.toJson(params);
         backtestDto.setParametersJson(gsonString);
 
@@ -337,7 +341,7 @@ public class StrategyService {
         return backtestDto;
     }
 
-    public N_StrategyBacktestDto runSimpleSmaStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int period, int lookback){
+    public StrategyBacktestDto runSimpleSmaStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int period, int isTrailingStopLoss, int lookback){
         symbol = symbol.toUpperCase();
         if (stockDataRepository.findTopBySymbolOrderByTimestampDesc(symbol).isEmpty()) throw new NotEnoughDataException("No data found for symbol: " + symbol);
         BarSeries fullSeries = loadSeries(symbol);
@@ -349,9 +353,10 @@ public class StrategyService {
         Indicator<Num> prices = sourceSelector(source, series);
 
         Map<String, Object> params = new HashMap<>();
-        params.put("period", period);
+        params.put("smaPeriod", period);
         params.put("stopLoss", stopLoss);
         params.put("takeProfit", takeProfit);
+        params.put("trailingStopLoss", isTrailingStopLoss);
         params.put("lookback", lookback);
 
         String gsonString = gson.toJson(params);
@@ -360,7 +365,7 @@ public class StrategyService {
         BarSeriesManager seriesManager =  new BarSeriesManager(series);
         TradingRecord tradingRecord = seriesManager.run(strategy);
 
-        N_StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
+        StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
         backtestDto.setParametersJson(gsonString);
 
         try {
@@ -372,7 +377,7 @@ public class StrategyService {
         return backtestDto;
     }
 
-    public N_StrategyBacktestDto runSimpleEmaStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int period, int lookback){
+    public StrategyBacktestDto runSimpleEmaStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int period, int isTrailingStopLoss, int lookback){
         symbol = symbol.toUpperCase();
         if (stockDataRepository.findTopBySymbolOrderByTimestampDesc(symbol).isEmpty()) throw new NotEnoughDataException("No data found for symbol: " + symbol);
         BarSeries fullSeries = loadSeries(symbol);
@@ -384,9 +389,10 @@ public class StrategyService {
         Indicator<Num> prices = sourceSelector(source, series);
 
         Map<String, Object> params = new HashMap<>();
-        params.put("period", period);
+        params.put("emaPeriod", period);
         params.put("stopLoss", stopLoss);
         params.put("takeProfit", takeProfit);
+        params.put("trailingStopLoss", isTrailingStopLoss);
         params.put("lookback", lookback);
 
         String gsonString = gson.toJson(params);
@@ -395,7 +401,7 @@ public class StrategyService {
         BarSeriesManager seriesManager =  new BarSeriesManager(series);
         TradingRecord tradingRecord = seriesManager.run(strategy);
 
-        N_StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
+        StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
         backtestDto.setParametersJson(gsonString);
 
         try {
@@ -407,162 +413,50 @@ public class StrategyService {
         return backtestDto;
     }
 
-    /// ----------------- Custom Combined Strategies -----------------
+    // Custom Strategy Backtest Builder
 
-    public N_StrategyBacktestDto runRsiMacdStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int rsiPeriod, int rsiUpper, int rsiLower, int macdShort, int macdLong, int macdSignal, int lookback) {
-        symbol = symbol.toUpperCase();
+    public StrategyBacktestDto runCustomStrategyBacktest(CustomStrategyInputDto input){
+        String symbol = input.getSymbol().toUpperCase();
+        String strategyName = input.getStrategyName();
+        double stopLoss = input.getStopLoss();
+        double takeProfit = input.getTakeProfit();
+        int lookback = input.getLookback();
+        int isTrailingStopLoss = input.getIsTrailingStopLoss();
+
         if (stockDataRepository.findTopBySymbolOrderByTimestampDesc(symbol).isEmpty()) throw new NotEnoughDataException("No data found for symbol: " + symbol);
-        BarSeries fullSeries = loadSeries(symbol);
-        BarSeries series = (lookback > 0) ? sliceSeriesByLookback(fullSeries, lookback) : fullSeries;
 
-        Indicator<Num> prices = sourceSelector(source, series);
+        BarSeries series = loadSeries(symbol);
+        Indicator<Num> closePrice = sourceSelector(input.getSource(), series);
 
-        Map<String, Object> rsiParams = new HashMap<>();
-        rsiParams.put("period", rsiPeriod);
-        rsiParams.put("upperLimit", rsiUpper);
-        rsiParams.put("lowerLimit", rsiLower);
-        rsiParams.put("stopLoss", stopLoss);
-        rsiParams.put("takeProfit", takeProfit);
-        Strategy rsi = RuleGeneratorFactory.buildRsiStrategy(series, prices, rsiParams);
+        Map<String, Object> params = new HashMap<>();
+        params.put("stopLoss", stopLoss);
+        params.put("takeProfit", takeProfit);
+        params.put("trailingStopLoss", isTrailingStopLoss);
+        params.put("lookback", lookback);
 
-        String rsiParamsJson = gson.toJson(rsiParams);
-
-        Map<String, Object> macdParams = new HashMap<>();
-        macdParams.put("shortPeriod", macdShort);
-        macdParams.put("longPeriod", macdLong);
-        macdParams.put("signalPeriod", macdSignal);
-        macdParams.put("stopLoss", stopLoss);
-        macdParams.put("takeProfit", takeProfit);
-        Strategy macd = RuleGeneratorFactory.buildMacdStrategy(series, prices, macdParams);
-
-        String macdParamsJson = gson.toJson(macdParams);
-
-        Rule entry = rsi.getEntryRule().or(macd.getEntryRule());
-        Rule exit = rsi.getExitRule().or(macd.getExitRule());
-
-        Strategy combined = new BaseStrategy("RSI + MACD Strategy", entry, exit);
-        BarSeriesManager manager = new BarSeriesManager(series);
-        TradingRecord record = manager.run(combined);
-
-        N_StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, combined, series, record, lookback);
-        backtestDto.setParametersJson(rsiParamsJson + macdParamsJson);
-
-        try {
-            backtestRepository.save(backtestEntityBuilder(series, backtestDto));
-            System.out.println("Backtest report saved for " + symbol + " with strategy " + combined.getName());
-        } catch (Exception e) {
-            throw new RuntimeException("Error saving backtest report: " + e.getMessage());
+        for (IndicatorParam indicator : input.getIndicators()) {
+            String indicatorType = indicator.getType();
+            Object param = indicator.getParams();
+            params.put(indicatorType, param);
         }
+
+        String gsonString = gson.toJson(params);
+
+        Strategy strategy = WalkForwardOptimizationService.strategySelector(strategyName, series, closePrice, params);
+        BarSeriesManager seriesManager =  new BarSeriesManager(series);
+        TradingRecord tradingRecord = seriesManager.run(strategy);
+
+        StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, strategy, series, tradingRecord, lookback);
+        backtestDto.setParametersJson(gsonString);
+
         return backtestDto;
     }
 
-    public N_StrategyBacktestDto runRsiBollingerStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int rsiPeriod, int rsiUpper, int rsiLower, int bbPeriod, double stdDev, String maType, int lookback) {
-        symbol = symbol.toUpperCase();
-        if (stockDataRepository.findTopBySymbolOrderByTimestampDesc(symbol).isEmpty()) throw new NotEnoughDataException("No data found for symbol: " + symbol);
-        BarSeries fullSeries = loadSeries(symbol);
-        BarSeries series = (lookback > 0) ? sliceSeriesByLookback(fullSeries, lookback) : fullSeries;
-
-        Indicator<Num> prices = sourceSelector(source, series);
-
-        Map<String, Object> rsiParams = new HashMap<>();
-        rsiParams.put("indicator", "RSI");
-        rsiParams.put("period", rsiPeriod);
-        rsiParams.put("upperLimit", rsiUpper);
-        rsiParams.put("lowerLimit", rsiLower);
-        rsiParams.put("stopLoss", stopLoss);
-        rsiParams.put("takeProfit", takeProfit);
-        rsiParams.put("lookback", lookback);
-        Strategy rsi = RuleGeneratorFactory.buildRsiStrategy(series, prices, rsiParams);
-
-        String rsiParamsJson = gson.toJson(rsiParams);
-
-        Map<String, Object> bbParams = new HashMap<>();
-        bbParams.put("indicator", "BollingerBands");
-        bbParams.put("period", bbPeriod);
-        bbParams.put("stdDev", stdDev);
-        bbParams.put("maType", maType);
-        bbParams.put("stopLoss", stopLoss);
-        bbParams.put("takeProfit", takeProfit);
-        bbParams.put("lookback", lookback);
-        Strategy bb = RuleGeneratorFactory.buildBollingerBandsStrategy(series, prices, bbParams);
-
-        String bbParamsJson = gson.toJson(bbParams);
-
-        Rule entry = rsi.getEntryRule().or(bb.getEntryRule());
-        Rule exit = rsi.getExitRule().or(bb.getExitRule());
-
-        Strategy combined = new BaseStrategy("RSI + Bollinger Strategy", entry, exit);
-        BarSeriesManager manager = new BarSeriesManager(series);
-        TradingRecord record = manager.run(combined);
-
-        N_StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, combined, series, record, lookback);
-        backtestDto.setParametersJson(rsiParamsJson + bbParamsJson);
-
-        try {
-            backtestRepository.save(backtestEntityBuilder(series, backtestDto));
-            System.out.println("Backtest report saved for " + symbol + " with strategy " + combined.getName());
-        } catch (Exception e) {
-            throw new RuntimeException("Error saving backtest report: " + e.getMessage());
-        }
-        return backtestDto;
-    }
-
-    public N_StrategyBacktestDto runDmiEmaStrategyBacktest(String symbol, String source, double stopLoss, double takeProfit, int dmiPeriod, int adxThreshold, int emaShort, int emaLong, int lookback) {
-        symbol = symbol.toUpperCase();
-        if (stockDataRepository.findTopBySymbolOrderByTimestampDesc(symbol).isEmpty()) throw new NotEnoughDataException("No data found for symbol: " + symbol);
-        BarSeries fullSeries = loadSeries(symbol);
-        BarSeries series = (lookback > 0) ? sliceSeriesByLookback(fullSeries, lookback) : fullSeries;
-
-        Indicator<Num> prices = sourceSelector(source, series);
-
-        Map<String, Object> dmiParams = new HashMap<>();
-        dmiParams.put("indicator", "DMI");
-        dmiParams.put("period", dmiPeriod);
-        dmiParams.put("adxThreshold", adxThreshold);
-        dmiParams.put("stopLoss", stopLoss);
-        dmiParams.put("takeProfit", takeProfit);
-        dmiParams.put("lookback", lookback);
-        Strategy dmi = RuleGeneratorFactory.buildDmiStrategy(series, prices, dmiParams);
-
-        String dmiParamsJson = gson.toJson(dmiParams);
-
-        Map<String, Object> emaParams = new HashMap<>();
-        emaParams.put("indicator", "EMA");
-        emaParams.put("shortPeriod", emaShort);
-        emaParams.put("longPeriod", emaLong);
-        emaParams.put("upperLimit", emaLong);
-        emaParams.put("lowerLimit", 0);
-        emaParams.put("stopLoss", stopLoss);
-        emaParams.put("takeProfit", takeProfit);
-        emaParams.put("lookback", lookback);
-        Strategy ema = RuleGeneratorFactory.buildEMACrossoverStrategy(series, prices, emaParams);
-
-        String emaParamsJson = gson.toJson(emaParams);
-
-        Rule entry = dmi.getEntryRule().or(ema.getEntryRule());
-        Rule exit = dmi.getExitRule().or(ema.getExitRule());
-
-        Strategy combined = new BaseStrategy("DMI + EMA Strategy", entry, exit);
-        BarSeriesManager manager = new BarSeriesManager(series);
-        TradingRecord record = manager.run(combined);
-
-        N_StrategyBacktestDto backtestDto = calculatePerformanceMetrics(symbol, combined, series, record, lookback);
-        backtestDto.setParametersJson(dmiParamsJson + emaParamsJson);
-
-        try {
-            backtestRepository.save(backtestEntityBuilder(series, backtestDto));
-            System.out.println("Backtest report saved for " + symbol + " with strategy " + combined.getName());
-        } catch (Exception e) {
-            throw new RuntimeException("Error saving backtest report: " + e.getMessage());
-        }
-        return backtestDto;
-    }
-    
     /// ----------------- Performance Metrics DTO Builder -----------------
 
-    public N_StrategyBacktestDto calculatePerformanceMetrics(String symbol, Strategy strategy, BarSeries series, TradingRecord tradingRecord, int lookback) {
+    public StrategyBacktestDto calculatePerformanceMetrics(String symbol, Strategy strategy, BarSeries series, TradingRecord tradingRecord, int lookback) {
         String signal = signalGenerator(strategy, series.getEndIndex());
-        N_StrategyBacktestDto dto = new N_StrategyBacktestDto();
+        StrategyBacktestDto dto = new StrategyBacktestDto();
         dto.setSymbol(symbol != null ? symbol : "unknown");
         dto.setStrategyName(strategy != null ? strategy.getName() : "unknown");
         dto.setLookbackPeriod(lookback);
@@ -595,10 +489,8 @@ public class StrategyService {
         try {
             Num n = new ReturnOverMaxDrawdownCriterion().calculate(series, tradingRecord);
             double val = n != null ? n.doubleValue() : 0.0;
-            dto.setReturnOverMaxDrawdown(val);
             dto.setRewardRiskRatio(val);
         } catch (Exception ignored) {
-            dto.setReturnOverMaxDrawdown(0.0);
             dto.setRewardRiskRatio(0.0);
         }
 
@@ -833,20 +725,17 @@ public class StrategyService {
 
         dto.setTotalLoss(tradingStatement.getPerformanceReport().getTotalLoss().doubleValue());
         dto.setTotalProfit(tradingStatement.getPerformanceReport().getTotalProfit().doubleValue());
-        dto.setTotalProfitLossRatio(tradingStatement.getPerformanceReport().getTotalProfitLoss().doubleValue());
+        dto.setTotalProfitLoss(tradingStatement.getPerformanceReport().getTotalProfitLoss().doubleValue());
         dto.setTotalProfitLossRatioPercent(tradingStatement.getPerformanceReport().getTotalProfitLossPercentage().doubleValue());
 
         dto.setBreakEvenCount(tradingStatement.getPositionStatsReport().getBreakEvenCount().doubleValue());
-        dto.setLossCount(tradingStatement.getPositionStatsReport().getLossCount().doubleValue());
-        dto.setProfitCount(tradingStatement.getPositionStatsReport().getProfitCount().doubleValue());
-
         dto.setLastDecisionValue(lastDecisionValueGenerator(dto.getScore(), tradingStatement.getPerformanceReport().getTotalProfitLossPercentage().doubleValue())); //TODO: Metric can be generic
         dto.setLastDecisionValueDescriptor(lastDecisionValueDescriptor(dto.getLastDecisionValue()));
 
         return dto;
     }
 
-    public Backtest backtestEntityBuilder(BarSeries series, N_StrategyBacktestDto backtestDto){
+    public Backtest backtestEntityBuilder(BarSeries series, StrategyBacktestDto backtestDto){
         Backtest backtestReport = new Backtest();
         backtestReport.setSymbol(backtestDto.getSymbol());
         backtestReport.setStrategyName(backtestDto.getStrategyName());
@@ -859,7 +748,6 @@ public class StrategyService {
         backtestReport.setTotalProfit(backtestDto.getTotalProfit());
         backtestReport.setTotalLoss(backtestDto.getTotalLoss());
         backtestReport.setTotalProfitLossRatioPercent(backtestDto.getTotalProfitLossRatioPercent());
-        backtestReport.setReturnOverMaxDrawdown(backtestDto.getReturnOverMaxDrawdown());
         backtestReport.setRewardRiskRatio(backtestDto.getRewardRiskRatio());
         backtestReport.setSharpeRatio(backtestDto.getSharpeRatio());
         backtestReport.setSortinoRatio(backtestDto.getSortinoRatio());
@@ -956,7 +844,7 @@ public class StrategyService {
 
     /// ----------------- Data Manipulation Helper Methods -----------------
 
-    private String signalGenerator(Strategy strategy, int targetIndex) {
+    public String signalGenerator(Strategy strategy, int targetIndex) {
         if (strategy.shouldEnter(targetIndex)) {
             return "BUY";
         } else if (strategy.shouldExit(targetIndex)) {
@@ -965,7 +853,16 @@ public class StrategyService {
         return "NEUTRAL";
     }
 
-    private double scoreGenerator(String signal){
+    public String signalGeneratorByScore(double score){
+        if (score > 0.2 && score <= 1) return "STRONG_BUY";
+        else if (score > 0.05) return "BUY";
+        else if (score > -0.05 && score < 0.05) return "HOLD";
+        else if (score < -0.05) return "SELL";
+        else if (score < -0.2 && score >= -1) return "STRONG_SELL";
+        else return "WRONG_SIGNAL";
+    }
+
+    public double scoreGenerator(String signal){
         switch (signal) {
             case "BUY":
                 return 1.0;
@@ -978,16 +875,15 @@ public class StrategyService {
 
     double lastDecisionValueGenerator(double score, double metric){
         double normalizedMetric = Math.tanh(metric); // -1 ile 1 arasında sınırlar
-        //double normalizedMetric = metric / 100; 
-        //System.out.println("Metric Value: " + Math.round(metric) / 100.0 + "\t Normalized Metric Value: " + Math.round(normalizedMetric));
         return score * normalizedMetric;
     }
 
     String lastDecisionValueDescriptor(double value){
-        if (value > 0.2) return "STRONG_BUY";
+        if (value > 0.2 && value <= 1) return "STRONG_BUY";
         else if (value > 0.05) return "BUY";
         else if (value > -0.05 && value < 0.05) return "HOLD";
         else if (value < -0.05) return "SELL";
+        else if (value < -0.2 && value >= -1) return "STRONG_SELL";
         else return "WRONG_SIGNAL";
     }
 
@@ -1033,7 +929,7 @@ public class StrategyService {
         return series;
     }
 
-    private Indicator<Num> sourceSelector(String priceType, BarSeries series) {
+    public Indicator<Num> sourceSelector(String priceType, BarSeries series) {
         switch (priceType.toLowerCase()) {
             case "open":
                 return new OpenPriceIndicator(series);
@@ -1048,7 +944,7 @@ public class StrategyService {
         }
     }
 
-    private BarSeries sliceSeriesByLookback(BarSeries originalSeries, int lookbackBars) {
+    public BarSeries sliceSeriesByLookback(BarSeries originalSeries, int lookbackBars) {
         int total = originalSeries.getBarCount();
         if (lookbackBars >= total) {
             return originalSeries;
@@ -1062,4 +958,5 @@ public class StrategyService {
         }
         return sliced;
     }
+
 }

@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.dto.base_responses;
+package lion.mode.tradebot_backend.dto.technicalanalysis.response;
 
 import lombok.*;
 
@@ -10,7 +10,7 @@ import java.util.Map;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class N_DecisionMatrixDto {
+public class DecisionMatrixDto {
 
     private String symbol;
     private Instant date;

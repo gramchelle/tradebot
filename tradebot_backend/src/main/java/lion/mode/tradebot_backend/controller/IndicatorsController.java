@@ -1,7 +1,7 @@
 package lion.mode.tradebot_backend.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lion.mode.tradebot_backend.dto.base_responses.N_BaseIndicatorResponseDto;
+import lion.mode.tradebot_backend.dto.technicalanalysis.response.BaseIndicatorResponseDto;
 import lion.mode.tradebot_backend.service.technicalanalysis.IndicatorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -23,7 +23,7 @@ public class IndicatorsController {
     private final IndicatorService indicatorsService;
 
     @GetMapping("/rsi")
-    public ResponseEntity<N_BaseIndicatorResponseDto> getRsi(
+    public ResponseEntity<BaseIndicatorResponseDto> getRsi(
             @RequestParam String symbol,
             @RequestParam(defaultValue = "#{T(java.time.Instant).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Instant date,
             @RequestParam(defaultValue = "14") int period,
@@ -33,7 +33,7 @@ public class IndicatorsController {
     }
 
     @GetMapping("/bollinger-bands")
-    public ResponseEntity<N_BaseIndicatorResponseDto>  getBollingerBands(
+    public ResponseEntity<BaseIndicatorResponseDto>  getBollingerBands(
             @RequestParam String symbol,
             @RequestParam(defaultValue = "20") int period,
             @RequestParam(defaultValue = "SMA") String basisMAtype,
@@ -45,7 +45,7 @@ public class IndicatorsController {
     }
 
     @GetMapping("/macd")
-    public ResponseEntity<N_BaseIndicatorResponseDto> getMacd(
+    public ResponseEntity<BaseIndicatorResponseDto> getMacd(
             @RequestParam String symbol,
             @RequestParam(defaultValue = "12") int shortPeriod,
             @RequestParam(defaultValue = "26") int longPeriod,
@@ -56,7 +56,7 @@ public class IndicatorsController {
     }
 
     @GetMapping("/ma-crossover")
-    public ResponseEntity<N_BaseIndicatorResponseDto> getMaCrossover(
+    public ResponseEntity<BaseIndicatorResponseDto> getMaCrossover(
             @RequestParam String symbol,
             @RequestParam(defaultValue = "9") int shortPeriod,
             @RequestParam(defaultValue = "21") int longPeriod,
@@ -68,7 +68,7 @@ public class IndicatorsController {
 
 
     @GetMapping("/mfi")
-    public ResponseEntity<N_BaseIndicatorResponseDto> getMfi(
+    public ResponseEntity<BaseIndicatorResponseDto> getMfi(
             @RequestParam String symbol,
             @RequestParam(defaultValue = "14") int period,
             @RequestParam(defaultValue = "#{T(java.time.Instant).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Instant date){
@@ -76,7 +76,7 @@ public class IndicatorsController {
     }
 
     @GetMapping("/dmi")
-    public ResponseEntity<N_BaseIndicatorResponseDto> getDmi(
+    public ResponseEntity<BaseIndicatorResponseDto> getDmi(
             @RequestParam String symbol,
             @RequestParam(defaultValue = "14") int period,
             @RequestParam(defaultValue = "#{T(java.time.Instant).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Instant date,
@@ -85,7 +85,7 @@ public class IndicatorsController {
     }
 
     @GetMapping("/trend")
-    public ResponseEntity<N_BaseIndicatorResponseDto> getTrend(
+    public ResponseEntity<BaseIndicatorResponseDto> getTrend(
             @RequestParam String symbol,
             @RequestParam(defaultValue = "14") int period,
             @RequestParam(defaultValue = "#{T(java.time.Instant).now()}") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Instant date){

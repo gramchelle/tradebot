@@ -1,6 +1,6 @@
 package lion.mode.tradebot_backend.service.technicalanalysis;
 
-import lion.mode.tradebot_backend.dto.base_responses.N_BaseIndicatorResponseDto;
+import lion.mode.tradebot_backend.dto.technicalanalysis.response.BaseIndicatorResponseDto;
 import lion.mode.tradebot_backend.exception.NotEnoughDataException;
 import lion.mode.tradebot_backend.model.StockDataDaily;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
@@ -36,9 +36,9 @@ public class IndicatorService {
     private final StockDataRepository repository;
 
     /// Main Indicator Controller Functions
-    public N_BaseIndicatorResponseDto calculateRsi(String symbol, int period, Instant date, String source){
+    public BaseIndicatorResponseDto calculateRsi(String symbol, int period, Instant date, String source){
         symbol = symbol.toUpperCase();
-        N_BaseIndicatorResponseDto response = new N_BaseIndicatorResponseDto();
+        BaseIndicatorResponseDto response = new BaseIndicatorResponseDto();
         response.setSymbol(symbol);
         response.setIndicator("RSI");
 
@@ -54,9 +54,9 @@ public class IndicatorService {
         return response;
     }
 
-    public N_BaseIndicatorResponseDto calculateBollingerBands(String symbol, int period, String basisMAtype, double stdDev, Instant date, String source){
+    public BaseIndicatorResponseDto calculateBollingerBands(String symbol, int period, String basisMAtype, double stdDev, Instant date, String source){
         symbol = symbol.toUpperCase();
-        N_BaseIndicatorResponseDto response = new N_BaseIndicatorResponseDto();
+        BaseIndicatorResponseDto response = new BaseIndicatorResponseDto();
         response.setSymbol(symbol);
         response.setIndicator("Bollinger Bands");
 
@@ -91,9 +91,9 @@ public class IndicatorService {
         return response;
     }
 
-    public N_BaseIndicatorResponseDto calculateMACD(String symbol, int shortPeriod, int longPeriod, int signalPeriod, Instant date, String source){
+    public BaseIndicatorResponseDto calculateMACD(String symbol, int shortPeriod, int longPeriod, int signalPeriod, Instant date, String source){
         symbol = symbol.toUpperCase();
-        N_BaseIndicatorResponseDto response = new N_BaseIndicatorResponseDto();
+        BaseIndicatorResponseDto response = new BaseIndicatorResponseDto();
         response.setSymbol(symbol);
         response.setIndicator("MACD");
 
@@ -111,9 +111,9 @@ public class IndicatorService {
         return response;
     }
 
-    public N_BaseIndicatorResponseDto calculateMaCrossover(String symbol, int shortPeriod, int longPeriod, String basisMAtype, Instant date, String source){
+    public BaseIndicatorResponseDto calculateMaCrossover(String symbol, int shortPeriod, int longPeriod, String basisMAtype, Instant date, String source){
         symbol = symbol.toUpperCase();
-        N_BaseIndicatorResponseDto response = new N_BaseIndicatorResponseDto();
+        BaseIndicatorResponseDto response = new BaseIndicatorResponseDto();
         response.setSymbol(symbol);
         response.setIndicator("MACrossover");
 
@@ -141,9 +141,9 @@ public class IndicatorService {
         return response;
     }
 
-    public N_BaseIndicatorResponseDto calculateDmi(String symbol, int period, Instant date, String source){
+    public BaseIndicatorResponseDto calculateDmi(String symbol, int period, Instant date, String source){
         symbol = symbol.toUpperCase();
-        N_BaseIndicatorResponseDto response = new N_BaseIndicatorResponseDto();
+        BaseIndicatorResponseDto response = new BaseIndicatorResponseDto();
         response.setSymbol(symbol);
         response.setIndicator("DMI");
 
@@ -163,9 +163,9 @@ public class IndicatorService {
         return response;
     }
 
-    public N_BaseIndicatorResponseDto calculateMfi(String symbol, int period, Instant date){
+    public BaseIndicatorResponseDto calculateMfi(String symbol, int period, Instant date){
         symbol = symbol.toUpperCase();
-        N_BaseIndicatorResponseDto response = new N_BaseIndicatorResponseDto();
+        BaseIndicatorResponseDto response = new BaseIndicatorResponseDto();
         response.setSymbol(symbol);
         response.setIndicator("MFI");
 
@@ -179,9 +179,9 @@ public class IndicatorService {
         return response;
     }
 
-    public N_BaseIndicatorResponseDto calculateTrend(String symbol, int period, Instant date) {
+    public BaseIndicatorResponseDto calculateTrend(String symbol, int period, Instant date) {
         symbol = symbol.toUpperCase();
-        N_BaseIndicatorResponseDto response = new N_BaseIndicatorResponseDto();
+        BaseIndicatorResponseDto response = new BaseIndicatorResponseDto();
         response.setSymbol(symbol);
         response.setIndicator("Trend");
 

@@ -1,4 +1,4 @@
-package lion.mode.tradebot_backend.dto.base_responses;
+package lion.mode.tradebot_backend.dto.technicalanalysis.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -12,7 +12,7 @@ import java.util.Map;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class N_BaseIndicatorResponseDto {
+public class BaseIndicatorResponseDto {
 
     private String symbol;
     private String indicator;

@@ -21,7 +21,7 @@ public class Backtest {
 
     @JsonIgnore
     @Column(columnDefinition = "TEXT")
-    private String parametersJson; 
+    private String parametersJson; // indicator name eklenecek
 
     private String lastSignal;
     private double score;
