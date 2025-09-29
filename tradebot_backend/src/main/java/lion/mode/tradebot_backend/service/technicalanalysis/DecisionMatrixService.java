@@ -313,11 +313,18 @@ public class DecisionMatrixService {
         decisionMatrixDto.setSymbol(requestDto.getSymbol().toUpperCase());
 
         WalkForwardReport walkforwardReport = walkforwardService.runWalkForwardAnalysis(requestDto);
+
+        String strategyName = walkforwardReport.getStrategyName();
+        String parameters = gson.toJson(walkforwardReport.getParameters());
+        decisionMatrixDto.setStrategyName(strategyName);
+        decisionMatrixDto.setParameters(parameters);
         decisionMatrixDto.setDate(walkforwardReport.getEndDate());
+
         try{
             decisionMatrixDto.setConfidence(walkforwardReport.getConfidence());
-            decisionMatrixDto.setLastSignal(walkforwardReport.getLastSignal());
-            decisionMatrixDto.setScore(scoreGenerator(walkforwardReport.getLastSignal(), walkforwardReport.getTotalProfitLossRatioPercent()));
+            String signal = walkforwardReport.getLastSignal();
+            decisionMatrixDto.setScore(scoreGenerator(signal, walkforwardReport.getTotalProfitLossRatioPercent()));
+            decisionMatrixDto.setLastSignal(signalGeneratorByScore(decisionMatrixDto.getScore()));
             System.out.println("[DONE] Walkforward analysis completed successfully.");
             walkForwardReportRepository.save(walkforwardReport);
         } catch (Exception e){
@@ -350,10 +357,12 @@ public class DecisionMatrixService {
 
             responses.add(lastDecisionGenerator(fullRequestDto));
         }
+        
         System.gc();
         stopWatch.stop();
         System.out.println("Total time for processing all symbols: " + stopWatch.getTime() / 1000 + " s");
         stopWatch.reset();
+
         return responses;
     }
 
@@ -366,4 +375,13 @@ public class DecisionMatrixService {
         else score = 0;
         return Math.tanh(score) * (confidence / 100);
     }
+
+    private String signalGeneratorByScore(double score) {
+        if (score >= 0.5) return "STRONG_BUY";
+        else if (score > 0 && score < 0.5) return "BUY";
+        else if (score >= -0.1 && score <= 0.1) return "NEUTRAL";
+        else if (score >= -0.5 && score < 0) return "SELL";
+        else return "STRONG_SELL";
+    }
+
 }

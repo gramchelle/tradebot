@@ -16,11 +16,13 @@ import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.num.Num;
 import org.ta4j.core.reports.TradingStatement;
 import org.ta4j.core.reports.TradingStatementGenerator;
+import org.ta4j.core.rules.BooleanRule;
 
 import com.google.gson.Gson;
 
 import lion.mode.tradebot_backend.dto.technicalanalysis.request.WalkForwardRequestDto;
 import lion.mode.tradebot_backend.dto.technicalanalysis.request.WalkForwardRequestDto.IndicatorParam;
+import lion.mode.tradebot_backend.dto.technicalanalysis.response.MovingAveragesOverallResponse;
 import lion.mode.tradebot_backend.dto.technicalanalysis.response.StrategyBacktestDto;
 import lion.mode.tradebot_backend.model.WalkForwardReport;
 import lion.mode.tradebot_backend.repository.StockDataRepository;
@@ -342,4 +344,79 @@ public class WalkForwardOptimizationService {
             default: throw new IllegalArgumentException("Unknown strategy type: " + type);
         }
     }
+
+    /// HELPERS
+    
+    public MovingAveragesOverallResponse getMovingAverages(String symbol) {
+        BarSeries series = strategyService.loadSeries(symbol.toUpperCase());
+        if (series == null || series.isEmpty()) 
+            throw new IllegalStateException("No data for symbol: " + symbol);
+
+        MovingAveragesOverallResponse response = new MovingAveragesOverallResponse();
+
+        int[] periods = {10, 20, 30, 50, 100, 200};
+        boolean[] types = {false, true};
+
+        List<Rule> buyRules = new ArrayList<>();
+        List<Rule> sellRules = new ArrayList<>();
+        List<Rule> neutralRules = new ArrayList<>();
+
+        for (boolean isEma : types) {
+            for (int period : periods) {
+                var strategy = maStrategyGenerator(period, isEma, series);
+
+                Rule buyRule = new BooleanRule(strategy.shouldEnter(series.getEndIndex()));
+                Rule sellRule = new BooleanRule(strategy.shouldExit(series.getEndIndex()));
+
+                buyRules.add(buyRule);
+                sellRules.add(sellRule);
+            }
+        }
+
+        Rule combinedBuyRule = buyRules.stream().reduce(Rule::or).orElseThrow(() -> new IllegalStateException("No buy rules found"));
+        Rule combinedSellRule = sellRules.stream().reduce(Rule::or).orElseThrow(() -> new IllegalStateException("No sell rules found"));
+
+        String overallSignal;
+        int buySignals = combinedBuyRule.isSatisfied(series.getEndIndex()) ? 1 : 0;
+        int sellSignals = combinedSellRule.isSatisfied(series.getEndIndex()) ? 1 : 0;
+        int neutralSignals = (buySignals == 0 && sellSignals == 0) ? 1 : 0;
+
+        response.getSignals().put("Buy", buySignals);
+        response.getSignals().put("Sell", sellSignals);
+        response.getSignals().put("Neutral", neutralSignals);
+
+        overallSignal = (buySignals > sellSignals) ? "Buy" :
+                        (sellSignals > buySignals) ? "Sell" : "Neutral";
+
+
+        response.setOverallSignal(overallSignal);
+        for (boolean isEma : types) {
+            String prefix = isEma ? "EMA" : "SMA";
+            for (int period : periods) {
+                var strategy = maStrategyGenerator(period, isEma, series);
+                String signal = signalGenerator(strategy.shouldEnter(series.getEndIndex()), 
+                                                strategy.shouldExit(series.getEndIndex()));
+                response.getMovingAverages().put(prefix + period, signal);
+            }
+        }
+
+        return response;
+    }
+
+    private String signalGenerator(boolean shouldEnter, boolean shouldExit){
+        if (shouldEnter) return "Buy";
+        else if (shouldExit) return "Sell";
+        else return "Neutral";
+    }
+
+    private Strategy maStrategyGenerator(int period, boolean isEma, BarSeries series) {
+        Indicator<Num> closePrice = new ClosePriceIndicator(series);
+        Map<String, Object> params = new HashMap<>();
+        if (isEma) {
+            return RuleGeneratorFactory.buildFixedEmaStrategy(series, closePrice, period, params);
+        } else {
+            return RuleGeneratorFactory.buildFixedSmaStrategy(series, closePrice, period, params);
+        }
+    }
+
 }

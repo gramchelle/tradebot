@@ -4,9 +4,11 @@ import lion.mode.tradebot_backend.dto.technicalanalysis.request.WalkForwardReque
 import lion.mode.tradebot_backend.dto.technicalanalysis.request.WalkForwardRequestDtoNoSymbol;
 import lion.mode.tradebot_backend.dto.technicalanalysis.response.AllSymbolsBacktestResult;
 import lion.mode.tradebot_backend.dto.technicalanalysis.response.LastDecisionResponse;
+import lion.mode.tradebot_backend.dto.technicalanalysis.response.MovingAveragesOverallResponse;
 import lion.mode.tradebot_backend.dto.technicalanalysis.response.StrategyBacktestDto;
 import lion.mode.tradebot_backend.model.WalkForwardReport;
 import lion.mode.tradebot_backend.service.technicalanalysis.DecisionMatrixService;
+import lion.mode.tradebot_backend.service.technicalanalysis.WalkForwardOptimizationService;
 import lombok.RequiredArgsConstructor;
 
 import java.util.HashMap;
@@ -26,7 +28,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class DecisionMatrixController {
 
     private final DecisionMatrixService decisionMatrixService;
+    private final WalkForwardOptimizationService walkForwardOptimizationService;
 
+    @Deprecated
     @GetMapping("/all-indicators")
     public ResponseEntity<StrategyBacktestDto> backtestAllIndicators(
             @RequestParam String symbol,
@@ -67,6 +71,7 @@ public class DecisionMatrixController {
         return new ResponseEntity<>(decisionMatrixService.calculateDecisionMatrix(symbol, source, stopLoss, takeProfit, params, lookback),HttpStatus.OK);
     }
 
+    @Deprecated
     @GetMapping("/all-symbols-all-indicators")
     public ResponseEntity<List<AllSymbolsBacktestResult>> backtestAllIndicatorsAllSymbols(
             @RequestParam(defaultValue = "14") int rsiPeriod,
@@ -105,6 +110,7 @@ public class DecisionMatrixController {
         return new ResponseEntity<List<AllSymbolsBacktestResult>>(decisionMatrixService.runForAllSymbols(source, stopLoss, takeProfit, params, lookback),HttpStatus.OK);
     }
 
+    @Deprecated
     @GetMapping("/overall-technical-signal")
     public ResponseEntity<AllSymbolsBacktestResult> overallTechnicalSignal(
             @RequestParam String symbol,
@@ -143,6 +149,7 @@ public class DecisionMatrixController {
         return new ResponseEntity<>(decisionMatrixService.runOverallTechnicalSignal(symbol, source, stopLoss, takeProfit, params, lookback), HttpStatus.OK);
     }
 
+    @Deprecated
     @GetMapping("/technical-analysis/all-symbols")
     public ResponseEntity<List<AllSymbolsBacktestResult>> backtestAllIndicatorsAndMaAllSymbols(
             @RequestParam(defaultValue = "14") int rsiPeriod,
@@ -181,6 +188,8 @@ public class DecisionMatrixController {
         return new ResponseEntity<List<AllSymbolsBacktestResult>>(decisionMatrixService.runTechnicalAnalysisForAllSymbols(source, stopLoss, takeProfit, params, lookback),HttpStatus.OK);
     }
 
+    /// NEW Endpoints
+
     @PostMapping("/decision-by-symbol")
     public ResponseEntity<LastDecisionResponse> runWalkforwardPost(@RequestBody WalkForwardRequestDto dto) {
         System.out.println("\n[INFO] Decision Matrix analysis started...");
@@ -194,6 +203,14 @@ public class DecisionMatrixController {
         System.out.println("\n[INFO] Detailed Decision Matrix analysis started...");
         List<LastDecisionResponse> response = decisionMatrixService.lastDecisionResponseForAllSymbols(dto);
         System.out.println("[INFO] Detailed Decision Matrix analysis completed.");
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/ma-overall/{symbol}")
+    public ResponseEntity<MovingAveragesOverallResponse> overallMaSignal(@PathVariable String symbol) {
+        System.out.println("\n[INFO] Overall MA Signal analysis started...");
+        MovingAveragesOverallResponse response = walkForwardOptimizationService.getMovingAverages(symbol);
+        System.out.println("[INFO] Overall MA Signal analysis completed.");
         return ResponseEntity.ok(response);
     }
 }
