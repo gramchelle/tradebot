@@ -16,6 +16,8 @@ import java.util.List;
 @Tag(name = "Stock Data", description = "Get Endpoints for Stock Data")
 public class StockDataController {
 
+    /* Stock Data Details Endpoints */
+
     private final StockDataService stockDataService;
 
     @GetMapping("/stocks")
@@ -23,7 +25,7 @@ public class StockDataController {
         return stockDataService.getAllStockData();
     }
 
-    @GetMapping("/stock")
+    @GetMapping("/stock-by-symbol")
     public ResponseEntity<List<StockDataDaily>> getStockDataBySymbol(@RequestParam String symbol) {
         return new ResponseEntity<List<StockDataDaily>>(stockDataService.getStockDataBySymbol(symbol), HttpStatus.OK);
     }

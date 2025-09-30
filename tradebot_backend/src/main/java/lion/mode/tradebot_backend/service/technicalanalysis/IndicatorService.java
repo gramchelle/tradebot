@@ -149,7 +149,6 @@ public class IndicatorService {
 
         BarSeries series = loadSeries(symbol);
         int targetIndex = seriesAmountValidator(symbol, series, date);
-        Indicator<Num> prices = sourceSelector(source, series);
 
         PlusDIIndicator plusDIIndicator = new PlusDIIndicator(series, period);
         MinusDIIndicator minusDIIndicator = new MinusDIIndicator(series, period);
@@ -236,8 +235,6 @@ public class IndicatorService {
         response.getValues().put("slopeAtDate", slopePerBar);
         response.getValues().put("recentSwingHigh", swingHigh);
         response.getValues().put("recentSwingLow", swingLow);
-        response.getValues().put("nearestSupport", nearestSupport);
-        response.getValues().put("nearestResistance", nearestResistance);
 
         return response;
     }

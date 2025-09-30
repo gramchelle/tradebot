@@ -18,6 +18,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class WalkForwardReport {
 
+    /* Walk Forward Report Entity - Saves Latest Validation Results */
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonIgnore

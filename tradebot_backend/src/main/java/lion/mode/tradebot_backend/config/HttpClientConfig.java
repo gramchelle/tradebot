@@ -9,8 +9,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class HttpClientConfig {
 
-    // HttpClient thread-safe olduğu için tek bir instance’ı uygulama boyunca yeniden kullanabiliriz.
-    // Yani, her seferinde yeniden oluşturmak yerine, HttpClient bean'ini kullanıyoruz.
     @Bean
     public HttpClient httpClient(){
         return HttpClient.newBuilder()

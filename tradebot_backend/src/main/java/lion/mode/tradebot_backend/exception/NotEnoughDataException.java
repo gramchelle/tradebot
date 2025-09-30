@@ -5,5 +5,3 @@ public class NotEnoughDataException extends RuntimeException{
         super(message);
     }
 }
-
-// exception handling'de custom exception yazmak, hata loglarını okurken sysout çıktısından daha anlamlı sonuçlar verir

@@ -15,6 +15,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @AllArgsConstructor
 public class WalkForwardRequestDto {
 
+    /* Walk Forward Parameters */
+
     @Schema(description = "Stock symbol", example = "AAPL", required = true)
     private String symbol;
 
@@ -33,13 +35,14 @@ public class WalkForwardRequestDto {
     @JsonIgnore
     private int step = 1;
 
-    private List<IndicatorParam> indicators; // Kullanıcı seçtiği indikatörler
+    @Schema(description = "List of technical indicators with their parameters")
+    private List<IndicatorParam> indicators;
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class IndicatorParam {
-        @Schema(description = "Indicator type", example = "rsi and bollinger and ema_cross and sma_cross and macd and mfi and dmi and ema10 and ema50 and ema100 and sma10 and sma50 and sma100", required = true)
+        @Schema(description = "Indicator type", example = "rsi and trendline and bollinger and ema_cross and sma_cross and macd and mfi and dmi and ema10 and ema20 and ema30 and ema50 and ema100 and ema200 and sma10 and sma20 and sma30 and sma50 and sma100 and sma200", required = true)
         private String type;
 
         @Schema(description = "Parameters for the indicator", example = "{\"rsiPeriod\":14,\"bollingerPeriod\":20,\"bollingerStdDev\":2,\"takeProfit\":15.0,\"stopLoss\":3.0,\"trailingStopLoss\":1}", required = true)

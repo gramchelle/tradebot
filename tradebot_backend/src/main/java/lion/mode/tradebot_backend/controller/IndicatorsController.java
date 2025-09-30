@@ -22,6 +22,8 @@ public class IndicatorsController {
 
     private final IndicatorService indicatorsService;
 
+    /// Endpoints for technical indicator calculations
+
     @GetMapping("/rsi")
     public ResponseEntity<BaseIndicatorResponseDto> getRsi(
             @RequestParam String symbol,

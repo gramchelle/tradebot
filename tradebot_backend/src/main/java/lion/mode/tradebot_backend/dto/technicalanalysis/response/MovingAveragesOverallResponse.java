@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class MovingAveragesOverallResponse {
 
+    /* Moving averages and signals */
+    
     private Map<String, String> movingAverages = new HashMap<>();
     private Map<String, Integer> signals = new HashMap<>();
     private String overallSignal;

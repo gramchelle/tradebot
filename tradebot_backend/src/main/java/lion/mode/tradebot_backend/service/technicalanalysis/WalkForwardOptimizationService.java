@@ -3,32 +3,21 @@ package lion.mode.tradebot_backend.service.technicalanalysis;
 import java.time.Instant;
 import java.util.*;
 
-import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.stereotype.Service;
 import org.ta4j.core.*;
 import org.ta4j.core.backtest.BarSeriesManager;
-import org.ta4j.core.criteria.MaximumDrawdownCriterion;
-import org.ta4j.core.criteria.ReturnOverMaxDrawdownCriterion;
-import org.ta4j.core.criteria.pnl.AverageProfitCriterion;
-import org.ta4j.core.criteria.pnl.ProfitCriterion;
-import org.ta4j.core.criteria.pnl.ReturnCriterion;
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator;
 import org.ta4j.core.num.Num;
-import org.ta4j.core.reports.TradingStatement;
 import org.ta4j.core.reports.TradingStatementGenerator;
 import org.ta4j.core.rules.BooleanRule;
-
-import com.google.gson.Gson;
 
 import lion.mode.tradebot_backend.dto.technicalanalysis.request.WalkForwardRequestDto;
 import lion.mode.tradebot_backend.dto.technicalanalysis.request.WalkForwardRequestDto.IndicatorParam;
 import lion.mode.tradebot_backend.dto.technicalanalysis.response.MovingAveragesOverallResponse;
 import lion.mode.tradebot_backend.dto.technicalanalysis.response.StrategyBacktestDto;
 import lion.mode.tradebot_backend.model.WalkForwardReport;
-import lion.mode.tradebot_backend.repository.StockDataRepository;
 import lion.mode.tradebot_backend.repository.WalkForwardReportRepository;
 import lombok.RequiredArgsConstructor;
-import ta4jexamples.strategies.CCICorrectionStrategy;
 
 @Service
 @RequiredArgsConstructor
@@ -39,103 +28,20 @@ public class WalkForwardOptimizationService {
     private TradingStatementGenerator generator = new TradingStatementGenerator();
 
     public List<WalkForwardReport> runDetailedWalkForwardAnalysis(WalkForwardRequestDto request) {
-        String symbol = request.getSymbol().toUpperCase();
-        BarSeries fullSeries = strategyService.loadSeries(symbol);
-
-        if (fullSeries == null || fullSeries.isEmpty()) throw new IllegalStateException("No data for symbol: " + symbol);
-        WalkForwardReport valReport = null;
-        List<WalkForwardReport> reports = new ArrayList<>();
-
-        int optWindow = request.getOptimizationWindow();
-        int valWindow = request.getValidationWindow();
-        int rollStep = request.getRollStep();
-
-        double trainTotalPnL = 0.0, valTotalPnL = 0.0;
-        int trainTradeSignals = 0, valTradeSignals = 0;
-        double totalTrainPnLperTrade = 0.0;
-        double totalValPnLperTrade = 0.0;
-
-        System.out.println("\n[INFO] Starting walk-forward analysis for symbol: " + symbol);
-        // Walk-forward loop
-        for (int start = 0; start + optWindow + valWindow <= fullSeries.getBarCount(); start += rollStep) {
-            int trainStart = start;
-            int trainEnd = start + optWindow;
-            int valEnd = trainEnd + valWindow;
-
-            BarSeries trainSlice = slice(fullSeries, trainStart, trainEnd);
-            BarSeries valSlice = slice(fullSeries, trainEnd, valEnd);
-
-            double bestScore = Double.NEGATIVE_INFINITY;
-            Strategy bestTrainStrategy = null;
-            TradingRecord bestTrainRecord = null;
-            Map<String, Object> bestParams = null;
-
-            // Optimization (grid search)
-            for (IndicatorParam indicatorParam : request.getIndicators()) {
-                List<Map<String, Object>> paramCombos = generateParamCombinations(indicatorParam.getParams());
-
-                for (Map<String, Object> candidateParams : paramCombos) {
-                    Strategy candidate = strategySelector(
-                            indicatorParam.getType(),
-                            trainSlice,
-                            new ClosePriceIndicator(trainSlice),
-                            candidateParams
-                    );
-                    TradingRecord record = new BarSeriesManager(trainSlice).run(candidate);
-
-                    double score = generator.generate(candidate, record, trainSlice).getPerformanceReport().getTotalProfitLoss().doubleValue();
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestTrainStrategy = candidate;
-                        bestTrainRecord = record;
-                        bestParams = candidateParams;
-                    }
-                }
-            }
-
-            if (bestTrainStrategy == null) continue;
-
-            // Validation test
-            Strategy valStrategy = strategySelector(bestTrainStrategy.getName(), valSlice, new ClosePriceIndicator(valSlice), bestParams);
-            TradingRecord valRecord = new BarSeriesManager(valSlice).run(valStrategy);
-
-            WalkForwardReport trainReport = buildReport("TRAIN", trainSlice, bestTrainStrategy, bestTrainRecord, bestParams, optWindow, valWindow, request.getStep());
-            valReport = buildReport("VALIDATION", valSlice, valStrategy, valRecord, bestParams, optWindow, valWindow, request.getStep());
-            
-            trainTotalPnL += trainReport.getTotalProfit();
-            trainTradeSignals += trainReport.getNumberOfTrades();
-            valTotalPnL += valReport.getTotalProfit();
-            valTradeSignals += valReport.getNumberOfTrades();
-
-            reports.add(trainReport);
-            reports.add(valReport);
-            trainSlice = null;
-            valSlice = null;
-        }
-
-        try {
-            walkForwardReportRepository.save(valReport);
-            System.out.println("Walk-forward analysis completed for symbol: " + symbol);
-        } catch (Exception e) {
-            System.err.println("Error saving walk-forward report: " + e.getMessage());
-        }
-
-        totalTrainPnLperTrade = (trainTradeSignals != 0) ? (trainTotalPnL / trainTradeSignals) : 0.0;
-        totalValPnLperTrade = (valTradeSignals != 0) ? (valTotalPnL / valTradeSignals) : 0.0;
-        double confidence = (totalValPnLperTrade != 0) ? (totalTrainPnLperTrade / totalValPnLperTrade) * 100 : 0.0;
-        System.out.println("Confidence level: " + String.format("%.2f", confidence) + "% (Train PnL/Trade: " + String.format("%.4f", totalTrainPnLperTrade) + ", Val PnL/Trade: " + String.format("%.4f", totalValPnLperTrade) + ")");
-        valReport.setConfidence(confidence);
-        
-        return reports;
+        return coreWalkForward(request, true);
     }
 
     public WalkForwardReport runWalkForwardAnalysis(WalkForwardRequestDto request) {
+        List<WalkForwardReport> reports = coreWalkForward(request, false);
+        return reports.isEmpty() ? null : reports.get(0);
+    }
+
+    private List<WalkForwardReport> coreWalkForward(WalkForwardRequestDto request, boolean returnAllReports) {
         String symbol = request.getSymbol().toUpperCase();
         BarSeries fullSeries = strategyService.loadSeries(symbol);
 
-        if (fullSeries == null || fullSeries.isEmpty()) throw new IllegalStateException("No data for symbol: " + symbol);
-        WalkForwardReport valReport = null;
         List<WalkForwardReport> reports = new ArrayList<>();
+        WalkForwardReport valReport = null;
 
         int optWindow = request.getOptimizationWindow();
         int valWindow = request.getValidationWindow();
@@ -143,11 +49,9 @@ public class WalkForwardOptimizationService {
 
         double trainTotalPnL = 0.0, valTotalPnL = 0.0;
         int trainTradeSignals = 0, valTradeSignals = 0;
-        double totalTrainPnLperTrade = 0.0;
-        double totalValPnLperTrade = 0.0;
 
         System.out.println("\n[INFO] Starting walk-forward analysis for symbol: " + symbol);
-        // Walk-forward loop
+
         for (int start = 0; start + optWindow + valWindow <= fullSeries.getBarCount(); start += rollStep) {
             int trainStart = start;
             int trainEnd = start + optWindow;
@@ -161,10 +65,9 @@ public class WalkForwardOptimizationService {
             TradingRecord bestTrainRecord = null;
             Map<String, Object> bestParams = null;
 
-            // Optimization (grid search)
+            // Optimization
             for (IndicatorParam indicatorParam : request.getIndicators()) {
                 List<Map<String, Object>> paramCombos = generateParamCombinations(indicatorParam.getParams());
-
                 for (Map<String, Object> candidateParams : paramCombos) {
                     Strategy candidate = strategySelector(
                             indicatorParam.getType(),
@@ -173,8 +76,8 @@ public class WalkForwardOptimizationService {
                             candidateParams
                     );
                     TradingRecord record = new BarSeriesManager(trainSlice).run(candidate);
+                    double score = generator.generate(candidate, record, trainSlice).getPerformanceReport().getTotalProfitLoss().doubleValue();
 
-                    double score = generator.generate(candidate, record, fullSeries).getPerformanceReport().getTotalProfitLoss().doubleValue();
                     if (score > bestScore) {
                         bestScore = score;
                         bestTrainStrategy = candidate;
@@ -186,22 +89,33 @@ public class WalkForwardOptimizationService {
 
             if (bestTrainStrategy == null) continue;
 
-            // Validation test
+            // Validation
             Strategy valStrategy = strategySelector(bestTrainStrategy.getName(), valSlice, new ClosePriceIndicator(valSlice), bestParams);
             TradingRecord valRecord = new BarSeriesManager(valSlice).run(valStrategy);
 
-            WalkForwardReport trainReport = buildReport("TRAIN", trainSlice, bestTrainStrategy, bestTrainRecord, bestParams, optWindow, valWindow, request.getStep());
-            valReport = buildReport("VALIDATION", valSlice, valStrategy, valRecord, bestParams, optWindow, valWindow, request.getStep());
+            WalkForwardReport trainReport = buildReport("TRAIN", trainSlice, fullSeries, bestTrainStrategy, bestTrainRecord, bestParams, optWindow, valWindow, rollStep);
+            valReport = buildReport("VALIDATION", valSlice, fullSeries, valStrategy, valRecord, bestParams, optWindow, valWindow, rollStep);
 
             trainTotalPnL += trainReport.getTotalProfit();
             trainTradeSignals += trainReport.getNumberOfTrades();
             valTotalPnL += valReport.getTotalProfit();
             valTradeSignals += valReport.getNumberOfTrades();
 
-            reports.add(valReport);
+            if (returnAllReports) {
+                reports.add(trainReport);
+                reports.add(valReport);
+            }
+
             trainSlice = null;
             valSlice = null;
         }
+
+        // Confidence calculation
+        double totalTrainPnLperTrade = (trainTradeSignals != 0) ? (trainTotalPnL / trainTradeSignals) : 0.0;
+        double totalValPnLperTrade = (valTradeSignals != 0) ? (valTotalPnL / valTradeSignals) : 0.0;
+        double confidence = (totalValPnLperTrade != 0) ? (totalTrainPnLperTrade / totalValPnLperTrade) * 100 : 0.0;
+
+        if (valReport != null) valReport.setConfidence(confidence);
 
         try {
             walkForwardReportRepository.save(valReport);
@@ -210,15 +124,14 @@ public class WalkForwardOptimizationService {
             System.err.println("Error saving walk-forward report: " + e.getMessage());
         }
 
-        totalTrainPnLperTrade = (trainTradeSignals != 0) ? (trainTotalPnL / trainTradeSignals) : 0.0;
-        totalValPnLperTrade = (valTradeSignals != 0) ? (valTotalPnL / valTradeSignals) : 0.0;
-        double confidence = (totalValPnLperTrade != 0) ? (totalTrainPnLperTrade / totalValPnLperTrade) * 100 : 0.0;
-        System.out.println("Confidence level: " + String.format("%.2f", confidence) + "% (Train PnL/Trade: " + String.format("%.4f", totalTrainPnLperTrade) + ", Val PnL/Trade: " + String.format("%.4f", totalValPnLperTrade) + ")");
-        valReport.setConfidence(confidence);
-        
-        return valReport;
+        if (returnAllReports) {
+            return reports;
+        } else {
+            return valReport != null ? List.of(valReport) : List.of();
+        }
     }
 
+    // Generate all combinations of parameters for grid search
     private List<Map<String, Object>> generateParamCombinations(Map<String, Object> rawParams) {
         List<Map<String, Object>> results = new ArrayList<>();
         results.add(new HashMap<>());
@@ -252,7 +165,8 @@ public class WalkForwardOptimizationService {
         return results;
     }
 
-    private WalkForwardReport buildReport(String phase, BarSeries slice, Strategy strategy, TradingRecord record, Map<String, Object> params, int optWindow, int valWindow, int step) {
+    // Report builder for database storage
+    private WalkForwardReport buildReport(String phase, BarSeries slice, BarSeries fullSeries, Strategy strategy, TradingRecord record, Map<String, Object> params, int optWindow, int valWindow, int rollStep) {
         WalkForwardReport report = new WalkForwardReport();
         report.setStrategyName(strategy.getName() + " (" + phase + ")");
         report.setSymbol(slice.getName());
@@ -262,20 +176,23 @@ public class WalkForwardOptimizationService {
 
         report.setOptimizationWindow(optWindow);
         report.setValidationWindow(valWindow);
-        report.setStepSize(step);
+        report.setStepSize(rollStep);
 
         report.setParameters(params != null ? params.toString() : "{}");
 
         if (record != null) {
+
             report.setNumberOfTrades(record.getTrades().size());
             report.setNumberOfPositions(record.getPositions().size());
 
-            StrategyBacktestDto backtestDto = strategyService.calculatePerformanceMetrics(slice.getName(), strategy, slice, record, step);
+            StrategyBacktestDto backtestDto = strategyService.calculatePerformanceMetrics(slice.getName(), strategy, slice, record, rollStep);
             report.setTotalProfitLossRatio(backtestDto.getTotalProfitLoss());
             report.setTotalProfitLossRatioPercent(backtestDto.getTotalProfitLossRatioPercent());
-            report.setLastSignal(backtestDto.getCurrentSignal());
-            report.setLastSignalDate(slice.getLastBar().getEndTime());
-            report.setLastPrice(slice.getLastBar().getClosePrice().doubleValue());
+
+            report.setLastSignal(backtestDto.getLastDecisionValueDescriptor());
+            report.setLastSignalDate(fullSeries.getLastBar().getEndTime());
+            report.setLastPrice(fullSeries.getLastBar().getClosePrice().doubleValue());
+
             report.setTotalProfit(backtestDto.getTotalProfit());
             report.setGrossReturn(backtestDto.getGrossReturn());
             report.setAverageProfit(backtestDto.getAverageProfit());

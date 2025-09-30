@@ -14,6 +14,8 @@ import java.util.Map;
 @NoArgsConstructor
 public class BaseIndicatorResponseDto {
 
+    /// Base response dto for Indicator results
+    
     private String symbol;
     private String indicator;
     private Instant date;

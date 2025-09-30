@@ -14,6 +14,6 @@ public class SwaggerConfig {
                 .info(new Info()
                         .title("TradeBot API")
                         .version("1.0")
-                        .description("Spring Boot + Swagger + Springdoc demo"));
+                        .description("Spring Boot Trading Bot API Documentation"));
     }
 }

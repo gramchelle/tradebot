@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class LastDecisionResponse {
 
+    /* Decision matrix last decision response entity */
+    
     private String symbol;
     private Instant date;
     private double score;
