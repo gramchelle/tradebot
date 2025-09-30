@@ -4,8 +4,6 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-!**/src/main/java/lion/mode/tradebot_backend/service/resource.txt
-
 .apt_generated
 .classpath
 .factorypath
@@ -14,19 +12,15 @@ target/
 .springBeans
 .sts4-cache
 
-.idea
+.vscode/
+.idea/
 *.iws
 *.iml
 *.ipr
 
-.vscode/
-
 *.class
-
 *.log
-
 *.ctxt
-
 .mtj.tmp/
 
 *.jar
@@ -37,6 +31,7 @@ target/
 *.tar.gz
 *.rar
 
-# vm crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+*.properties
