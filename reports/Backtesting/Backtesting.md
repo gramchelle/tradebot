@@ -309,12 +309,12 @@ Kullanıcı, TradeBot bünyesinde bulunan stratejilerin başarısını ölçmek 
 
 TradeBot ta4j kütüphanesinin sağlamış olduğu backtesting sınıflarından yararlanarak stratejilerini ölçmektedir. Uygulama kapsamında tüm indikatörlerin varsayılan değerleri ile kaydedilmiş basit indikatör bazlı stratejiler bulunmaktadır. Özelleştirilmiş strateji eklemesi güncel aşamada manuel olarak yapılmaktadır. Plan, en optimize çalışan stratejiyi bularak gerçek hayat uygulamasına geçirmektir.
 
-### TradeBot'ta SMA50>SMA200 Stratejisinin Backtest Çıktıları
+### TradeBot'ta SMA50>SMA200 Stratejisinin Backtest Çıktısı
 
 ```json
 {
   "symbol": "GOOGL",
-  "strategyName": "SMA Strategy",
+  "strategyName": "SMA Crossover Strategy",
   "lookbackPeriod": 252,
   "currentSignal": "NEUTRAL",
   "score": 0,
@@ -348,21 +348,56 @@ TradeBot ta4j kütüphanesinin sağlamış olduğu backtesting sınıflarından 
   "sortinoRatio": 1.1288559378617478
 }
 ```
-
-ve
-
-![alt text](image-13.png) şeklindedir.
-
+şeklindedir.
 
 Strateji testleri input olarak yukarıdaki strateji parametrelerini almalıdır ancak geliştirme aşamasında olunan TradeBot şu an için yalnızca sembol, indikatör parametreleri, lookbackPeriod ve fiyat türü (varsayılan olarak kapanış fiyatları) almaktadır. Tüm stratejiler base bir çıktı vermektedir. Amaç, Investing.com ve TradingView platformlarının sağlamış olduğu multiindicator bazlı karar matrisi servisini oluşturmaktır.
 
+### TradeBot Backtest Metrik Açıklamaları
+
+| Alan | Açıklama |
+|------|----------|
+| `symbol` | İşlem yapılan hisse veya varlık sembolü (ör. "GARAN"). |
+| `strategyName` | Kullanılan stratejinin adı (ör. "RSI + MACD Strategy"). |
+| `lookbackPeriod` | Backtest sırasında kullanılan geriye dönük bar sayısı (lookback). |
+| `currentSignal` | Son bar için stratejinin verdiği sinyal: "BUY", "SELL" veya "NEUTRAL". |
+| `score` | `currentSignal` bazlı numerik skor: BUY=1, SELL=-1, NEUTRAL=0. |
+| `totalProfit` | Stratejinin toplam karı (nominal, normalize edilmiş; 1 birim sermaye üzerinden). |
+| `totalLoss` | Stratejinin toplam zararı (nominal, normalize edilmiş; 1 birim sermaye üzerinden). |
+| `grossReturn` | Yüzdesel veya çarpan olarak toplam getiri. |
+| `averageProfit` | Ortalama pozisyon başına kar. |
+| `returnOverMaxDrawdown` | Toplam getiri / maksimum drawdown oranı, risk/ödül göstergesi. |
+| `rewardRiskRatio` | `returnOverMaxDrawdown` ile aynı; risk/ödül ölçüsü. |
+| `maximumDrawdown` | Stratejinin en yüksek tepe-dip farkı (maksimum kayıp). |
+| `averageDrawdown` | Tüm drawdown periyotlarının ortalaması. |
+| `numberOfTrades` | Kapalı işlem sayısı (tradingRecord.getTrades().size()). |
+| `numberOfPositions` | Açılmış pozisyon sayısı (NumberOfPositionsCriterion bazlı). |
+| `winningPositionsRatio` | Karla kapanan pozisyonların oranı. |
+| `losingPositionsRatio` | Zararla kapanan pozisyonların oranı. |
+| `winningTradesRatio` | Toplam işlemlerde kazananların oranı (winCount / total). |
+| `totalHoldingPeriod` | Tüm pozisyonların toplam bar cinsinden tutma süresi. |
+| `averageHoldingPeriod` | Pozisyon başına ortalama tutma süresi (bar). |
+| `buyAndHoldReturn` | Sadece satın al ve tut stratejisi ile elde edilen getiri. |
+| `versusBuyAndHold` | Stratejinin getirisi ile buy&hold getirisi arasındaki fark. |
+| `cashFlow` | Son bar bazında stratejinin nakit/sermaye durumu. |
+| `profitLoss` | `cashFlow - 1.0`, yani normalize edilmiş toplam kar/zarar. |
+| `sharpeRatio` | Sharpe oranı (risk/volatilite düzeltilmiş getiri). |
+| `sortinoRatio` | Sortino oranı (negatif volatiliteye göre düzeltilmiş getiri). |
+| `totalLoss` | Tüm pozisyonların toplam kaybı |
+| `totalProfitLossRatio` | Toplam kar/zarar oranı |
+| `totalProfitLossRatioPercent` | Kar/zarar oranı yüzdesi. |
+| `breakEvenCount` | Sıfır kar/zarar ile kapanan pozisyon sayısı. |
+| `profitCount` | Karla kapanan pozisyon sayısı. |
+| `lossCount` | Zararla kapanan pozisyon sayısı. |
+| `lastDecisionValue` | `score` ve performans metriğine göre hesaplanan son karar değeri (-1…1 arası normalize). |
+| `lastDecisionValueDescriptor` | `lastDecisionValue` bazlı yorum: STRONG_BUY, BUY, HOLD, SELL veya WRONG_SIGNAL. |
+
 #### TradingView Technical Metrics
 
-![alt text](image-14.png)
+  ![alt text](image-14.png)
 
 #### Investing.com Teknik Metrikler
 
-![alt text](image-15.png)
+  ![alt text](image-15.png)
 
 #### TradeBot Teknik Metrikler
 
@@ -492,11 +527,284 @@ Walk forward optimizasyonu, bir yatırım stratejisinin optimal parametrelerini 
 
 ### TradeBot'ta Walk Forward Optimization
 
+TradeBot'da Walk Forward optimizasyonu, **ta4j** kütüphaneleri kullanılarak implemente edilmiştir. Temel mantık, strateji parametrelerini tarihsel veriler üzerinde sistematik olarak test etmek ve validasyon pencerelerinde performansını doğrulamaktır.
 
+```pseudo
+Başla WalkForwardOptimization
 
----
+Girdi: VarlıkSembolü, FiyatTürü, Parametreler, optimizasyonPenceresi, validasyonPenceresi, ilerlemeAdımı, Strateji(indikatörler)
 
- > *"To be successful, you need to treat trading as a business and stocks as your business inventory. There will be losses, as much as there will be wins."* [2]
+1. Girilen sembolün tarihsel fiyat verilerini getir
+2. Optimizasyon penceresi boyunca strateji parametrelerini sistematik olarak değiştir
+3. Her parametre seti için backtest uygula ve performans metriklerini kaydet
+4. En iyi performans gösteren parametre setini belirle
+5. Bu parametreleri validasyon penceresi üzerinde test et
+6. Performans metriklerini karşılaştır ve stabil parametreleri seç
+7. İlerleme adımı kadar zaman serisini kaydır ve 2-6 adımlarını tekrarla
+8. Tüm periyotlar için sonuçları birleştir, ortalama performans ve risk değerlerini hesapla
+9. Optimal parametrelerin zaman içinde stabil olup olmadığını değerlendir
+10. Net karar: Her pencerede en iyi performans gösteren strateji ve parametre setlerini belirle
+
+Çıktı: Parametrelerin optimizasyon sonucu, performans raporu, risk analizi ve sonraki al-sat kararları için önerilen ayarlar
+```
+
+Aşağıdaki görselde Walk Forward Optimizasyonunu daha detaylı inceleyebiliriz. In-sample aralığı optimizasyon penceresini temsil ederken, outsample optimizasyon sonucunda çıkan optimal parametrelerin validasyonu amacıyla modelin daha önce görmediği veriseti üzerinde deneme yaparak gerekli metriklerin hesaplanmasını sağlar.
+
+![Optimizasyon penceresi](image-16.png)
+
+### Tradebot tarafında Walk Forward nasıl çalışıyor?
+
+#### Örnek Bir Girdi
+
+````json
+{
+  "symbol": "GARAN",
+  "optimizationWindow": 252,
+  "validationWindow": 126,
+  "rollStep": 21,
+  "indicators": [
+    {
+      "type": "rsi and bollinger and macd and dmi and trendline and mfi and ema_cross and sma_cross and ema10 and ema50 and ema100 and sma10 and sma50 and sma200",
+      "params": {
+        "rsiPeriod": 11,
+        "macdSignalLine": { "max": 11.0, "step": 2.0, "min": 7.0},
+        "stopLoss": 5.0,
+        "takeProfit": { "max": 15.0, "step": 2.0, "min": 9.0},
+        "trailingStopLoss": 0
+      }
+    }
+  ]
+}
+````
+Kullanıcı, stratejisinde kullanmak istediği indikatörleri *type* değişkeninde *and* operatörü ile bağlayarak sisteme verir. Sistem *type* değişkenini parse ettikten sonra bu indikatörlerin varsayılan değerleriyle bir strateji oluşturur. Kullanıcı isterse *params* değişkeni içerisinde optimize etmek istediği parametreleri ve o parametreler için aralıkları belirterek optimizasyon aşamasına geçebilir. Yukarıdaki girdi örneğinde de görüldüğü üzere *takeProfit* değeri için %9 değerinden başlayıp %15 değerine kadar ikişer ikişer artarak tüm takeProfit değerlerinin oluşturduğu metrikler denenerek starteji için en uygun (optimal) *takeProfit* değeri bulunur. İşlemlere genel olarak bu parametre değeri ile devam edilir.
+
+Walkforward optimizasyonu metodunun yukarıdaki girdi için çıktısı aşağıdaki gibidir. 
+
+````json
+ {
+    "strategyName": "RSI AND BOLLINGER AND MACD AND DMI AND TRENDLINE AND MFI AND EMA_CROSS AND SMA_CROSS AND EMA10 AND EMA50 AND EMA100 AND SMA10 AND SMA50 AND SMA200 (VALIDATION)",
+    "symbol": "GARAN_bars_between_7014_-_7140",
+    "runDate": "2025-09-28T16:20:26.277140Z",
+    "startDate": "2025-02-27T21:00:00Z",
+    "endDate": "2025-09-02T21:00:00Z",
+    "optimizationWindow": 252,
+    "validationWindow": 126,
+    "stepSize": 1,
+    "totalProfit": 47.34,
+    "totalLoss": -70.2,
+    "totalProfitLossRatio": -22.86,
+    "totalProfitLossRatioPercent": -15.328263513900096,
+    "grossReturn": 0.8386531671758696,
+    "averageProfit": 1.6907142857142856,
+    "returnOverMaxDrawdown": 4.212847891417696,
+    "numberOfTrades": 110,
+    "numberOfPositions": 55,
+    "parameters": "{takeProfit=15.0, stopLoss=5.0, isTrailingStopLoss=1}",
+    "lastSignal": "BUY",
+    "lastSignalDate": "2025-09-02T21:00:00Z",
+    "lastPrice": 133.8
+  }
+````
+Sistem gerekli metrikleri hesaplayarak en son validasyon setinin metrikleri ile parametrelerini veritabanına kaydeder.
+
+### Özet
+- Walk Forward Optimization, overfitting riskini azaltır.
+- Parametreler tarihsel olarak test edilir ve validasyon periyotlarında doğrulanır.
+- Sonuçlar, stratejinin gerçek piyasa koşullarında stabil ve güvenilir olup olmadığını gösterir.
+- TradeBot, bu yöntem sayesinde parametreleri zaman içinde güncelleyerek daha sağlıklı al-sat kararları üretir.
+
+## Teknik Analiz - Decision Matrix Katmanı
+
+TradeBot'un genel bir al-sat sinyali gönderebilmesi için karar matrisi katmanı gereklidir. Bu katmanda, kullanıcının girmiş olduğu strateji ve parametreler walkforward optimizasyonundan geçtikten sonra sinyaller ağırlıklandırılarak overall bir sinyal ile bu sinyalin *confidence* değeri gönderilir.
+
+> *Confidence* değeri, walkforward optimizasyonu aşamalarındaki validasyon setinin performansının optimizasyon setinin performansına oranını verir. Yani gönderilen sinyalin güvenilirliğini ölçen bir metrik oluşturur. Kullanıcıya, kendisine gönderilen sinyal hakkında fikir verir. Bu değerin genellikle %60 ve üzeri olması durumunda sinyale güven artmalıdır.
+
+* **Özetle,** Her bir in-sample + out-sample döngüsü için:
+
+                    (Out-sample: totalProfit/tradeSignalCount)
+      confidence = -------------------------------------------- * 100
+                    (In-sample: totalProfit/tradeSignalCount) 
+
+### TradeBot'ta Sembole Göre Karar Alma
+
+* **curl**:
+````curl
+http://localhost:8082/decision-matrix/decision-by-symbol
+````
+* **input**: (walkforward işlemleri yapıldığından dolayı aynı input)
+````json
+{
+  "symbol": "AAPL",
+  "optimizationWindow": 252,
+  "validationWindow": 126,
+  "rollStep": 25,
+  "indicators": [
+    {
+      "type": "rsi and trendline and bollinger and ema_cross and sma_cross and macd and mfi and dmi and ema10 and ema50 and ema100 and sma10 and sma50 and sma100",
+      "params": {
+        "rsiPeriod": 14,
+        "bollingerPeriod": 20,
+        "bollingerStdDev": 2,
+        "takeProfit": 15,
+        "stopLoss": 3,
+        "trailingStopLoss": 1
+      }
+    }
+  ]
+}
+````
+* **output**:
+````json
+{
+  "symbol": "AAPL",
+  "date": "2025-09-28T22:51:18.453405400Z",
+  "score": -0.182972125945818,
+  "confidence": 87.01382327226334,
+  "lastSignal": "BUY"
+}
+````
+> Ek olarak, TradeBot üzerinde, veritabanındaki tüm semboller için aynı anda sinyal çekerek hangi varlığı satın almanız gerektiğini liste halinde görüntüleyebilirsiniz.
+
+### Tüm Semboller Output
+
+````json
+[
+  {
+    "symbol": "AAPL",
+    "date": "2025-08-25T21:00:00Z",
+    "score": 0.04683168579434313,
+    "confidence": 90.07828419932204,
+    "lastSignal": "BUY"
+  },
+  {
+    "symbol": "AKBNK",
+    "date": "2025-09-15T21:00:00Z",
+    "score": -0.11246825046014935,
+    "confidence": 78.90282599691858,
+    "lastSignal": "SELL"
+  },
+  {
+    "symbol": "AMD",
+    "date": "2025-08-25T21:00:00Z",
+    "score": 0.26440739975095334,
+    "confidence": 87.58767931211418,
+    "lastSignal": "BUY"
+  },
+  {
+    "symbol": "AMZN",
+    "date": "2025-08-25T21:00:00Z",
+    "score": 0,
+    "confidence": 90.48364974746377,
+    "lastSignal": "NEUTRAL"
+  },
+  {
+    "symbol": "ASELS",
+    "date": "2025-08-26T21:00:00Z",
+    "score": 0,
+    "confidence": 56.454089078480706,
+    "lastSignal": "NEUTRAL"
+  },
+  {
+    "symbol": "GARAN",
+    "date": "2025-09-21T21:00:00Z",
+    "score": -0.23682929371927364,
+    "confidence": 67.14430337338378,
+    "lastSignal": "SELL"
+  },
+  {
+    "symbol": "GOOGL",
+    "date": "2025-08-25T21:00:00Z",
+    "score": 0,
+    "confidence": 80.99412154174578,
+    "lastSignal": "NEUTRAL"
+  },
+  {
+    "symbol": "HALKB",
+    "date": "2025-08-24T21:00:00Z",
+    "score": 0,
+    "confidence": 99.46998326948085,
+    "lastSignal": "NEUTRAL"
+  },
+  {
+    "symbol": "HEPS",
+    "date": "2025-09-09T21:00:00Z",
+    "score": 0,
+    "confidence": 88.97902909118932,
+    "lastSignal": "NEUTRAL"
+  },
+  {
+    "symbol": "ISCTR",
+    "date": "2025-08-24T21:00:00Z",
+    "score": 0,
+    "confidence": 81.02210463923663,
+    "lastSignal": "NEUTRAL"
+  },
+  {
+    "symbol": "ISMEN",
+    "date": "2025-08-24T21:00:00Z",
+    "score": 0,
+    "confidence": 73.6712118321994,
+    "lastSignal": "NEUTRAL"
+  },
+  {
+    "symbol": "MSFT",
+    "date": "2025-08-25T21:00:00Z",
+    "score": 0,
+    "confidence": 84.77912318509792,
+    "lastSignal": "NEUTRAL"
+  },
+  {
+    "symbol": "NFLX",
+    "date": "2025-08-25T21:00:00Z",
+    "score": -0.15043896461418174,
+    "confidence": 87.16414096838439,
+    "lastSignal": "SELL"
+  },
+  {
+    "symbol": "SAHOL",
+    "date": "2025-09-24T21:00:00Z",
+    "score": 0,
+    "confidence": 79.19453497393837,
+    "lastSignal": "NEUTRAL"
+  },
+  {
+    "symbol": "TCELL",
+    "date": "2025-09-04T21:00:00Z",
+    "score": 0,
+    "confidence": 79.74208439234484,
+    "lastSignal": "NEUTRAL"
+  },
+  {
+    "symbol": "THYAO",
+    "date": "2025-09-08T21:00:00Z",
+    "score": 0,
+    "confidence": 74.67041063340712,
+    "lastSignal": "NEUTRAL"
+  },
+  {
+    "symbol": "TSLA",
+    "date": "2025-08-25T21:00:00Z",
+    "score": 0,
+    "confidence": 92.36970667409913,
+    "lastSignal": "NEUTRAL"
+  }
+]
+````
+
+### Loglama
+
+Decision matrix servisi her sembol için bilgilendirme logları dönmektedir:
+
+````terminal
+[INFO] Starting walk-forward analysis for symbol: AMZN
+Walk-forward analysis completed for symbol: AMZN
+Confidence level: 90,48% (Train PnL/Trade: 0,7645, Val PnL/Trade: 0,8449)
+[DONE] Walkforward analysis completed successfully.
+````
+
+Bu rapor bir alan bilgisi araştırma raporu olduğundan dolayı yazan hiçbir bilgininin finansal yönlendirme/tavsiye yetkinliği bulunmamakla birlikte, yatırım tavsiyesi niteliğinde değildir.
+
+> *"To be successful, you need to treat trading as a business and stocks as your business inventory. There will be losses, as much as there will be wins."* [2]
 
 ## Kaynakça
 
@@ -510,4 +818,6 @@ Walk forward optimizasyonu, bir yatırım stratejisinin optimal parametrelerini 
 
 [5] https://www.investopedia.com/terms/p/papertrade.asp 
 
-> Ana kaynak olarak: Youtube-Yatırım Finansman: *"Kıvanç Özbilgiç ile A’dan Z’ye Algoritmik İşlemler"* video serisinden yararlanılmıştır.
+[6] https://algotrading101.com/learn/walk-forward-optimization/ 
+
+[7] Ana kaynak olarak: Youtube-Yatırım Finansman: *"Kıvanç Özbilgiç ile A’dan Z’ye Algoritmik İşlemler"* video serisinden yararlanılmıştır.

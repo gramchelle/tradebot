@@ -231,7 +231,22 @@ En basit haliyle, eğer trend çizgimizin eğimi 0'dan yükseldikçe artış, d�
 
 Yukarıdaki grafikte gördüğümüz 473 periyotluk bu destek, TradeBot tarafından aşağıdaki şekilde tespit edilmiştir:
 
-![Trendline Output](trendline_output.png)
+```json
+{
+  "symbol": "GOOGL",
+  "indicator": "Trend",
+  "date": "2025-03-11T21:00:00Z",
+  "values": {
+    "nearestSupport": 190.68,
+    "nearestResistance": 174.97,
+    "recentSwingLow": 190.68,
+    "recentSwingHigh": 174.97,
+    "slopeAtDate": -124.64285714285705,
+    "isUptrend": -1,
+    "currentPrice": 167.11
+  }
+}
+```
 
 Trend çizgilerimizi oluşturmak için kullandığımız teknik ve kalıplar kadar, bunları nerede kullanacağımız ve hangi formasyonlar üzerinden yorumlama yapacağımız da önem taşımaktadır. Trend çizgileri envai çeşit alanda kullanılabilir ve çok farklı yorumlama teknikleri bulunabilir. En basit 3 trend yönü Artış, Azalış ve Sabit kalma trendleridir, ancak bunlarla yetinilmemelidir. Grafikler üzerinden trend kalıplarını yorumlamaya başlamak üzere bazı yaygın formasyonları inceleyelim. [6]
 
@@ -390,7 +405,17 @@ Bitir
 
 Yukarıdaki GOOGL sembolü üzerindeki SMA Crossover'ın bullish trende geçtiği (golden cross) noktada TradeBot üzerinden gelen örnek bir sonuç aşağıdaki gibidir. 
 
-![TradeBot GOOGL SMA Crossover Output](image-1.png)
+````json
+{
+  "symbol": "GOOGL",
+  "indicator": "MACrossover",
+  "date": "2025-09-18T21:00:00Z",
+  "values": {
+    "shortMA": 208.7082,
+    "longMA": 183.1369
+  }
+}
+````
 
 MA Crossover algoritmasının girdileri fiyatlar listesi ile kısa ve uzun vadeli hareketli ortalama periyotlarıdır. Her gün için bu iki ortalama hesaplanır, ve kullanıcının stratejisi üzerinde kullanılmak üzere strateji katmanına gönderilir. Çoğu strateji SMA50>SMA200 kesişim noktasında uzun vadeli pozisyon açma emri gönderen bir yapıdadır.
 
@@ -439,7 +464,16 @@ TradeBot, RSI'ı en basit halde implemente edecek ve yatırımcıların strateji
 
 İşaretle gösterilen 11-12-2024 tarihli günlük bazda fiyat grafiğinin TradeBot RSI çıktısı:
 
-![TradeBot GOOGL RSI Output](image-3.png)
+````json
+{
+  "symbol": "GOOGL",
+  "indicator": "RSI",
+  "date": "2024-12-10T21:00:00Z",
+  "values": {
+    "rsiValue": 75.25854873670565
+  }
+}
+````
 
 şeklindedir.
 
@@ -508,7 +542,18 @@ Bitir
 
 Bu algoritma kullanılarak TradeBot üzerinden gönderilen örnek bir çıktı aşağıdaki gibidir.
 
-![TradeBot MACD Output](image-4.png)
+````json
+{
+  "symbol": "GOOGL",
+  "indicator": "MACD",
+  "date": "2025-06-05T21:00:00Z",
+  "values": {
+    "histogram": 0.03692346951490431,
+    "macdLine": 2.709551266056451,
+    "signalLine": 2.672627796541574
+  }
+}
+````
 
 ### MACD’de Uyumsuzluk (Divergence)
 
@@ -587,7 +632,20 @@ Bitir
 
 Yukarıdaki algoritmanın sonucunda yatırımcı, kendi risk yönetimini kullanarak bollinger bantlarını stratejisinde uygulayabilir. Örnek bir TradeBot çıktısı aşağıdaki gibidir.
 
-![TradeBot Bollinger Bands Output](image-5.png)
+````json
+{
+  "symbol": "GOOGL",
+  "indicator": "Bollinger Bands",
+  "date": "2025-09-17T21:00:00Z",
+  "values": {
+    "middle": 228.0575,
+    "bandwidth": 30.656918236664126,
+    "upper": 263.01520065379015,
+    "lower": 193.09979934620986,
+    "percentB": 0.8428786726766722
+  }
+}
+````
 
 > Bollinger Bantları tek başına kullanılmamalıdır. RSI, MACD ve trend analizleriyle birlikte değerlendirildiğinde çok daha güçlü sinyaller üretir.  
 
@@ -644,7 +702,16 @@ Algoritmadan da anlaşılacağı üzere, pozitif ve negatif para akışları da 
 
 Yukarıdaki sözde kod algoritması, yukarıdaki grafiğin üzerinde çekilen son trendin ilk günü için uygulandığında TradeBot tarafından elde edilen çıktı
 
-![TradeBot GOOGL MFI Output](image-6.png)
+````json
+{
+  "symbol": "GOOGL",
+  "indicator": "MFI",
+  "date": "2025-09-17T21:00:00Z",
+  "values": {
+    "mfiValue": 87.11040676070746
+  }
+}
+````
 
 şeklinde olmaktadır.
 
@@ -744,7 +811,18 @@ Aşağıdaki GOOGL sembolünün 1 günlük bazdaki yıllık fiyat grafiğinin DM
 
 Yukarıdaki grafiğin üzerine çizilen sonuncu trendin başlangıç tarihinde TradeBot'a gönderilen sorgunun çıktısı aşağıdaki gibi olmaktadır. Grafikte de görüldüğü üzere bariz bir düşüş yaşanmıştır ve botun teknik analiz katmanı tarafından Sat sinyali gönderilmiştir. 
 
-![TradeBot GOOGL DMI Output](image-7.png)
+````json
+{
+  "symbol": "GOOGL",
+  "indicator": "DMI",
+  "date": "2025-09-17T21:00:00Z",
+  "values": {
+    "plusDIValue": 43.84138316731136,
+    "adxValue": 52.74342778309579,
+    "minusDIValue": 10.887768379641209
+  }
+}
+````
 
 > Özetle: DMI, +DI ve −DI ile trendin yönünü, ADX ile trendin gücünü gösterir. Her gösterge gibi DMI da geçmişe dayanır; geçmiş başarı gelecek başarıyı garanti etmez, yönü söyler ama tek başına bir giriş/çıkış stratejisi olmamalıdır. Yanlış tetiklemeleri azaltmak için ADX gibi güç ölçerlerle filtrelemek gerekir. 
 
