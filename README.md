@@ -53,3 +53,7 @@ Signal Generation → Strategy Backtesting → Decision Matrix Learning
 - **User Strategies** → **Signal Requests** → **Market Data**  
 - İndikatör sonuçları + Decision Weights birleşerek **Final Signal** üretir  
 - **Outcome Tracker** ile gerçekleşen sonuçlar kaydedilir ve öğrenme sistemine geri beslenir (AI katmanında)
+
+### Teknik Analiz Ana Akış Diyagramı
+
+![Teknik Analiz Flowchart](tradebot_technicalanalysis.png)
